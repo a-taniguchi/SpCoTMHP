@@ -1,0 +1,18 @@
+This dataset was recorded 
+ - by Cyrill Stachniss 
+ - at the building 079 at the University of Freiburg, Germany
+ - 22.09.2005 
+ - iRobot B21r robot "Albert".
+
+---
+
+    This data set was obtained from the Robotics Data Set
+    Repository (Radish)~\cite{Radish}. Thanks go to [provider]
+    for providing this data.
+
+    @misc{Radish,
+    author = "Andrew Howard and Nicholas Roy", 
+    year = "2003",
+    title = "The Robotics Data Set Repository (Radish)",
+    url = "http://radish.sourceforge.net/",
+    }
