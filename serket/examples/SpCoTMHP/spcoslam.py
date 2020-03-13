@@ -1,5 +1,6 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
+#Akira Taniguchi (SpCoSLAM, batch learning) 簡易版（GMMはserketのものを使用しているが、精度が悪い）
 from __future__ import print_function,unicode_literals, absolute_import
 import sys
 sys.path.append("../../")
