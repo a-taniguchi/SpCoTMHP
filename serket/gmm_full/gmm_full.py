@@ -5,8 +5,14 @@ import math
 import os
 import pickle
 from sklearn.cluster import KMeans
+from math import pi as PI
+from math import cos,sin,sqrt,exp,log,fabs,fsum,degrees,radians,atan2,gamma,lgamma
+from numpy.random import multinomial,uniform,dirichlet
+from scipy.stats import t,multivariate_normal,invwishart,rv_discrete
+import collections
 
 var = 2.0 #0.1 #共分散行列の行列成分のハイパーパラメータのスケール係数
+dimx = 2             #The number of dimensions of xt (x,y)
 
 ##Posterior (∝likelihood×prior): https://en.wikipedia.org/wiki/Conjugate_prior
 #alpha0 = 20.0        #Hyperparameter of CRP in multinomial distribution for index of spatial concept
@@ -31,6 +37,54 @@ k0m0m0 = k0*np.dot(np.array([m0]).T,np.array([m0]))
 #V0 = np.eye(2)*2             #For Σ, Hyperparameters of Gaussian–inverse–Wishart prior distribution (covariance matrix prior)
 #nu0 = 3.0 #3.0               #For Σ, Hyperparameters of Gaussian–inverse–Wishart prior distribution (degree of freedom: dimension+1)
 sig_init =  1.0 
+
+def multivariate_t_distribution(x, mu, Sigma, df):
+    """
+    Multivariate t-student density. Returns the density
+    of the function at points specified by x.
+    
+    input:
+        x = parameter (n-d numpy array; will be forced to 2d)
+        mu = mean (d dimensional numpy array)
+        Sigma = scale matrix (dxd numpy array)
+        df = degrees of freedom
+        
+    Edited from: http://stackoverflow.com/a/29804411/3521179
+    """
+    
+    x = np.atleast_2d(x) # requires x as 2d
+    nD = Sigma.shape[0] # dimensionality
+    
+    numerator = gamma(1.0 * (nD + df) / 2.0)
+    denominator = (
+            gamma(1.0 * df / 2.0) * 
+            np.power(df * PI, 1.0 * nD / 2.0) *  
+            np.power(np.linalg.det(Sigma), 1.0 / 2.0) * 
+            np.power(
+                1.0 + (1.0 / df) *
+                np.diagonal(
+                    np.dot( np.dot(x - mu, np.linalg.inv(Sigma)), (x - mu).T)
+                ), 
+                1.0 * (nD + df) / 2.0
+                )
+            )
+            
+    return 1.0 * numerator / denominator 
+
+def log_multivariate_t_distribution(x, mu, Sigma, df):
+    x = np.atleast_2d(x) # requires x as 2d
+    nD = Sigma.shape[0] # dimensionality
+    
+    lnumerator = lgamma( (nD + df) / 2.0 )
+    ldenominator = (
+            lgamma(0.5 * df) + 
+            (0.5 * nD) * ( log(df) + log(PI) ) + 
+            0.5 * log(np.linalg.det(Sigma))  + 
+            (0.5 * (nD + df)) * 
+            log(1.0 + (1.0 / df) * np.diagonal(np.dot( np.dot(x - mu, np.linalg.inv(Sigma)), (x - mu).T)))
+            )
+            
+    return lnumerator - ldenominator 
 
 # 計算された共分散行列のパラメータが正定値性を満たすか簡易チェック
 def Check_VN(VN):
@@ -120,7 +174,12 @@ class GaussWishart():
         self.__N -= 1
         self.__update_param()
 
-    def calc_loglik(self, x):
+    def calc_loglik(self, x, mu_k, sig_k):
+        # log(P(x|mu_k, sig_k))
+        prob = multivariate_normal.logpdf(x, mu_k, sig_k)
+        return prob
+
+        """
         def _calc_loglik(self):
             p = - self.__N * self.__dim * 0.5 * math.log( math.pi )
             p+= - self.__dim * 0.5 * math.log( self.__r )
@@ -141,6 +200,7 @@ class GaussWishart():
 
         # log(P(x|X)) = log(P(x,X)) - log(P(X))
         return p2 - p1
+        """
 
     def get_loglik(self):
          p = - self.__N * self.__dim * 0.5 * math.log( math.pi )
@@ -177,17 +237,35 @@ class GaussWishart():
         self.__update_param()
 
 
-def calc_probability( dist, d ):
-    return dist.get_num_data() * math.exp( dist.calc_loglik( d ) )
+def calc_probability( dist, d, mu, sig ):
+    return dist.get_num_data() *  math.exp( dist.calc_loglik( d, mu, sig ) )
 
+def sample_GIW(k, classes, d, N):
+    ic = collections.Counter(classes) #｛it番号：カウント数｝
+    icitems = ic.items()  # [(it番号,カウント数),(),...]
+    nk = ic[icitems[k][0]]
+    kN,mN,nN,VN = PosteriorParameterGIW(k, nk, N, classes, d, icitems[k][0])
+    return mu, sig
 
-def sample_class( d, distributions, i, bias_dz ):
+def sample_pi(K, classes):
+    temp = np.ones(K) * (gamma0 / float(K))
+    for c in xrange(K):
+          temp[c] = temp[c] + classes.count(c)
+    #加算したデータとパラメータから事後分布を計算しサンプリング
+    sumn = sum(np.random.dirichlet(temp,1000)) #fsumではダメ
+    pi = sumn / np.sum(sumn)
+    return pi
+
+def sample_class( d, distributions, i, bias_dz, params ):
     K = len(distributions)
     P =  np.zeros(K) #[ 0.0 ] * K
+    mu  = params[0]
+    sig = params[1]
+    pi  = params[2]
     
     # 事後確率分布を計算
     for k in range(K):
-        P[k] = calc_probability( distributions[k], d ) * bias_dz[i][k]
+        P[k] = calc_probability( distributions[k], d, mu[k], sig[k] ) * bias_dz[i][k] * pi[k] # mu, sig を使った確率値の計算に変更
 
     P = P / np.sum(P)  #Normalization
     sample_list = np.random.multinomial(1,P)
@@ -237,7 +315,7 @@ def calc_acc( results, correct ):
     return max_acc, results
 
 # モデルの保存
-def save_model( Pdz, mu, sig, classes, save_dir, categories, distributions, liks, load_dir ):
+def save_model( Pdz, mu, sig, pi, classes, save_dir, categories, distributions, liks, load_dir ):
     if not os.path.exists( save_dir ):
         os.makedirs( save_dir )
     
@@ -254,6 +332,8 @@ def save_model( Pdz, mu, sig, classes, save_dir, categories, distributions, liks
         np.savetxt( os.path.join( save_dir, "liklihood.txt" ), liks, fmt="%f" )
         # sigの保存: add by Akira
         np.savetxt( os.path.join( save_dir, "sig.txt" ), sig )
+        # piの保存
+        np.savetxt( os.path.join( save_dir, "pi.txt" ), pi )
 
     # 確率の保存
     np.savetxt( os.path.join( save_dir, "Pdz.txt" ), Pdz, fmt="%f" )
@@ -290,6 +370,8 @@ def train( data, K, num_itr=100, save_dir="model", bias_dz=None, categories=None
     Pdz = np.zeros((N,K))
     mu  = np.zeros((N,dim))
     sig = np.zeros( (N, 2*dim) ) #
+    pi  = stick_breaking(gamma0, K) #
+    params = [mu, sig, pi] #
 
     # 初期値の決定：データをランダムに分類 (-> k-meansで分類)
     #kmeans = KMeans(n_clusters=10, init='k-means++').fit(data)
@@ -317,14 +399,14 @@ def train( data, K, num_itr=100, save_dir="model", bias_dz=None, categories=None
             # メインの処理
             for i in range(N):
                 d = data[i]
-                k_old = classes[i]  # 現在のクラス
+                #k_old = classes[i]  # 現在のクラス
     
-                # データをクラスから除きパラメータを更新
-                distributions[k_old].delete_data( d )
-                classes[i] = -1
+                # データをクラスから除きパラメータを更新 <- Collapsed Gibbs sampling の処理のため通常のGSではいらない
+                #distributions[k_old].delete_data( d )
+                #classes[i] = -1
     
                 # 新たなクラスをサンプリング
-                k_new = sample_class( d, distributions, i, bias_dz )
+                k_new = sample_class( d, distributions, i, bias_dz, params ) #samplingされたグローバルパラメータを使ってサンプリングするように変更
     
                 # サンプリングされたクラスに更新
                 classes[i] = k_new
@@ -332,6 +414,11 @@ def train( data, K, num_itr=100, save_dir="model", bias_dz=None, categories=None
                 # サンプリングされたクラスのパラメータを更新
                 distributions[k_new].add_data( d )
             
+            # global parameters のサンプリング
+            mu, sig = sample_GIW()
+            pi      = sample_pi()
+
+
             # 尤度の計算
             lik = 0
             for k in range(K):
@@ -340,23 +427,23 @@ def train( data, K, num_itr=100, save_dir="model", bias_dz=None, categories=None
 
         for n in range(N):
             for k in range(K):
-                Pdz[n][k] = calc_probability( distributions[k], data[n] )
-                if classes[n] == k:
-                    mu[n] = distributions[k].get_mean().reshape((1,dim))[0]
-                    sig[n] = distributions[k].get_variance().reshape((1,dim*2))[0] #
-                    #print sig[n]
+                Pdz[n][k] = calc_probability( distributions[k], data[n], mu[k], sig[k] )
+                #if classes[n] == k:
+                #    mu[n] = distributions[k].get_mean().reshape((1,dim))[0]
+                #    sig[n] = distributions[k].get_variance().reshape((1,dim*2))[0] #
+                #    #print sig[n]
     
     # 認識
     if load_dir is not None:
         for n in range(N):
             for k in range(K):
-                Pdz[n][k] = calc_probability( distributions[k], data[n] )
+                Pdz[n][k] = calc_probability( distributions[k], data[n], mu[k], sig[k]  )
         classes = np.argmax(Pdz, axis=1)
 
     # 正規化
     Pdz = (Pdz.T / np.sum(Pdz,1)).T
     
-    save_model( Pdz, mu, sig, classes, save_dir, categories, distributions, liks, load_dir )
+    save_model( Pdz, mu, sig, pi, classes, save_dir, categories, distributions, liks, load_dir ) # add parameter
 
-    return Pdz, mu
+    return Pdz, mu #, sig
 
