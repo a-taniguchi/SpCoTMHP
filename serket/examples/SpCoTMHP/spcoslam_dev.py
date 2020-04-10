@@ -21,13 +21,6 @@ def main():
     obs2 = srk.Observation( np.loadtxt(dataset_path + "histogram_w_place.txt") ) # 単語
     obs3 = srk.Observation( np.loadtxt(dataset_path + "position_place.txt") ) # 位置
     
-    #obs1 = srk.Observation( np.loadtxt("feature_place.txt") )       # 視覚  
-    #obs2 = srk.Observation( np.loadtxt("mfcc.txt") )        # 聴覚
-    #obs3 = srk.Observation( np.loadtxt("tactile.txt") )     # 触覚
-    #obs4 = srk.Observation( np.loadtxt("angle.txt") )       # 関節角
-    
-    #object_category = np.loadtxt( "object_category.txt" )
-    #motion_category = np.loadtxt( "motion_category.txt" )
     place_category = np.loadtxt( dataset_path + "place_category.txt" )
     position_category = np.loadtxt( dataset_path + "position_category.txt" )
     

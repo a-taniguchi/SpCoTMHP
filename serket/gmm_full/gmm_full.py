@@ -1,4 +1,5 @@
 # encoding: utf-8
+#Akira Taniguchi (GMM, Gibbs sampling) 開発・編集中(未完成)
 import numpy as np
 import random
 import math

@@ -111,6 +111,7 @@ img/
 #dataset/
 data/
 *.py~
+*.sh~
 .lnk
-SIGVerse/
+#SIGVerse/
 output/
