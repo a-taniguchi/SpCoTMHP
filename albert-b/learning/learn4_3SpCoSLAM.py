@@ -695,7 +695,7 @@ def simulate(iteration):
       
       ##場所概念の学習
       #関数にとばす->のは後にする
-      print u"- <START> Learning of Location Concepts ver. NEW MODEL. -"
+      print u"- <START> Learning of Spatial Concepts ver. NEW MODEL. -"
       
       for iter in xrange(num_iter):   #イテレーションを行う
         print 'Iter.'+repr(iter+1)+'\n'
@@ -1157,7 +1157,7 @@ def simulate(iteration):
       if loop == 1:
         print "--------------------"
         #最終学習結果を出力
-        print u"\n- <COMPLETED> Learning of Location Concepts ver. NEW MODEL. -"
+        print u"\n- <COMPLETED> Learning of Spatial Concepts ver. NEW MODEL. -"
         print 'Sample: ' + str(sample)
         print 'Ct: ' + str(Ct)
         print 'It: ' + str(It)

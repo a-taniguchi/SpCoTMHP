@@ -4,10 +4,10 @@
 ##Spatial concept formation model (SpCoA without lexical acquisition)
 ##For SpCoNavi (on SIGVerse)
 ##Learning algorithm is Gibbs sampling.
-##Akira Taniguchi -2019/07/25-2020/04/12
+##Akira Taniguchi 2020/04/12-
 ##############################################
 
-# python ./learn4_3SpCoA_GT.py 3LDK_00
+# python ./learnSpCoTMHP.py 3LDK_00
 
 import glob
 import codecs

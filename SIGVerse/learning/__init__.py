@@ -1,19 +1,24 @@
 #coding:utf-8
 #The file for setting parameters (learning for SpCoNavi on SIGVerse; for learn4_3SpCoA_GT.py)
-#Akira Taniguchi -2019/07/25
+#Akira Taniguchi 2020/04/11-
 import numpy as np
 
-##### example #####
+##### Add SpCoTMHP #####
+nonpara = 1     #Nonparametric Bayes method (ON:1,OFF:0)
+
+
+##### example (for SpCoNavi experiments) #####
 example = 2 #1
 example_folder = ""
 #Word data folder path
 word_folder = "/name/per_100/word"
 if (example == 1):
   example_folder = "example1/"
-  word_folder = "/name/" + example_folder + "word" # "/name/per_100/word"
+  word_folder    = "/name/" + example_folder + "word" # "/name/per_100/word"
 elif (example == 2):
   example_folder = "example2/"
-  word_folder = "/name/" + example_folder + "word" # "/name/per_100/word"
+  word_folder    = "/name/" + example_folder + "word" # "/name/per_100/word"
+##############################################
 
 ##### NEW #####
 inputfolder_SIG  = "/mnt/hgfs/Dropbox/SpCoNavi/CoRL/dataset/similar/3LDK/"  #"/home/akira/Dropbox/SpCoNavi/data/"
@@ -32,9 +37,12 @@ origin     = np.array([-10.000000, -10.000000]) #np.array([x,y]) #np.array([-30.
 word_increment = 10     #Increment number of word observation data (BoWs)
 
 #################### Parameters ####################
-#kyouji_count = 50 #100 #the number of training data
-#M = 2000   #the number of particles (Same value as the condition in learning: 300)
-#LAG = 100 + 1  ##the number of elements of array (lag value for smoothing + 1)
+#kyouji_count = 50 #100 # The number of training data
+#M = 2000               # The number of particles (Same value as the condition in learning: 300)
+#LAG = 100 + 1          # The number of elements of array (lag value for smoothing + 1)
+
+num_iter = 100          # The number of iterations of Gibbs sampling for spatial concept learning
+dimx = 2                # The number of dimensions of xt (x,y)
 
 #limit of map size
 #WallX = 1600
@@ -43,6 +51,13 @@ WallXmin = -10
 WallXmax = 10
 WallYmin = 10
 WallYmax = -10
+
+# initial scale of Gaussian distribution 
+#mu_X_init  =  [WallXmin, WallXmax]
+#mu_Y_init  =  [WallYmin, WallYmax]
+sig_init =  1.0 
+
+#margin = 10*0.05   # margin value for place area in gird map (0.05m/grid)*margin(grid)=0.05*margin(m)
 
 #Motion model parameters (TABLE 5.6 in Probabilistic Robotics)
 #para1 = 0.01  #0.50
@@ -56,9 +71,26 @@ WallYmax = -10
 
 
 ##Initial (hyper)-parameters
-num_iter = 1           #The number of iterations of Gibbs sampling for spatial concept learning
-L = 10                  #The number of spatial concepts #50 #100
-K = 10                  #The number of position distributions #50 #100
+##Posterior (∝likelihood×prior): https://en.wikipedia.org/wiki/Conjugate_prior
+if (nonpara == 1):
+  L = 50               #The number of spatial concepts #50 #100
+  K = 50               #The number of position distributions #50 #100
+  alpha0 = 20.0        #Hyperparameter of multinomial distribution for index of spatial concept
+  gamma0 = 0.1         #Hyperparameter of multinomial distribution for index of position 
+else:
+  L = 10               #The number of spatial concepts #50 #100
+  K = 10               #The number of position distributions #50 #100
+  alpha0 = 20.0        #Hyperparameter of multinomial distribution for index of spatial concept
+  gamma0 = 0.1         #Hyperparameter of multinomial distribution for index of position distribution
+beta0 = 0.1          #Hyperparameter in multinomial distribution P(W) for place names 
+chi0  = 0.1          #Hyperparameter in multinomial distribution P(φ) for image feature
+k0 = 1e-3            #Hyperparameter in Gaussina distribution P(μ) (Influence degree of prior distribution of μ)
+m0 = np.zeros(dimx)  #Hyperparameter in Gaussina distribution P(μ) (prior mean vector)
+V0 = np.eye(dimx)*2  #Hyperparameter in Inverse Wishart distribution P(Σ) (prior covariance matrix) 
+n0 = 3.0             #Hyperparameter in Inverse Wishart distribution P(Σ) {>the number of dimenssions] (Influence degree of prior distribution of Σ)
+k0m0m0 = k0*np.dot(np.array([m0]).T,np.array([m0]))
+
+"""
 alpha = 1.0                  #Hyperparameter of multinomial distributions for index of position distirubitons phi #1.5 #0.1
 gamma = 1.0                  #Hyperparameter of multinomial distributions for index of spatial concepts pi #8.0 #20.0
 beta0 = 0.1                  #Hyperparameter of multinomial distributions for words (place names) W #0.5 #0.2
@@ -66,8 +98,7 @@ kappa0 = 1e-3                #For μ, Hyperparameters of Gaussian–inverse–Wi
 m0 = np.array([[0.0],[0.0]]) #For μ, Hyperparameters of Gaussian–inverse–Wishart prior distribution (mean prior)
 V0 = np.eye(2)*2             #For Σ, Hyperparameters of Gaussian–inverse–Wishart prior distribution (covariance matrix prior)
 nu0 = 3.0 #3.0               #For Σ, Hyperparameters of Gaussian–inverse–Wishart prior distribution (degree of freedom: dimension+1)
-
-sig_init =  1.0 
+"""
 
 ##latticelm parameters
 #knownn       = [2,3,4] #[3] #The n-gram length of the language model (3)
@@ -82,8 +113,8 @@ ITERATION  = 1  #The number of iterations for mutual estimation
 ##単語の選択の閾値
 #threshold = 0.01
 
-#Plot = 2000#1000  #位置分布ごとの描画の点プロット数
-#N_best_number = 10 #n-bestのnをどこまでとるか (n<=10) 
+# The number of N of N-best for PRR evaluation (PRR評価用のN-bestのN) (N<=10)
+N_best_number = 10  
 
 #Julius parameters
 JuliusVer      = "v4.4"   #"v.4.3.1"
@@ -100,10 +131,6 @@ if (HMMtype == "DNN"):
   lang_init = 'syllableDNN.htkdic' 
 else:
   lang_init = 'web.000.htkdic'   # 'trueword_syllable.htkdic' #'phonemes.htkdic' # Initial word dictionary (in ./lang_m/ folder)
-#lang_init_DNN = 'syllableDNN.htkdic' #なごり
-
-N_best_number = 10  #N of N-best (N<=10)
-#margin = 10*0.05   #margin value for place area in gird map (0.05m/grid)*margin(grid)=0.05*margin(m)
 
 """
 #################### Folder PATH ####################

@@ -74,13 +74,13 @@ def Check_VN(VN):
   return VN
 
 # ガウス-逆ウィシャート分布(NIW)の事後分布のパラメータ推定の計算
-def PosteriorParameterGIW(k,nk,step,IT,XT,icitems_k0):
+def PosteriorParameterGIW2(k,nk,step,IT,XT,icitems_k0):
   ###kについて、ITが同じものを集める
-  if nk != 0 :  #もしzaの中にkがあれば(計算短縮処理)        ##0ワリ回避
+  if nk != 0 :  #もしITの中にkがあれば(計算短縮処理)        ##0ワリ回避
     xk = []
     for s in xrange(step) : 
       if IT[s] == icitems_k0 : 
-        xk = xk + [ np.array([XT[s].x, XT[s].y]) ]
+        xk = xk + [ np.array(XT[s]) ]
     m_ML = sum(xk) / float(nk) #fsumではダメ
     print "K%d n:%d m_ML:%s" % (k,nk,str(m_ML))
     
