@@ -237,7 +237,7 @@ def Ignore_SP_Tags(itemList):
 
 #All parameters and initial values are output
 def SaveParameters_init(filename, trialname, iteration, sample, THETA_init, Ct_init, It_init, N, TN):
-  phi_init, pi_init, W_init, theta_init, Mu_init, sig_init = THETA_init  #THETA = [phi, pi, W, theta, Mu, S]
+  phi_init, pi_init, W_init, theta_init, Mu_init, S_init = THETA_init  #THETA = [phi, pi, W, theta, Mu, S]
 
   fp_init = open( filename + '/' + trialname + '_init_'+str(iteration) + "_" + str(sample) + '.csv', 'w')
   fp_init.write('init_data\n')  #num_iter = 10  #The number of iterations
@@ -270,7 +270,11 @@ def SaveParameters_init(filename, trialname, iteration, sample, THETA_init, Ct_i
   fp_init.write('\n')
   fp_init.write('Position distribution_init\n')
   for k in xrange(K):
-    fp_init.write('Mu_init'+repr(k)+','+repr(Mu_init[k][0])+','+repr(Mu_init[k][1])+'\n')
+    fp_init.write('Mu_init'+repr(k)+',')
+    for dim in xrange(dimx):
+      fp_init.write(repr(float(Mu_init[k][dim]))+',')
+    fp_init.write('\n')
+    #fp_init.write('Mu_init'+repr(k)+','+repr(Mu_init[k][0])+','+repr(Mu_init[k][1])+'\n')
   for k in xrange(K):
     fp_init.write('Sig_init'+repr(k)+'\n')
     fp_init.write(repr(S_init[k])+'\n')
@@ -322,7 +326,10 @@ def SaveParameters_all(filename, trialname, iteration, sample, THETA, Ct, It, W_
   fp.write('\n')
   fp.write('Position distribution\n')
   for k in xrange(K):
-    fp.write('Mu'+repr(k)+','+repr(Mu[k][0][0])+','+repr(Mu[k][1][0])+'\n')
+    fp.write('Mu'+repr(k)+',')
+    for dim in xrange(dimx):
+      fp.write(repr(float(Mu[k][dim]))+',')
+    fp.write('\n')
   for k in xrange(K):
     fp.write('Sig'+repr(k)+'\n')
     fp.write(repr(S[k])+'\n')
@@ -368,7 +375,7 @@ def SaveParameter_EachFile(filename, trialname, iteration, sample, THETA, Ct, It
   fp = open( filename + '/' + trialname + '_Mu_'+str(iteration) + "_" + str(sample) + '.csv', 'w')
   for k in xrange(K):
     for dim in xrange(dimx):
-      fp.write(repr(float(Mu[k][dim][0]))+',')
+      fp.write(repr(float(Mu[k][dim]))+',')
     fp.write('\n')
   fp.close()
 
@@ -516,8 +523,8 @@ def Gibbs_Sampling(iteration,filename):
       It = [ int(random.uniform(0,K)) for n in xrange(N) ] #[ int(n/15) for n in xrange(N)]    
       ##Uniform random numbers within the range
       #the position distribution (Gaussian)の平均(x,y)[K]
-      Mu = [ np.array([[ int( random.uniform(WallXmin,WallXmax) ) ],
-                        [ int( random.uniform(WallYmin,WallYmax) ) ]]) for i in xrange(K) ]      
+      Mu = [ np.array([ int( random.uniform(WallXmin,WallXmax) ) ,
+                        int( random.uniform(WallYmin,WallYmax) ) ]) for i in xrange(K) ]      
       #the position distribution (Gaussian)の共分散(2×2-dimension)[K]
       S  = [ np.eye(dimx) * sig_init for i in xrange(K) ]      # [ np.array([ [sig_init, 0.0],[0.0, sig_init] ]) for i in xrange(K) ]
       #the name of place(multinomial distribution: W_index-dimension)[L]
@@ -713,14 +720,14 @@ def Gibbs_Sampling(iteration,filename):
           #Mu[j] = np.array([[x1],[y1]])
           #S[j] = samp_sig
           
-        for j in xrange(K) : 
-          if (nk[j] != 0):  #dataなしは表示しない
-            print 'Mu'+str(j)+':'+str(Mu[j].T),
+        for k in xrange(K) : 
+          if (It.count(k) != 0):  #dataなしは表示しない
+            print 'Mu'+str(k)+':'+str(Mu[k]),
         print ''
         
-        for j in xrange(K):
-          if (nk[j] != 0):  #dataなしは表示しない
-            print 'sig'+str(j)+':'+str(S[j])
+        for k in xrange(K):
+          if (It.count(k) != 0):  #dataなしは表示しない
+            print 'sig'+str(k)+':'+str(S[k])
           
         ########## ↑ ##### μ, Σ (the position distribution (Gaussian distribution: mean and covariance matrix) is samplied ##### ↑ ##########
         
@@ -761,7 +768,7 @@ def Gibbs_Sampling(iteration,filename):
           gamma = gamma0 / float(K)
 
         for c in xrange(L):  #L個分
-          temp = np.ones(K) * gamma) #np.array([ gamma0 / float(K) for k in xrange(K) ])  
+          temp = np.ones(K) * gamma #np.array([ gamma0 / float(K) for k in xrange(K) ])  
           #Ctとcが一致するdataを集める
           if c in Ct :
             for t in xrange(N):

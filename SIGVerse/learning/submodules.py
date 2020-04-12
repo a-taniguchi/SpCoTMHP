@@ -93,7 +93,7 @@ def PosteriorParameterGIW2(k,nk,step,IT,XT,icitems_k0):
     VN = Check_VN(VN)
     
   else:  #データがないとき
-    print "nk["+str(k)+"]="+str(nk)
+    #print "nk["+str(k)+"]="+str(nk)
     kN = k0
     mN = m0
     nN = n0

@@ -8,7 +8,7 @@ nonpara = 1     #Nonparametric Bayes method (ON:1,OFF:0)
 
 
 ##### example (for SpCoNavi experiments) #####
-example = 2 #1
+example = 0 #2 #1
 example_folder = ""
 #Word data folder path
 word_folder = "/name/per_100/word"
@@ -22,7 +22,7 @@ elif (example == 2):
 
 ##### NEW #####
 inputfolder_SIG  = "/mnt/hgfs/Dropbox/SpCoNavi/CoRL/dataset/similar/3LDK/"  #"/home/akira/Dropbox/SpCoNavi/data/"
-outputfolder_SIG = "/mnt/hgfs/Dropbox/SpCoNavi/CoRL/data/" + example_folder  #"/home/akira/Dropbox/SpCoNavi/data/"
+outputfolder_SIG = "/mnt/hgfs/Dropbox/SpCoSLAM/SpCoTMHP/SIGVerse/data/" + example_folder  #"/home/akira/Dropbox/SpCoNavi/data/"
 
 #Navigation folder (Other output files are also in same folder.)
 navigation_folder = "/navi/"  #outputfolder + trialname + / + navigation_folder + contmap.csv
@@ -73,15 +73,15 @@ sig_init =  1.0
 ##Initial (hyper)-parameters
 ##Posterior (∝likelihood×prior): https://en.wikipedia.org/wiki/Conjugate_prior
 if (nonpara == 1):
-  L = 50               #The number of spatial concepts #50 #100
-  K = 50               #The number of position distributions #50 #100
-  alpha0 = 20.0        #Hyperparameter of multinomial distribution for index of spatial concept
-  gamma0 = 0.1         #Hyperparameter of multinomial distribution for index of position 
+  L = 50             #The number of spatial concepts #50 #100
+  K = 50             #The number of position distributions #50 #100
+  alpha0 = 20.0      #Hyperparameter of multinomial distribution for index of spatial concept
+  gamma0 = 10.0      #Hyperparameter of multinomial distribution for index of position 
 else:
-  L = 10               #The number of spatial concepts #50 #100
-  K = 10               #The number of position distributions #50 #100
-  alpha0 = 20.0        #Hyperparameter of multinomial distribution for index of spatial concept
-  gamma0 = 0.1         #Hyperparameter of multinomial distribution for index of position distribution
+  L = 10             #The number of spatial concepts #50 #100
+  K = 10             #The number of position distributions #50 #100
+  alpha0 = 1.00      #Hyperparameter of multinomial distribution for index of spatial concept
+  gamma0 = 0.10      #Hyperparameter of multinomial distribution for index of position distribution
 beta0 = 0.1          #Hyperparameter in multinomial distribution P(W) for place names 
 chi0  = 0.1          #Hyperparameter in multinomial distribution P(φ) for image feature
 k0 = 1e-3            #Hyperparameter in Gaussina distribution P(μ) (Influence degree of prior distribution of μ)
@@ -123,9 +123,9 @@ lattice_weight = "AMavg"  #"exp" #acoustic likelihood (log likelihood: "AMavg", 
 wight_scale    = -1.0
 
 if (JuliusVer ==  "v4.4"):
-  Juliusfolder = "/home/akira/Dropbox/Julius/dictation-kit-v4.4/"
+  Juliusfolder = "/mnt/hgfs/Dropbox/Julius/dictation-kit-v4.4/"
 else:
-  Juliusfolder = "/home/akira/Dropbox/Julius/dictation-kit-v4.3.1-linux/"
+  Juliusfolder = "/mnt/hgfs/Dropbox/Julius/dictation-kit-v4.3.1-linux/"
 
 if (HMMtype == "DNN"):
   lang_init = 'syllableDNN.htkdic' 
