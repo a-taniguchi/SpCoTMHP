@@ -4,8 +4,14 @@
 import numpy as np
 
 ##### Add SpCoTMHP #####
-nonpara = 1     #Nonparametric Bayes method (ON:1,OFF:0)
-
+nonpara    = 1     #Nonparametric Bayes method (ON:1,OFF:0)
+Robust_W   = 1000
+Robust_Sig = 100
+Robust_Mu  = 1
+Robust_pi  = 1000
+Robust_phi = 1000
+Robust_psi = 1000  #予約(未使用)
+Robust_theta = 1000  #予約(未使用)
 
 ##### example (for SpCoNavi experiments) #####
 example = 0 #2 #1
@@ -89,16 +95,6 @@ m0 = np.zeros(dimx)  #Hyperparameter in Gaussina distribution P(μ) (prior mean 
 V0 = np.eye(dimx)*2  #Hyperparameter in Inverse Wishart distribution P(Σ) (prior covariance matrix) 
 n0 = 3.0             #Hyperparameter in Inverse Wishart distribution P(Σ) {>the number of dimenssions] (Influence degree of prior distribution of Σ)
 k0m0m0 = k0*np.dot(np.array([m0]).T,np.array([m0]))
-
-"""
-alpha = 1.0                  #Hyperparameter of multinomial distributions for index of position distirubitons phi #1.5 #0.1
-gamma = 1.0                  #Hyperparameter of multinomial distributions for index of spatial concepts pi #8.0 #20.0
-beta0 = 0.1                  #Hyperparameter of multinomial distributions for words (place names) W #0.5 #0.2
-kappa0 = 1e-3                #For μ, Hyperparameters of Gaussian–inverse–Wishart prior distribution (scale: kappa0>0)
-m0 = np.array([[0.0],[0.0]]) #For μ, Hyperparameters of Gaussian–inverse–Wishart prior distribution (mean prior)
-V0 = np.eye(2)*2             #For Σ, Hyperparameters of Gaussian–inverse–Wishart prior distribution (covariance matrix prior)
-nu0 = 3.0 #3.0               #For Σ, Hyperparameters of Gaussian–inverse–Wishart prior distribution (degree of freedom: dimension+1)
-"""
 
 ##latticelm parameters
 #knownn       = [2,3,4] #[3] #The n-gram length of the language model (3)
