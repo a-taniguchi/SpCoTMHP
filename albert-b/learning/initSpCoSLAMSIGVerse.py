@@ -3,8 +3,30 @@
 #Akira Taniguchi 2020/04/11-
 import numpy as np
 
+##### Add SpCoTMHP #####
+nonpara    = 1     #Nonparametric Bayes method (ON:1,OFF:0)
+Robust_W   = 1000
+Robust_Sig = 100
+Robust_Mu  = 1
+Robust_pi  = 1000
+Robust_phi = 1000
+Robust_psi = 1000  #予約(未使用)
+Robust_theta = 1000  #予約(未使用)
+
+#Navigation folder (Other output files are also in same folder.)
+navigation_folder = "/navi/"  #outputfolder + trialname + / + navigation_folder + contmap.csv
+
+#Word data folder path
+#word_folder = "/name/" + example_folder + "word" # "/name/per_100/word"
+
+#Same value to map yaml file
+resolution = 0.1   #0.050000
+origin     = np.array([-10.000000, -10.000000]) #np.array([x,y]) #np.array([-30.000000, -20.000000])
+
+word_increment = 1.0     #Increment number of word observation data (BoWs)
+
 ####################Parameters####################
-kyouji_count = 60 #100  # The number of training data
+DATA_NUM = 60 #100      # The number of training data
 M = 2000                # The number of particles (Same value as the condition in learning: 300)
 #LAG = 100 + 1          # The number of elements of array (lag value for smoothing + 1)
 
@@ -19,6 +41,11 @@ WallXmax = 10
 WallYmin = 10
 WallYmax = -10
 
+# initial scale of Gaussian distribution 
+sig_init =  1.0 
+
+margin = 10*0.05    # margin value for place area in gird map (0.05m/grid)*margin(grid)=0.05*margin(m)
+
 #Motion model parameters (TABLE 5.6 in Probabilistic Robotics)
 #para1 = 0.01  #0.50
 #para2 = 0.01  #0.05
@@ -31,10 +58,17 @@ WallYmax = -10
 
 ##Initial (hyper)-parameters
 ##Posterior (∝likelihood×prior): https://en.wikipedia.org/wiki/Conjugate_prior
-L = 20               #The number of spatial concepts #50 #100
-K = 20               #The number of position distributions #50 #100
-alpha0 = 20.0        #Hyperparameter of multinomial distribution for index of spatial concept
-gamma0 = 0.1         #Hyperparameter of multinomial distribution for index of position distribution
+if (nonpara == 1):
+  L = 20             #The number of spatial concepts #50 #100
+  K = 20             #The number of position distributions #50 #100
+  alpha0 = 20.0      #Hyperparameter of multinomial distribution for index of spatial concept
+  gamma0 = 0.10      #Hyperparameter of multinomial distribution for index of position 
+else:
+  L = 10             #The number of spatial concepts #50 #100
+  K = 10             #The number of position distributions #50 #100
+  alpha0 = 1.00      #Hyperparameter of multinomial distribution for index of spatial concept
+  gamma0 = 0.10      #Hyperparameter of multinomial distribution for index of position distribution
+
 beta0 = 0.1          #Hyperparameter in multinomial distribution P(W) for place names 
 chi0  = 0.1          #Hyperparameter in multinomial distribution P(φ) for image feature
 k0 = 1e-3            #Hyperparameter in Gaussina distribution P(μ) (Influence degree of prior distribution of μ)
@@ -43,17 +77,6 @@ V0 = np.eye(dimx)*2  #Hyperparameter in Inverse Wishart distribution P(Σ) (prio
 n0 = 3.0             #Hyperparameter in Inverse Wishart distribution P(Σ) {>the number of dimenssions] (Influence degree of prior distribution of Σ)
 k0m0m0 = k0*np.dot(np.array([m0]).T,np.array([m0]))
 
-"""
-alpha = 10.0 #0.1 #10.0 #5.0#1.5#10.0               #位置分布のindexの多項分布のハイパーパラメータ1.5#
-gamma = 1.0 #20.0 #15.0#8.0#20.0               #場所概念のindexの多項分布のハイパーパラメータ8.0#
-beta0 = 0.1 #0.4#0.2               #場所の名前Wのハイパーパラメータ0.5#
-kappa0 = 1e-3                #μのパラメータ、旧モデルのbeta0であることに注意
-m0 = np.array([[0.0],[0.0]])   #μのパラメータ
-V0 = np.eye(2)*2 #*1000              #Σのパラメータ
-nu0 = 3.0 #3.0                    #Σのパラメータ、旧モデルでは1としていた(自由度の問題で2の方が良い?)、事後分布の計算のときに1加算していた
-"""
-
-sig_init =  10.0 
 
 ##latticelm parameters
 knownn       = [2,3,4] #[3] #The n-gram length of the language model (3)
@@ -69,8 +92,8 @@ ITERATION = 10                      #The number of iterations for mutual estimat
 ##単語の選択の閾値
 threshold = 0.01
 
-#Plot = 2000#1000  #位置分布ごとの描画の点プロット数
-#N_best_number = 10 #n-bestのnをどこまでとるか（n<=10）
+# The number of N of N-best for PRR evaluation (PRR評価用のN-bestのN) (N<=10)
+N_best_number = 10  
 
 #Julius parameters
 #Juliusフォルダのsyllable.jconf参照
@@ -88,25 +111,24 @@ if (HMMtype == "DNN"):
   lang_init = 'syllableDNN.htkdic' 
 else:
   lang_init = 'web.000.htkdic' # 'trueword_syllable.htkdic' #'phonemes.htkdic' # 初期の単語辞書（./lang_mフォルダ内）
-#lang_init_DNN = 'syllableDNN.htkdic' #なごり
+
 
 #################### Folder PATH ####################
 
 ##### NEW #####
-inputfolder_SIG  = "/mnt/hgfs/D/Dropbox/SpCoNavi/CoRL/dataset/similar/3LDK_small/"  #"/home/akira/Dropbox/SpCoNavi/data/"
-outputfolder_SIG = "/mnt/hgfs/D/Dropbox/SpCoSLAM/SIGVerse/data/"  #"/home/akira/Dropbox/SpCoNavi/data/"
+inputfolder  = "/mnt/hgfs/Dropbox/SpCoSLAM/SpCoTMHP/SIGVerse/dataset/similar/3LDK_small/"  #"/home/akira/Dropbox/SpCoNavi/data/"
+outputfolder = "/mnt/hgfs/Dropbox/SpCoSLAM/SpCoTMHP/SIGVerse/data/"  #"/home/akira/Dropbox/SpCoNavi/data/"
 # akira/Dropbox/SpCoNavi/CoRL/dataset/similar/3LDK_small/3LDK_01/
 
-speech_folder = inputfolder_SIG + "speech/*.wav" #"/home/akira/Dropbox/Julius/directory/SpCoSLAM/*.wav" #*.wav" #音声の教示データフォルダ(Ubuntu full path)
+speech_folder = inputfolder + "speech/*.wav" #"/home/akira/Dropbox/Julius/directory/SpCoSLAM/*.wav" #*.wav" #音声の教示データフォルダ(Ubuntu full path)
 #speech_folder = "/home/*/Dropbox/Julius/directory/SpCoSLAM/*.wav" #*.wav" #音声の教示データフォルダ(Ubuntuフルパス)
 #speech_folder_go = "/home/akira/Dropbox/Julius/directory/SpCoSLAMgo/*.wav" #*.wav" #音声の教示データフォルダ(Ubuntuフルパス)
-data_name = '/position/position_AURO.csv' #'SpCoSLAM.csv'      # 'test000' #位置推定の教示データ(./../sampleフォルダ内)
+PositionDataFile = '/position/position_AURO.csv' #'SpCoSLAM.csv'      # 'test000' #位置推定の教示データ(./../sampleフォルダ内)
 lmfolder = "/home/akira/Dropbox/SpCoSLAM/learning/lang_m/"
-#lang_init = 'web.000.htkdic' #'phonemes.htkdic' #  初期の単語辞書（./lang_mフォルダ内）
 
 #Folder of training data set
-datasetfolder = inputfolder_SIG #"/home/akira/Dropbox/SpCoSLAM/rosbag/"   #training data set folder
-datasets      = ["00","01","04","05","06","09","02","03","07","08","10"] #[dataset1,dataset2]
+datasetfolder = inputfolder #"/home/akira/Dropbox/SpCoSLAM/rosbag/"   #training data set folder
+datasets      = ["00","01","02","03","04","05","06","07","08","09","10"] #["00","01","04","05","06","09","02","03","07","08","10"] #[dataset1,dataset2]
 data_step_num = 60
 
 #True data files for evaluation (評価用正解データファイル)
@@ -114,6 +136,3 @@ correct_Ct = 'Ct_correct.csv'        #データごとの正解のCt番号
 correct_It = 'It_correct.csv'        #データごとの正解のIt番号
 correct_data = 'SpCoSLAM_human.csv'  #データごとの正解の文章（単語列、区切り文字つき）(./data/)
 correct_name = 'name_correct.csv'    #データごとの正解の場所の名前（音素列）
-
-N_best_number = 10  # The number of N of N-best for PRR evaluation (PRR評価用のN-bestのN) (N<=10)
-margin = 10*0.05    # margin value for place area in gird map (0.05m/grid)*margin(grid)=0.05*margin(m)

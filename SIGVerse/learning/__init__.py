@@ -27,8 +27,8 @@ elif (example == 2):
 ##############################################
 
 ##### NEW #####
-inputfolder_SIG  = "/mnt/hgfs/Dropbox/SpCoNavi/CoRL/dataset/similar/3LDK/"  #"/home/akira/Dropbox/SpCoNavi/data/"
-outputfolder_SIG = "/mnt/hgfs/Dropbox/SpCoSLAM/SpCoTMHP/SIGVerse/data/" + example_folder  #"/home/akira/Dropbox/SpCoNavi/data/"
+inputfolder  = "/mnt/hgfs/Dropbox/SpCoSLAM/SpCoTMHP/SIGVerse/dataset/similar/3LDK/"  #"/home/akira/Dropbox/SpCoNavi/data/"
+outputfolder = "/mnt/hgfs/Dropbox/SpCoSLAM/SpCoTMHP/SIGVerse/data/" + example_folder  #"/home/akira/Dropbox/SpCoNavi/data/"
 
 #Navigation folder (Other output files are also in same folder.)
 navigation_folder = "/navi/"  #outputfolder + trialname + / + navigation_folder + contmap.csv
@@ -59,8 +59,6 @@ WallYmin = 10
 WallYmax = -10
 
 # initial scale of Gaussian distribution 
-#mu_X_init  =  [WallXmin, WallXmax]
-#mu_Y_init  =  [WallYmin, WallYmax]
 sig_init =  1.0 
 
 #margin = 10*0.05   # margin value for place area in gird map (0.05m/grid)*margin(grid)=0.05*margin(m)
@@ -88,6 +86,7 @@ else:
   K = 10             #The number of position distributions #50 #100
   alpha0 = 1.00      #Hyperparameter of multinomial distribution for index of spatial concept
   gamma0 = 0.10      #Hyperparameter of multinomial distribution for index of position distribution
+
 beta0 = 0.1          #Hyperparameter in multinomial distribution P(W) for place names 
 chi0  = 0.1          #Hyperparameter in multinomial distribution P(φ) for image feature
 k0 = 1e-3            #Hyperparameter in Gaussina distribution P(μ) (Influence degree of prior distribution of μ)

@@ -15,7 +15,6 @@ import os.path
 import sys
 import random
 import string
-#import collections
 import numpy as np
 import scipy as sp
 from numpy.random import uniform,dirichlet #multinomial
@@ -129,42 +128,6 @@ def Name_data_read(directory,word_increment,DATA_NUM):
             #print i,"is test data."
     return np.array(name_data_set)
 """
-
-#remove <s>,<sp>,</s> and "\r", "": if its were segmented to words.
-def Ignore_SP_Tags(itemList):
-  for b in xrange(5):
-    if ("<s><s>" in itemList):
-      itemList.pop(itemList.index("<s><s>"))
-    if ("<s><sp>" in itemList):
-      itemList.pop(itemList.index("<s><sp>"))
-    if ("<s>" in itemList):
-      itemList.pop(itemList.index("<s>"))
-    if ("<sp>" in itemList):
-      itemList.pop(itemList.index("<sp>"))
-    if ("<sp><sp>" in itemList):
-      itemList.pop(itemList.index("<sp><sp>"))
-    if ("</s>" in itemList):
-      itemList.pop(itemList.index("</s>"))
-    if ("<sp></s>" in itemList):
-      itemList.pop(itemList.index("<sp></s>"))
-    if ("" in itemList):
-      itemList.pop(itemList.index(""))
-
-  #remove <s>,<sp>,</s>: if its exist in words.
-  for j in xrange(len(itemList)):
-    itemList[j] = itemList[j].replace("<s><s>", "")
-    itemList[j] = itemList[j].replace("<s>", "")
-    itemList[j] = itemList[j].replace("<sp>", "")
-    itemList[j] = itemList[j].replace("</s>", "")
-
-  for j in xrange(len(itemList)):
-    itemList[j] = itemList[j].replace("\r", "")  
-
-  for b in xrange(5):
-    if ("" in itemList):
-      itemList.pop(itemList.index(""))
-
-  return itemList
 
 #All parameters and initial values are output
 def SaveParameters_init(filename, trialname, iteration, sample, THETA_init, Ct_init, It_init, N, TN):
@@ -289,13 +252,13 @@ def SaveParameters_all(filename, trialname, iteration, sample, THETA, Ct, It, W_
   fp.close()
 
   #fp_x = open( filename + '/' + filename +'_xt'+ repr(iter)+'.csv', 'w')
-  #for t in xrange(EndStep) : 
+  #for t in xrange(len(Xt[t])) : 
   #  fp_x.write(repr(Xt[t][0]) + ', ' + repr(Xt[t][1]) + '\n')
   #fp_x.close()
         
 
 # Saving data for parameters Θ of spatial concepts
-def SaveParameter_EachFile(filename, trialname, iteration, sample, THETA, Ct, It):
+def SaveParameter_EachFile(filename, trialname, iteration, sample, THETA, Ct, It, W_index, Otb):
   phi, pi, W, theta, Mu, S = THETA  #THETA = [phi, pi, W, theta, Mu, S]
   file_trialname   = filename + '/' + trialname
   iteration_sample = str(iteration) + "_" + str(sample) 
@@ -353,22 +316,40 @@ def SaveParameter_EachFile(filename, trialname, iteration, sample, THETA, Ct, It
   #  fp.write(W_index[w]+",")
   #fp.close()
 
+  ##Output to file: the set of word recognition results
+  #filename_ot = raw_input("Otb:filename?(.csv) >")  #ファイル名を個別に指定する場合
+  #filename_ot = trialname
+  fp = open(filename + '/' + trialname + '_ot_'+ str(iteration) + "_" + str(sample) + '.csv', 'w')
+  fp2 = open(filename + '/' + trialname + '_w_index_'+ str(iteration) + "_" + str(sample) + '.csv', 'w')
+  for n in xrange(N) : 
+      for j in xrange(len(Otb[n])):
+          fp.write(Otb[n][j] + ',')
+      fp.write('\n')
+  for i in xrange(len(W_index)):
+      fp2.write(repr(i) + ',')
+  fp2.write('\n')
+  for i in xrange(len(W_index)):
+      fp2.write(W_index[i] + ',')
+  fp.close()
+  fp2.close()
 
+######################################################
 # Gibbs sampling
-def Gibbs_Sampling(iteration,filename):
-    inputfile = inputfolder_SIG  + trialname
-    filename  = outputfolder_SIG + trialname
+######################################################
+def Gibbs_Sampling(iteration):
+    DataSetFolder = inputfolder  + trialname
+    filename  = outputfolder + trialname
     
     ##S## ##### Ishibushi's code #####
-    env_para = np.genfromtxt(inputfile+"/Environment_parameter.txt",dtype= None,delimiter =" ")
+    env_para = np.genfromtxt(DataSetFolder+"/Environment_parameter.txt",dtype= None,delimiter =" ")
 
-    MAP_X = float(env_para[0][1])  #Max x value of the map
-    MAP_Y = float(env_para[1][1])  #Max y value of the map
-    map_x = float(env_para[2][1])  #Min x value of the map
-    map_y = float(env_para[3][1])  #Min y value of the map
+    #MAP_X = float(env_para[0][1])  #Max x value of the map
+    #MAP_Y = float(env_para[1][1])  #Max y value of the map
+    #map_x = float(env_para[2][1])  #Min x value of the map
+    #map_y = float(env_para[3][1])  #Min y value of the map
 
-    map_center_x = ((MAP_X - map_x)/2)+map_x
-    map_center_y = ((MAP_Y - map_x)/2)+map_y
+    #map_center_x = ((MAP_X - map_x)/2)+map_x
+    #map_center_y = ((MAP_Y - map_x)/2)+map_y
     #mu_0 = np.array([map_center_x,map_center_y,0,0])
     DATA_initial_index = int(env_para[5][1]) #Initial data num
     DATA_last_index    = int(env_para[6][1]) #Last data num
@@ -376,15 +357,15 @@ def Gibbs_Sampling(iteration,filename):
     ##E## ##### Ishibushi's code ######
     
     # DATA read
-    Xt = position_data_read_pass(inputfile,DATA_NUM)
-    #name = Name_data_read(inputfile,word_increment,DATA_NUM)
+    Xt = position_data_read_pass(DataSetFolder,DATA_NUM)
+    #name = Name_data_read(DataSetFolder,word_increment,DATA_NUM)
     
     for sample in xrange(sample_num):
       N = 0
       Otb = []
       #Read text file
       for word_data_num in range(DATA_NUM):
-        f = open(inputfile + word_folder + str(word_data_num) + ".txt", "r")
+        f = open(DataSetFolder + word_folder + str(word_data_num) + ".txt", "r")
         line = f.read()
         itemList = line[:].split(' ')
         
@@ -422,13 +403,11 @@ def Gibbs_Sampling(iteration,filename):
               Otb_B[n][i] += word_increment
       #print Otb_B
       
-      #N = DATA_NUM
-      if N != DATA_NUM:
-         print "DATA_NUM" + str(DATA_NUM) + ":KYOUJI error!! N:" + str(N)  ##教示フェーズの教示数と読み込んだ発話文data数が違う場合
+      if (DATA_NUM != N):
+         print "DATA_NUM" + str(DATA_NUM) + ":KYOUJI error!! N:" + str(N)   ##教示フェーズの教示数と読み込んだ発話文データ数が違う場合
          #exit()
       
-      #Xt = pose
-      TN = [i for i in range(DATA_NUM)] #TN[N]: teaching time-step
+      TN = [i for i in xrange(N)]   #TN[N]: teaching time-step
       
       
       #############################################################################
@@ -632,24 +611,8 @@ def Gibbs_Sampling(iteration,filename):
       SaveParameters_all(filename, trialname, iteration, sample, THETA, Ct, It, W_index)
 
       ##paramtersそれぞれをそれぞれのファイルとしてはく
-      SaveParameter_EachFile(filename, trialname, iteration, sample, THETA, Ct, It)
-
       ##Output to file: the set of word recognition results
-      #filename_ot = raw_input("Otb:filename?(.csv) >")  #ファイル名を個別に指定する場合
-      #filename_ot = trialname
-      fp = open(filename + '/' + trialname + '_ot_'+ str(iteration) + "_" + str(sample) + '.csv', 'w')
-      fp2 = open(filename + '/' + trialname + '_w_index_'+ str(iteration) + "_" + str(sample) + '.csv', 'w')
-      for n in xrange(N) : 
-          for j in xrange(len(Otb[n])):
-              fp.write(Otb[n][j] + ',')
-          fp.write('\n')
-      for i in xrange(len(W_index)):
-          fp2.write(repr(i) + ',')
-      fp2.write('\n')
-      for i in xrange(len(W_index)):
-          fp2.write(W_index[i] + ',')
-      fp.close()
-      fp2.close()
+      SaveParameter_EachFile(filename, trialname, iteration, sample, THETA, Ct, It, W_index, Otb)
       
       print 'File Output Successful!(filename:'+filename+ "_" +str(iteration) + "_" + str(sample) + ')\n'
       ########  ↑File output↑  ########
@@ -663,12 +626,12 @@ if __name__ == '__main__':
 
     #start_time = time.time()
     #iteration_time = [0.0 for i in range(ITERATION)]
-    filename = outputfolder_SIG + trialname
+    filename = outputfolder + trialname
     Makedir( filename )
 
     print "--------------------------------------------------"
     print "ITERATION:",1
-    Gibbs_Sampling(1,trialname)          ##Learning of spatial concepts
+    Gibbs_Sampling(1)          ##Learning of spatial concepts
     print "ITERATION:",1," Learning complete!"
     
 
