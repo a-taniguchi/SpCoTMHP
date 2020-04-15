@@ -103,9 +103,9 @@ lattice_weight = "AMavg"  #"exp" #acoustic likelihood (log likelihood: "AMavg", 
 wight_scale    = -1.0
 
 if (JuliusVer ==  "v4.4"):
-  Juliusfolder = "/home/akira/Dropbox/Julius/dictation-kit-v4.4/"
+  Juliusfolder = "/mnt/hgfs/Dropbox/Julius/dictation-kit-v4.4/"
 else:
-  Juliusfolder = "/home/akira/Dropbox/Julius/dictation-kit-v4.3.1-linux/"
+  Juliusfolder = "/mnt/hgfs/Dropbox/Julius/dictation-kit-v4.3.1-linux/"
 
 if (HMMtype == "DNN"):
   lang_init = 'syllableDNN.htkdic' 
@@ -117,7 +117,7 @@ else:
 
 ##### NEW #####
 inputfolder  = "/mnt/hgfs/Dropbox/SpCoSLAM/SpCoTMHP/SIGVerse/dataset/similar/3LDK_small/"  #"/home/akira/Dropbox/SpCoNavi/data/"
-outputfolder = "/mnt/hgfs/Dropbox/SpCoSLAM/SpCoTMHP/SIGVerse/data/"  #"/home/akira/Dropbox/SpCoNavi/data/"
+outputfolder = "/mnt/hgfs/Dropbox/SpCoSLAM/SpCoTMHP/albert-b/data/"  #"/home/akira/Dropbox/SpCoNavi/data/"
 # akira/Dropbox/SpCoNavi/CoRL/dataset/similar/3LDK_small/3LDK_01/
 
 speech_folder = inputfolder + "speech/*.wav" #"/home/akira/Dropbox/Julius/directory/SpCoSLAM/*.wav" #*.wav" #音声の教示データフォルダ(Ubuntu full path)

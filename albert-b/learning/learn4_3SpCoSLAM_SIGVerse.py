@@ -6,7 +6,7 @@
 ## Learning algorithm is Gibbs sampling.
 ## Akira Taniguchi 2020/04/14-
 ##############################################
-# python ./learnSpCoTMHP.py 3LDK_00 (要変更)
+# python ./learn4_3SpCoSLAM_SIGVerse.py trialname ** (3LDK_**)
 
 import glob
 import codecs
@@ -279,7 +279,7 @@ def ReadPositionData():
     itemList3 = line3[:-1].split(',')
     Xt = Xt + [(float(itemList3[0]), float(itemList3[1]))]
     TN = TN + [i]
-    print TN
+    #print TN
     i = i + 1
 
   return Xt,TN

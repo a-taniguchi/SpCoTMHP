@@ -17,16 +17,17 @@ def Makedir(dir):
 
 
 # julisuに入力するためのwavファイルのリストファイルを作成
-def MakeTmpWavListFile( wavfile , filename):
+def MakeTmpWavListFile( wavfile , trialname):
     Makedir( outputfolder + "tmp" )
-    Makedir( outputfolder + "tmp/" + filename )
-    fList = codecs.open( outputfolder + "tmp/" + filename + "/list.txt" , "w" , "sjis" )
+    Makedir( outputfolder + "tmp/" + trialname )
+    fList = codecs.open( outputfolder + "tmp/" + trialname + "/list.txt" , "w" , "sjis" )
     fList.write( wavfile )
     fList.close()
 
 # Lattice認識
-def RecogLattice( wavfile , iteration , filename ):
-    MakeTmpWavListFile( wavfile , filename )
+def RecogLattice( wavfile , iteration , trialname ):
+    filename = outputfolder + trialname
+    MakeTmpWavListFile( wavfile , trialname )
     if (JuliusVer == "v4.4"):
       binfolder = "bin/linux/julius"
     else:
@@ -34,18 +35,18 @@ def RecogLattice( wavfile , iteration , filename ):
     
     if (JuliusVer == "v4.4" and HMMtype == "DNN"):
       if (iteration == 0):  #最初は日本語音節のみの単語辞書を使用
-        p = os.popen( Juliusfolder + binfolder + " -C " + Juliusfolder + "syllable.jconf -C " + Juliusfolder + "am-dnn.jconf -v " + lmfolder + lang_init + " -demo -filelist tmp/"+ filename + "/list.txt -lattice -dnnconf " + Juliusfolder + "julius.dnnconf $*"  ) #元設定-n 5 # -gram type -n 5-charconv UTF-8 SJIS -confnet 
+        p = os.popen( Juliusfolder + binfolder + " -C " + Juliusfolder + "syllable.jconf -C " + Juliusfolder + "am-dnn.jconf -v " + lmfolder + lang_init + " -demo -filelist " + outputfolder + "tmp/" + trialname+ "/list.txt -lattice -dnnconf " + Juliusfolder + "julius.dnnconf $*"  ) #元設定-n 5 # -gram type -n 5-charconv UTF-8 SJIS -confnet 
         print "Julius",JuliusVer,HMMtype,"Read dic:" ,lang_init , iteration
       else:  #更新した単語辞書を使用
-        p = os.popen( Juliusfolder + binfolder + " -C " + Juliusfolder + "syllable.jconf -C " + Juliusfolder + "am-dnn.jconf -v ./data/" + filename + "/web.000s_" + str(iteration) + ".htkdic -demo -filelist tmp/" + filename + "/list.txt -lattice -dnnconf " + Juliusfolder + "julius.dnnconf $*" ) #元設定-n 5 # -gram type -n 5-charconv UTF-8 SJIS  -confnet
-        print "Julius",JuliusVer,HMMtype,"Read dic:web.000s_" + str(iteration) + ".htkdic" , iteration
+        p = os.popen( Juliusfolder + binfolder + " -C " + Juliusfolder + "syllable.jconf -C " + Juliusfolder + "am-dnn.jconf -v " + filename + "/WD_" + str(iteration) + ".htkdic -demo -filelist " + outputfolder + "tmp/" + trialname + "/list.txt -lattice -dnnconf " + Juliusfolder + "julius.dnnconf $*" ) #元設定-n 5 # -gram type -n 5-charconv UTF-8 SJIS  -confnet
+        print "Julius",JuliusVer,HMMtype,"Read dic:WD_" + str(iteration) + ".htkdic" , iteration
     else:
       if (iteration == 0):  #最初は日本語音節のみの単語辞書を使用
-        p = os.popen( Juliusfolder + binfolder + " -C " + Juliusfolder + "syllable.jconf -C " + Juliusfolder + "am-gmm.jconf -v " + lmfolder + lang_init + " -demo -filelist tmp/"+ filename + "/list.txt -lattice" ) #元設定-n 5 # -gram type -n 5-charconv UTF-8 SJIS -confnet 
+        p = os.popen( Juliusfolder + binfolder + " -C " + Juliusfolder + "syllable.jconf -C " + Juliusfolder + "am-gmm.jconf -v " + lmfolder + lang_init + " -demo -filelist " + outputfolder + "tmp/" + trialname+ "/list.txt -lattice" ) #元設定-n 5 # -gram type -n 5-charconv UTF-8 SJIS -confnet 
         print "Julius",JuliusVer,HMMtype,"Read dic:" ,lang_init , iteration
       else:  #更新した単語辞書を使用
-        p = os.popen( Juliusfolder + binfolder + " -C " + Juliusfolder + "syllable.jconf -C " + Juliusfolder + "am-gmm.jconf -v ./data/" + filename + "/web.000s_" + str(iteration) + ".htkdic -demo -filelist tmp/" + filename + "/list.txt -lattice" ) #元設定-n 5 # -gram type -n 5-charconv UTF-8 SJIS  -confnet
-        print "Julius",JuliusVer,HMMtype,"Read dic:web.000s_" + str(iteration) + ".htkdic" , iteration
+        p = os.popen( Juliusfolder + binfolder + " -C " + Juliusfolder + "syllable.jconf -C " + Juliusfolder + "am-gmm.jconf -v " + filename + "/WD_" + str(iteration) + ".htkdic -demo -filelist " + outputfolder + "tmp/" + trialname + "/list.txt -lattice" ) #元設定-n 5 # -gram type -n 5-charconv UTF-8 SJIS  -confnet
+        print "Julius",JuliusVer,HMMtype,"Read dic:WD_" + str(iteration) + ".htkdic" , iteration
 
     startWordGraphData = False
     wordGraphData = []
@@ -117,7 +118,7 @@ def FSTCompile( txtfst , syms , outBaseName , filename ):
     #Makedir( "tmp" )
     #Makedir( "tmp/" + filename )
     os.system( "fstcompile --isymbols=%s --osymbols=%s %s %s.fst" % ( syms , syms , txtfst , outBaseName ) )
-    os.system( "fstdraw  --isymbols=%s --osymbols=%s %s.fst > tmp/%s/fst.dot" % ( syms , syms , outBaseName , filename ) )
+    os.system( "fstdraw  --isymbols=%s --osymbols=%s %s.fst > %s/fst.dot" % ( syms , syms , outBaseName , filename ) )
 
     # sjisをutf8に変換して，日本語フォントを指定
     #codecs.open( "tmp/" + filename + "/fst_utf.dot" , "w" , "utf-8" ).write( codecs.open( "tmp/" + filename + "/fst.dot" , "r" , "sjis" ).read().replace( 'label' , u'fontname="MS UI Gothic" label' ) )
@@ -128,7 +129,8 @@ def FSTCompile( txtfst , syms , outBaseName , filename ):
     #os.system( "ps2pdf %s.ps %s.pdf" % (outBaseName, outBaseName) )
 
 
-def Julius_lattice(iteration , filename):
+def Julius_lattice(iteration , trialname):
+    filename = outputfolder + trialname
     iteration = int(iteration)
     Makedir( filename + "/fst_gmm_" + str(iteration+1) )
     Makedir( filename + "/out_gmm_" + str(iteration+1) )
@@ -148,7 +150,7 @@ def Julius_lattice(iteration , filename):
         print "count...", f , num
 
         # Lattice認識&保存
-        graph = RecogLattice( f , iteration ,filename )
+        graph = RecogLattice( f, iteration, trialname )
         SaveLattice( graph , txtfstfile )
 
         # 単語辞書に追加
