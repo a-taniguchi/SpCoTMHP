@@ -30,7 +30,7 @@ DATA_NUM = 60 #100      # The number of training data
 M = 2000                # The number of particles (Same value as the condition in learning: 300)
 #LAG = 100 + 1          # The number of elements of array (lag value for smoothing + 1)
 
-num_iter = 100          # The number of iterations of Gibbs sampling for spatial concept learning
+num_iter = 10 #0          # The number of iterations of Gibbs sampling for spatial concept learning
 dimx = 2                # The number of dimensions of xt (x,y)
 
 #limit of map size
@@ -61,8 +61,8 @@ margin = 10*0.05    # margin value for place area in gird map (0.05m/grid)*margi
 if (nonpara == 1):
   L = 20             #The number of spatial concepts #50 #100
   K = 20             #The number of position distributions #50 #100
-  alpha0 = 20.0      #Hyperparameter of multinomial distribution for index of spatial concept
-  gamma0 = 0.10      #Hyperparameter of multinomial distribution for index of position 
+  alpha0 = 20.0 / float(L)      #Hyperparameter of multinomial distribution for index of spatial concept
+  gamma0 = 0.10 / float(K)      #Hyperparameter of multinomial distribution for index of position 
 else:
   L = 10             #The number of spatial concepts #50 #100
   K = 10             #The number of position distributions #50 #100
@@ -79,7 +79,7 @@ k0m0m0 = k0*np.dot(np.array([m0]).T,np.array([m0]))
 
 
 ##latticelm parameters
-knownn       = [2,3,4] #[3] #The n-gram length of the language model (3)
+knownn       = [3] #[2,3,4] #The n-gram length of the language model (3)
 unkn         = [3,4] #[3]   #The n-gram length of the spelling model (3)
 annealsteps  = [3,5,10]     #The number of annealing steps to perform (3)
 anneallength = [5,10,15]    #The length of each annealing step in iterations (5)
@@ -103,9 +103,9 @@ lattice_weight = "AMavg"  #"exp" #acoustic likelihood (log likelihood: "AMavg", 
 wight_scale    = -1.0
 
 if (JuliusVer ==  "v4.4"):
-  Juliusfolder = "/mnt/hgfs/Dropbox/Julius/dictation-kit-v4.4/"
+  Juliusfolder = "/home/akira/Dropbox/Julius/dictation-kit-v4.4/"
 else:
-  Juliusfolder = "/mnt/hgfs/Dropbox/Julius/dictation-kit-v4.3.1-linux/"
+  Juliusfolder = "/home/akira/Dropbox/Julius/dictation-kit-v4.3.1-linux/"
 
 if (HMMtype == "DNN"):
   lang_init = 'syllableDNN.htkdic' 
@@ -116,8 +116,8 @@ else:
 #################### Folder PATH ####################
 
 ##### NEW #####
-inputfolder  = "/mnt/hgfs/Dropbox/SpCoSLAM/SpCoTMHP/SIGVerse/dataset/similar/3LDK_small/"  #"/home/akira/Dropbox/SpCoNavi/data/"
-outputfolder = "/mnt/hgfs/Dropbox/SpCoSLAM/SpCoTMHP/albert-b/data/"  #"/home/akira/Dropbox/SpCoNavi/data/"
+inputfolder  = "/mnt/hgfs/D/Dropbox/SpCoSLAM/SpCoTMHP/SIGVerse/dataset/similar/3LDK_small/"  #"/home/akira/Dropbox/SpCoNavi/data/"
+outputfolder = "/mnt/hgfs/D/Dropbox/SpCoSLAM/SpCoTMHP/albert-b/data/"  #"/home/akira/Dropbox/SpCoNavi/data/"
 # akira/Dropbox/SpCoNavi/CoRL/dataset/similar/3LDK_small/3LDK_01/
 
 speech_folder = inputfolder + "speech/*.wav" #"/home/akira/Dropbox/Julius/directory/SpCoSLAM/*.wav" #*.wav" #音声の教示データフォルダ(Ubuntu full path)

@@ -350,9 +350,6 @@ def Gibbs_Sampling(iteration, Otb_Samp, W_index_Samp, Xt, TN):
     N = DATA_NUM
 
     for sample in xrange(sample_num):
-      #############################################################################
-      ####                 ↓Learning phase of spatial concept↓                 ####
-      #############################################################################
       #TN = [i for i in xrange(N)]   #TN[N]: teaching time-step #テスト用教示時刻(step)集合
       #Otb_B[N][W_index]：時刻tごとの発話文をBOWにしたものの集合
       Otb_B   = Otb_Samp[sample]
@@ -395,6 +392,9 @@ def Gibbs_Sampling(iteration, Otb_Samp, W_index_Samp, Xt, TN):
       #All parameters and initial values are output
       SaveParameters_init(filename, trialname, iteration, sample, THETA_init, Ct, It, N, TN)
 
+      #############################################################################
+      ####                 ↓Learning phase of spatial concept↓                 ####
+      #############################################################################
       ##Start learning of spatial concepts
       print u"- <START> Learning of Spatial Concepts ver. NEW MODEL. -"
       
@@ -488,29 +488,17 @@ def Gibbs_Sampling(iteration, Otb_Samp, W_index_Samp, Xt, TN):
         
        ########## ↓ ##### π(index of spatial conceptのmultinomial distribution) is samplied ##### ↓ ##########
         print u"Sampling PI..."
-
-        if nonpara == 0:
-          alpha = alpha0 
-        elif nonpara == 1:
-          alpha = alpha0 / float(L)
-        temp = np.array([Ct.count(c) + alpha for c in xrange(L)])
+        temp = np.array([Ct.count(c) + alpha0 for c in xrange(L)])
 
         #加算したdataとparamtersからPosterior distributionを計算しSampling
         pi = np.mean(dirichlet(temp,Robust_pi),0)
-
         print pi
         ########## ↑ ##### π(index of spatial conceptのmultinomial distribution) is samplied ##### ↑ ##########
         
         ########## ↓ ##### φ(index of position distributionのmultinomial distribution) is samplied ##### ↓ ##########
         print u"Sampling PHI_c..."
-
-        if nonpara == 0:
-          gamma = gamma0 
-        elif nonpara == 1:
-          gamma = gamma0 / float(K)
-
         for c in xrange(L):  #L個分
-          temp = np.ones(K) * gamma  
+          temp = np.ones(K) * gamma0
           #Ctとcが一致するdataを集める
           if c in Ct :
             for t in xrange(N):
@@ -568,12 +556,9 @@ def Gibbs_Sampling(iteration, Otb_Samp, W_index_Samp, Xt, TN):
     return Ct_Samp, THETA_Samp
 
 ##発話した文章ごとに相互情報量を計算し、サンプリング結果を選ぶ
-def SelectMaxWordDict(iteration, Otb_Samp, Ct, THETA, W_index):
+def SelectMaxWordDict(iteration, THETA, W_index):
   filename = outputfolder + trialname
   MI_Samp2 = [0.0 for sample in xrange(sample_num)]  ##サンプルの数だけMIを求める
-  #Otb_Samp = [[] for sample in xrange(sample_num)]   #単語分割結果：教示データ
-  #W_index  = [[] for sample in xrange(sample_num)]
-  _, pi, W, _, _, _ = THETA
   
   for sample in xrange(sample_num):
     #####↓##場所概念ごとに単語ごとに相互情報量を計算、高いものから表示##↓######
@@ -581,6 +566,7 @@ def SelectMaxWordDict(iteration, Otb_Samp, Ct, THETA, W_index):
     MI   = [[] for c in xrange(L)]
     W_in = []    #閾値以上の単語集合
     #i_best = len(W_index)    ##相互情報量上位の単語をどれだけ使うか
+    _, pi, W, _, _, _ = THETA[sample]  #THETA = [phi, pi, W, theta, Mu, S]
     ###相互情報量を計算
     for c in xrange(L):
       #print "Concept:%d" % c
@@ -612,8 +598,8 @@ def SelectMaxWordDict(iteration, Otb_Samp, Ct, THETA, W_index):
     if ( len(W_in) == 0 ):
       print "W_in is empty."
       W_in = W_index[sample] ##選ばれる単語がなかった場合、W_indexをそのままいれる
-    else:
-      print W_in
+    #else:
+    #  print W_in
     
     ##場所の名前W（多項分布）をW_inに含まれる単語のみにする
     W_reco = [ [0.0 for j in xrange(len(W_in))] for c in xrange(L) ]  #場所の名前(多項分布：W_index次元)[L]
@@ -655,7 +641,7 @@ def WordDictionaryUpdate(iteration, W_index):
   hatsuon   = [ "" for i in xrange(i_best) ]
   TANGO     = []
   ##単語辞書の読み込み
-  for line in open('./lang_m/' + lang_init, 'r'):
+  for line in open(lmfolder + lang_init, 'r'):
       itemList = line[:-1].split('	')
       LIST = LIST + [line]
       for j in xrange(len(itemList)):
@@ -735,7 +721,7 @@ def WordDictionaryUpdate(iteration, W_index):
   meishi = meishi.encode('shift-jis')
   
   ##単語辞書ファイル生成
-  fp = open(filename + '/web.000s_' + str(iteration) + '.htkdic', 'w')
+  fp = open(filename + '/WD_' + str(iteration) + '.htkdic', 'w')
   for list in xrange(len(LIST)):
         fp.write(LIST[list])
   ##新しい単語を追加
@@ -818,7 +804,7 @@ if __name__ == '__main__':
       Ct_Samp, THETA_Samp = Gibbs_Sampling(i+1, Otb_Samp, W_index_Samp, Xt, TN)          ##場所概念の学習
       print "ITERATION:",i+1," Learning complete!"
 
-      W_index_MAX = SelectMaxWordDict(i+1, Otb_Samp, Ct_Samp, THETA_Samp, W_index_Samp)  ##相互情報量計算
+      W_index_MAX = SelectMaxWordDict(i+1, THETA_Samp, W_index_Samp)  ##相互情報量計算
       WordDictionaryUpdate(i+1, W_index_MAX)  ##単語辞書登録
       print "ITERATION:",i+1," Language Model update!"
 
