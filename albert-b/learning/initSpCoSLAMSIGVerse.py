@@ -4,14 +4,16 @@
 import numpy as np
 
 ##### Add SpCoTMHP #####
+IT_mode = "HMM"  # "HMM" or "GMM"
+
 nonpara    = 1     #Nonparametric Bayes method (ON:1,OFF:0)
 Robust_W   = 1000
 Robust_Sig = 100
 Robust_Mu  = 1
 Robust_pi  = 1000
 Robust_phi = 1000
+Robust_theta = 1000
 Robust_psi = 1000  #予約(未使用)
-Robust_theta = 1000  #予約(未使用)
 
 #Navigation folder (Other output files are also in same folder.)
 navigation_folder = "/navi/"  #outputfolder + trialname + / + navigation_folder + contmap.csv
@@ -23,14 +25,40 @@ navigation_folder = "/navi/"  #outputfolder + trialname + / + navigation_folder 
 resolution = 0.1   #0.050000
 origin     = np.array([-10.000000, -10.000000]) #np.array([x,y]) #np.array([-30.000000, -20.000000])
 
+approx_zero = 10.0**(-200)   #approximated value of log(0)
+
 word_increment = 1.0     #Increment number of word observation data (BoWs)
 
-####################Parameters####################
-DATA_NUM = 60 #100      # The number of training data
-M = 2000                # The number of particles (Same value as the condition in learning: 300)
-#LAG = 100 + 1          # The number of elements of array (lag value for smoothing + 1)
+CNNmode = 1             # Select image feature descriptor
+Feture_times = 1        # 画像特徴量を何倍するか
+Feture_sum_1 = 1        # 画像特徴量を足して１になるようにする(1)
+Feture_noize = 10**(-5) # 画像特徴量に微小ノイズを足す(Feture_noize/DimImg)
 
-num_iter = 10 #0          # The number of iterations of Gibbs sampling for spatial concept learning
+if (CNNmode == 0):
+  Descriptor = "SIFT_BoF"
+  DimImg     = 100  #Dimension of image feature
+elif (CNNmode == 1):
+  Descriptor = "googlenet_prob_AURO" #"CNN_softmax"
+  DimImg     = 1000 #Dimension of image feature
+  Feture_times = float(Feture_times)/100.0 #googlenet_probのデータはすでに１００倍されている
+elif (CNNmode == 2):
+  Descriptor = "CNN_fc6"
+  DimImg     = 4096 #Dimension of image feature
+elif (CNNmode == 3):
+  Descriptor = "CNN_Place205"
+  DimImg     = 205  #Dimension of image feature
+elif (CNNmode == 4):
+  Descriptor = "hybridCNN"
+  DimImg     = 1183  #Dimension of image feature
+elif (CNNmode == 5):
+  Descriptor = "CNN_Place365"
+  DimImg     = 365  #Dimension of image feature
+
+####################Parameters####################
+num_iter = 100          # The number of iterations of Gibbs sampling for spatial concept learnin
+DATA_NUM = 60 #100      # The number of training data
+#M = 2000               # The number of particles (Same value as the condition in learning: 300)
+#LAG = 100 + 1          # The number of elements of array (lag value for smoothing + 1)
 dimx = 2                # The number of dimensions of xt (x,y)
 
 #limit of map size
@@ -62,12 +90,14 @@ if (nonpara == 1):
   L = 20             #The number of spatial concepts #50 #100
   K = 20             #The number of position distributions #50 #100
   alpha0 = 20.0 / float(L)      #Hyperparameter of multinomial distribution for index of spatial concept
-  gamma0 = 0.10 / float(K)      #Hyperparameter of multinomial distribution for index of position 
+  gamma0 = 0.10 / float(K)      #Hyperparameter of multinomial distribution for index of position (GMM mixtured component; spatial concept dependent)
+  omega0 = 0.10 / float(K)      #Hyperparameter of multinomial distribution for index of position distribution (HMM transition distribution)
 else:
   L = 10             #The number of spatial concepts #50 #100
   K = 10             #The number of position distributions #50 #100
   alpha0 = 1.00      #Hyperparameter of multinomial distribution for index of spatial concept
-  gamma0 = 0.10      #Hyperparameter of multinomial distribution for index of position distribution
+  gamma0 = 0.10      #Hyperparameter of multinomial distribution for index of position distribution (GMM mixtured component; spatial concept dependent)
+  omega0 = 0.10      #Hyperparameter of multinomial distribution for index of position distribution (HMM transition distribution)
 
 beta0 = 0.1          #Hyperparameter in multinomial distribution P(W) for place names 
 chi0  = 0.1          #Hyperparameter in multinomial distribution P(φ) for image feature

@@ -6,7 +6,7 @@
 ## Learning algorithm is Gibbs sampling.
 ## Akira Taniguchi 2020/04/14-
 ##############################################
-# python ./learn4_3SpCoSLAM_SIGVerse.py trialname ** (3LDK_**)
+# python ./learnSpCoTMHP_SIGVerse.py trialname ** (3LDK_**)
 
 import glob
 import codecs
@@ -28,6 +28,9 @@ from initSpCoSLAMSIGVerse import *
 from JuliusLattice_dec_SIGVerse import *
 from submodules import *
 import time
+from hmmlearn import hmm
+import pickle
+#import joblib
 
 #Mutual information (binary variable): word_index, W, π, Ct
 def MI_binary(b,W,pi,c):
@@ -107,6 +110,8 @@ def SaveParameters_init(filename, trialname, iteration, sample, THETA_init, Ct_i
   for c in xrange(L):
     fp_init.write('W_init'+repr(c)+','+repr(W_init[c])+'\n')
   for c in xrange(L):
+    fp_init.write('theta_init'+repr(c)+','+repr(theta_init[c])+'\n')
+  for c in xrange(L):
     fp_init.write(',')
     for k in xrange(K):
       fp_init.write(repr(k)+',')
@@ -165,6 +170,17 @@ def SaveParameters_all(filename, trialname, iteration, sample, THETA, Ct, It, W_
     for i in xrange(len(W_index)):
       fp.write(repr(W[c][i])+',')
     fp.write('\n')
+    
+  for c in xrange(L):
+    fp.write(',')
+    for i in xrange(DimImg):
+      fp.write(repr(i) + ',')   #####空白が入っているものがあるので注意(', ')
+    fp.write('\n')
+    fp.write('theta'+repr(c)+',')
+    for i in xrange(DimImg):
+      fp.write(repr(theta[c][i])+',')
+    fp.write('\n')
+
   for c in xrange(L):
     fp.write(',')
     for k in xrange(K):
@@ -219,6 +235,13 @@ def SaveParameter_EachFile(filename, trialname, iteration, sample, THETA, Ct, It
     fp.write('\n')
   fp.close()
 
+  fp = open( file_trialname + '_theta_'+ iteration_sample + '.csv', 'w')
+  for c in xrange(L):
+    for i in xrange(len(theta[c])): 
+      fp.write(repr(theta[c][i])+',')
+    fp.write('\n')
+  fp.close()
+
   fp = open( file_trialname + '_phi_'+ iteration_sample + '.csv', 'w')
   for c in xrange(L):
     for k in xrange(K):
@@ -268,30 +291,106 @@ def SaveWordData(filename, trialname, iteration, sample, W_index, Otb):
   fp.close()
   fp2.close()
 
-def ReadPositionData():
-  DataSetFolder = inputfolder  + datasetname
-  # DATA read
-  i = 0
-  Xt = []
-  #Xt = [(0.0,0.0) for n in xrange(len(HTW)) ]
-  TN = []
-  for line3 in open(DataSetFolder + PositionDataFile, 'r'):
-    itemList3 = line3[:-1].split(',')
-    Xt = Xt + [(float(itemList3[0]), float(itemList3[1]))]
-    TN = TN + [i]
-    #print TN
-    i = i + 1
+"""
+# Read Position data(SpCoNaviのSIGVerse実験で使用したバージョン)
+def position_data_read_pass(directory,DATA_NUM):
+    all_position=[] 
+    hosei = 1  # 04 is *2, 06 is -1, 10 is *1.5.
+    
+    ##### 座標の補正 #####
+    if ("04" in directory):
+      hosei *= 2
+      print "hosei",hosei
+    elif ("06" in directory):
+      hosei *= -1
+      print "hosei",hosei
+    elif ("10" in directory):
+      hosei *= 1.5
+      print "hosei",hosei
+    ######################
 
+    for i in range(DATA_NUM):
+      #if  (i in test_num)==False:
+      f=directory+"/position/"+repr(i)+".txt"
+      position=[] #(x,y,sin,cos)
+      itigyoume = 1
+      for line in open(f, 'r').readlines():
+          if (itigyoume == 1):
+            data=line[:-1].split('	')
+            #print data
+            position +=[float(data[0])*(-1) + float(origin[0]*resolution)*hosei]
+            position +=[float(data[1])]
+            itigyoume = 0
+      all_position.append(position)
+    
+    return np.array(all_position)
+"""
+# Read Position data
+def ReadPositionData():
+  N  = 0
+  Xt = []  #Xt = [(0.0,0.0) for n in xrange(len(HTW)) ]
+  TN = []
+  for line in open(datasetfolder + datasetname + PositionDataFile, 'r'):
+    itemList = line[:-1].split(',')
+    Xt = Xt + [(float(itemList[0]), float(itemList[1]))]
+    TN = TN + [N]
+    N  = N + 1    
+    #print TN
+
+  if (N != DATA_NUM):   ##教示フェーズの教示数と読み込んだ発話文データ数が違う場合
+    print "DATA_NUM" + str(DATA_NUM) + ":KYOUJI error!! N:" + str(N)
+    #DATA_NUM = N
+    #exit()
   return Xt,TN
 
+# Read Image feature data (フォルダパス設定が必要)
+def ReadImageData():
+  FT = []
+  for s in xrange(DATA_NUM):
+    for line in open( datasetfolder + datasetname + 'img/ft' + str(s+1) + '.csv', 'r'):
+      itemList = line[:].split(',')
+    FT.append( [float(itemList[i]) for i in xrange(DimImg)] )
+  return FT
+
+# Reading data for image feature (For SIGVerse)
+def ReadImageData_SIGVerse():
+  FT = []
+  files = glob.glob(datasetfolder + datasetname + '/' + Descriptor + "/*.csv")
+  files.sort()
+
+  for s in xrange(DATA_NUM):
+    FT_temp = []
+    i = 0
+    for line in open( files[s], 'r'):
+      #itemList = line[:].split(',')
+      if (i < DimImg):
+        FT_temp.append(float(line)*Feture_times)
+      i += 1
+    if (Feture_noize > 0.0):
+      FT_temp = [FT_temp[i]+(Feture_noize/float(DimImg)) for i in range(DimImg)] 
+    if (Feture_sum_1 == 1):
+      Ft_sum = sum(FT_temp)
+      FT_temp = [FT_temp[i]/float(Ft_sum) for i in range(DimImg)] 
+    FT.append( FT_temp )
+    #print files[s]
+
+  if( DATA_NUM != len(FT) ):
+    print "ERROR FT", DATA_NUM, len(FT)
+  else:
+    print "READ FT", DATA_NUM, len(FT[0])
+  #print FT
+  return FT
+
+# Read Word data (segmenated word sequences)
 def ReadWordData(iteration):
   Otb_Samp     = [ [ [] for _ in xrange(DATA_NUM)] for _ in range(sample_num) ]
   W_index_Samp = [ [ [] for _ in xrange(DATA_NUM)] for _ in range(sample_num) ]
+  N = DATA_NUM
 
   ##発話認識文(単語)データを読み込む
   ##空白またはカンマで区切られた単語を行ごとに読み込むことを想定する
   for sample in xrange(sample_num):
-    N = 0
+    #N = 0
     Otb = []
     #Read text file
     for line in open(filename + '/out_gmm_' + str(iteration) + '/' + str(sample) + '_samp.100', 'r'):   ##*_samp.100を順番に読み込む
@@ -302,7 +401,7 @@ def ReadWordData(iteration):
       
       #Otb[sample] = Otb[sample] + [itemList]
       Otb = Otb + [itemList]
-      N = N + 1  #count
+      #N = N + 1  #count
 
       #for j in xrange(len(itemList)):
       #    print "%s " % (str(itemList[j])),
@@ -331,20 +430,15 @@ def ReadWordData(iteration):
             Otb_B[n][i] += word_increment
     #print Otb_B
     
-    if (DATA_NUM != N):
-        print "DATA_NUM" + str(DATA_NUM) + ":KYOUJI error!! N:" + str(N)   ##教示フェーズの教示数と読み込んだ発話文データ数が違う場合
-        #exit()
-    
     Otb_Samp[sample], W_index_Samp[sample] = Otb_B, W_index
     SaveWordData(filename, trialname, iteration, sample, W_index, Otb)
 
-      
   return Otb_Samp, W_index_Samp
 
 ######################################################
 # Gibbs sampling
 ######################################################
-def Gibbs_Sampling(iteration, Otb_Samp, W_index_Samp, Xt, TN):
+def Gibbs_Sampling(iteration, Otb_Samp, W_index_Samp, Xt, TN, Ft):
     Ct_Samp     = [ [ 0 for _ in xrange(DATA_NUM)] for _ in range(sample_num) ]
     THETA_Samp  = [ [] for _ in range(sample_num) ]
     N = DATA_NUM
@@ -359,35 +453,62 @@ def Gibbs_Sampling(iteration, Otb_Samp, W_index_Samp, Xt, TN):
       print u"Initialize Parameters..."
 
       # index of spatial concepts [N]
-      Ct = [ int(random.uniform(0,L)) for n in xrange(N) ] #[ int(n/15) for n in xrange(N)]  
+      Ct = [ int(random.uniform(0,L)) for _ in xrange(N) ] #[ int(n/15) for n in xrange(N)]  
       # index of position distributions [N]
-      It = [ int(random.uniform(0,K)) for n in xrange(N) ] #[ int(n/15) for n in xrange(N)]  
+      It = [ int(random.uniform(0,K)) for _ in xrange(N) ] #[ int(n/15) for n in xrange(N)]  
       ## Uniform random numbers within the range
       # the position distribution (Gaussian)の平均(x,y)[K]
       Mu = [ np.array([ int( random.uniform(WallXmin,WallXmax) ) ,
-                        int( random.uniform(WallYmin,WallYmax) ) ]) for i in xrange(K) ]      
+                        int( random.uniform(WallYmin,WallYmax) ) ]) for _ in xrange(K) ]      
       # the position distribution (Gaussian)の共分散(2×2-dimension)[K]
-      S  = [ np.eye(dimx) * sig_init for i in xrange(K) ] 
-      # the name of place(multinomial distribution: W_index-dimension)[L]
-      W  = [ [ 1.0/len(W_index) for j in xrange(len(W_index)) ] for c in xrange(L) ]
+      S  = [ np.eye(dimx) * sig_init for _ in xrange(K) ] 
+      # the name of place (multinomial distribution: W_index-dimension)[L]
+      W  = [ [ 1.0/len(W_index) for _ in xrange(len(W_index)) ] for _ in xrange(L) ]
+      # the image feature (multinomial distribution: DimImg-dimension)[L]
+      theta  = [ [ 1.0/DimImg for _ in xrange(DimImg) ] for _ in xrange(L) ]
       if (nonpara == 1):  
         # index of spatial conceptのmultinomial distribution(L-dimension)
         pi  = stick_breaking(alpha0, L)     
         # index of position distributionのmultinomial distribution(K-dimension)[L]
-        phi = [ stick_breaking(gamma0, K) for c in xrange(L) ] 
+        phi = [ stick_breaking(gamma0, K) for _ in xrange(L) ] 
       elif (nonpara == 0):
         # index of spatial conceptのmultinomial distribution(L-dimension)
-        pi  = [ 1.0/L for c in xrange(L) ]     
+        pi  = [ 1.0/L for _ in xrange(L) ]     
         # index of position distributionのmultinomial distribution(K-dimension)[L]
-        phi = [ [ 1.0/K for i in xrange(K) ] for c in xrange(L) ]        
+        phi = [ [ 1.0/K for _ in xrange(K) ] for _ in xrange(L) ]        
       
-      print Mu
-      print S
-      print W
-      print pi
-      print phi
 
-      theta = []  #仮置き
+      if (IT_mode == "HMM"):
+        # Initial setting for GaussianHMM
+        model = hmm.GaussianHMM(
+          n_components=K, covariance_type="full", 
+          startprob_prior=gamma0, transmat_prior=np.ones((K,K))*omega0, 
+          means_weight=m0, means_prior=k0, # Mean and precision
+          covars_weight=V0, covars_prior=n0,
+          algorithm="viterbi", n_iter=100,
+          params="stmc", init_params="stmc"  # update, initialized 
+          #‘s’ for startprob, ‘t’ for transmat, ‘m’ for means and ‘c’ for covars. 
+        )
+        
+        # HMM transition distribution (multinomial distribution [K][K])
+        if (nonpara == 1):  
+          psi = np.array([ stick_breaking(omega0, K) for _ in xrange(K) ])
+        elif (nonpara == 0):
+          psi = np.array([ [ 1.0/K for _ in xrange(K) ] for _ in xrange(K) ])
+
+        # Initial parameters setting
+        model.startprob_ = np.mean(phi, 0) #startprob
+        model.transmat_  = psi #transmat
+        model.means_     = Mu  #means
+        model.covars_    = S   #covars
+
+      print ">> Mu\n", Mu
+      print ">> Sig\n", S
+      print ">> W\n", W
+      print ">> theta\n", theta
+      print ">> pi\n", pi
+      print ">> phi\n", phi
+
       THETA_init = [phi, pi, W, theta, Mu, S]
       #All parameters and initial values are output
       SaveParameters_init(filename, trialname, iteration, sample, THETA_init, Ct, It, N, TN)
@@ -402,23 +523,32 @@ def Gibbs_Sampling(iteration, Otb_Samp, W_index_Samp, Xt, TN):
         print 'Iter.'+repr(iter+1)+'\n'
         
         ########## ↓ ##### it(index of position distribution) is samplied ##### ↓ ##########
-        print u"Sampling it..."
-        
-        #itと同じtのCtの値c番目のφc  の要素kごとに事後multinomial distributionの値を計算
-        temp = np.zeros(K)
-        for t in xrange(N):    #時刻tごとのdata
-          phi_c = phi[int(Ct[t])]
-          
-          for k in xrange(K):
-            #it=k番目のμΣについてのGaussian distributionをitと同じtのxtから計算
-            #2-dimension Gaussian distributionを計算
-            temp[k] = multivariate_normal.pdf(Xt[TN[t]], mean=Mu[k], cov=S[k]) * phi_c[k]
-            #print g2,phi_c[k]  ###Xtとμが遠いとg2の値がアンダーフローする可能性がある
+        print u"Sampling it...", IT_mode
+        if (IT_mode == "HMM"):
+          # psi (model.transmat_) のパラメータをphi_cでリスケーリングする (データごとに指定できない)
+          psi_rescaling = psi * (phi[1] / np.sum(phi,0))
+          psi_rescaling = psi_rescaling / np.array([np.sum(psi_rescaling,1)]).T
+          model.transmat_ = psi_rescaling
+
+          It = model.predict(Xt) #本当はサンプリングにしたい
+          model.fit(Xt)  # fitting HMM parameters
+          print It
+          print u"Sampling psi_k...", 
+          psi = model.transmat_
+
+        elif (IT_mode == "GMM"):
+          #itと同じtのCtの値c番目のφc  の要素kごとに事後multinomial distributionの値を計算
+          temp = np.zeros(K)
+          for t in xrange(N):    #時刻tごとのdata
+            phi_c = phi[int(Ct[t])]
             
-          temp = temp / np.sum(temp)  #Normalization
-          It[t] = list(multinomial.rvs(1,temp)).index(1)
-        
-        print It
+            for k in xrange(K):
+              #it=k番目のμΣについての2-dimension Gaussian distributionをitと同じtのxtから計算
+              temp[k] = multivariate_normal.pdf(Xt[TN[t]], mean=Mu[k], cov=S[k]) * phi_c[k]
+              
+            temp = temp / np.sum(temp)  #Normalization
+            It[t] = list(multinomial.rvs(1,temp)).index(1)
+          print It
         ########## ↑ ##### it(index of position distribution) is samplied ##### ↑ ##########
         
         ########## ↓ ##### Ct(index of spatial concept) is samplied ##### ↓ ##########
@@ -428,7 +558,7 @@ def Gibbs_Sampling(iteration, Otb_Samp, W_index_Samp, Xt, TN):
         temp = np.zeros(L)
         for t in xrange(N):    #時刻tごとのdata
           for c in xrange(L):  #index of spatial conceptのmultinomial distributionそれぞれについて
-            temp[c] = pi[c] * phi[c][It[t]] * multinomial.pmf(Otb_B[t], sum(Otb_B[t]), W[c])
+            temp[c] = pi[c] * phi[c][It[t]] * multinomial.pmf(Otb_B[t], sum(Otb_B[t]), W[c]) * multinomial.pmf(Ft[t], sum(Ft[t]), theta[c])
           
           temp = temp / np.sum(temp)  #Normalization
           Ct[t] = list(multinomial.rvs(1,temp)).index(1)
@@ -458,6 +588,29 @@ def Gibbs_Sampling(iteration, Otb_Samp, W_index_Samp, Xt, TN):
         
         print W
         ########## ↑ ##### W(the name of place: multinomial distribution) is samplied ##### ↑ ##########
+
+        ########## ↓ ##### theta(the image feature: multinomial distribution) is samplied ##### ↓ ##########
+        print u"Sampling theta_c..."
+        ##Dirichlet multinomial distributionからDirichlet Posterior distributionを計算しSamplingする
+        
+        temp = [ np.ones(DimImg)*chi0 for c in xrange(L) ]  #集めて加算するための array :paramtersで初期化しておけばよい
+        #Ctがcであるときのdataを集める
+        for c in xrange(L) :   #ctごとにL個分計算
+          nc = 0
+          ##Posterior distributionのためのparamters計算
+          if c in Ct : 
+            for t in xrange(N) : 
+              if Ct[t] == c : 
+                #dataを集めるたびに値を加算
+                temp[c] = temp[c] + np.array(Ft[t])
+                nc = nc + 1  #counting the number of data
+            print "%d n:%d %s" % (c,nc,temp[c])
+          
+        #加算したdataとparamtersからPosterior distributionを計算しSampling
+        theta = [ np.mean(dirichlet(temp[c],Robust_theta),0) for c in xrange(L) ] 
+        
+        print theta
+        ########## ↑ ##### W(the name of place: multinomial distribution) is samplied ##### ↑ ##########
                
         ########## ↓ ##### μ, Σ (the position distribution (Gaussian distribution: mean and covariance matrix) is samplied ##### ↓ ##########
         print u"Sampling Mu_i,Sigma_i..."
@@ -468,13 +621,13 @@ def Gibbs_Sampling(iteration, Otb_Samp, W_index_Samp, Xt, TN):
           kN,mN,nN,VN = PosteriorParameterGIW2(k,nk,N,It,Xt,k)
           
           ##3.1##ΣをInv-WishartからSampling
-          S[k] = np.mean([invwishart.rvs(df=nN, scale=VN) for i in xrange(Robust_Sig)],0) #サンプリングをロバストに
+          S[k] = np.mean([invwishart.rvs(df=nN, scale=VN) for _ in xrange(Robust_Sig)],0) #サンプリングをロバストに
 
           if np.linalg.det(S[k]) < -0.0: #半正定値を満たさない場合；エラー処理
             S[k] = invwishart.rvs(df=nN, scale=VN)
           
           ##3.2##μをGaussianからSampling
-          Mu[k] = np.mean([multivariate_normal.rvs(mean=mN, cov=S[k]/kN) for i in xrange(Robust_Mu)],0) #サンプリングをロバストに
+          Mu[k] = np.mean([multivariate_normal.rvs(mean=mN, cov=S[k]/kN) for _ in xrange(Robust_Mu)],0) #サンプリングをロバストに
           
         for k in xrange(K) : 
           if (It.count(k) != 0):  #dataなしは表示しない
@@ -530,6 +683,8 @@ def Gibbs_Sampling(iteration, Otb_Samp, W_index_Samp, Xt, TN):
       print 'It: ' + str(It)
       for c in xrange(L):
         print "W%d: %s" % (c,W[c])
+      for c in xrange(L):
+        print "theta%d: %s" % (c,theta[c])
       for k in xrange(K):
         print "Mu%d: %s" % (k, str(Mu[k].T))
       for k in xrange(K):
@@ -546,7 +701,12 @@ def Gibbs_Sampling(iteration, Otb_Samp, W_index_Samp, Xt, TN):
       ##paramtersそれぞれをそれぞれのファイルとしてはく
       ##Output to file: the set of word recognition results
       SaveParameter_EachFile(filename, trialname, iteration, sample, THETA, Ct, It)
-        
+      
+      if (IT_mode == "HMM"):
+        with open(filename + '/' + trialname + "_HMM_" + str(iteration) + "_" + str(sample)  + ".pkl", "wb") as file: pickle.dump(model, file)
+        #joblib.dump(model, "filename.pkl")
+
+
       print 'File Output Successful!(filename:'+filename+ "_" +str(iteration) + "_" + str(sample) + ')\n'
       ########  ↑File output↑  ########
 
@@ -765,8 +925,8 @@ if __name__ == '__main__':
     Makedir( filename )
 
     # DATA read
-    Xt, TN   = ReadPositionData()  # Reading Position data 
-    #Ft       = ReadImageData()     # Reading Image feture data  予約（未完成）
+    Xt, TN = ReadPositionData()  # Reading Position data 
+    Ft     = ReadImageData()     # Reading Image feature data  予約（未完成）
 
     for i in xrange(ITERATION):
       print "--------------------------------------------------"
@@ -802,7 +962,7 @@ if __name__ == '__main__':
       print "ITERATION:",i+1," latticelm complete!"
       
       Otb_Samp, W_index_Samp = ReadWordData(i+1)   # Reading word data and Making word list
-      Ct_Samp, THETA_Samp = Gibbs_Sampling(i+1, Otb_Samp, W_index_Samp, Xt, TN)          ##場所概念の学習
+      Ct_Samp, THETA_Samp = Gibbs_Sampling(i+1, Otb_Samp, W_index_Samp, Xt, TN, Ft) #         ##場所概念の学習
       print "ITERATION:",i+1," Learning complete!"
 
       W_index_MAX = SelectMaxWordDict(i+1, THETA_Samp, W_index_Samp)  ##相互情報量計算
