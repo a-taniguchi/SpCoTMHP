@@ -337,7 +337,7 @@ def SaveParameter_EachFile(filename, trialname, iteration, sample, THETA, Ct, It
 # Gibbs sampling
 ######################################################
 def Gibbs_Sampling(iteration):
-    DataSetFolder = inputfolder  + trialname
+    DataSetFolder = inputfolder + trialname
     filename  = outputfolder + trialname
     
     ##S## ##### Ishibushi's code #####

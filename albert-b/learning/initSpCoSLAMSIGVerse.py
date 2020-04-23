@@ -5,6 +5,7 @@ import numpy as np
 
 ##### Add SpCoTMHP #####
 IT_mode = "HMM"  # "HMM" or "GMM"
+sample_num_IT = 10 
 
 nonpara    = 1     #Nonparametric Bayes method (ON:1,OFF:0)
 Robust_W   = 1000
@@ -14,6 +15,19 @@ Robust_pi  = 1000
 Robust_phi = 1000
 Robust_theta = 1000
 Robust_psi = 1000  #予約(未使用)
+
+##### example (for SpCoNavi experiments) #####
+example = 0 #2 #1
+example_folder = ""
+#Word data folder path
+word_folder = "/name/per_100/word"
+if (example == 1):
+  example_folder = "example1/"
+  word_folder    = "/name/" + example_folder + "word" # "/name/per_100/word"
+elif (example == 2):
+  example_folder = "example2/"
+  word_folder    = "/name/" + example_folder + "word" # "/name/per_100/word"
+##############################################
 
 #Navigation folder (Other output files are also in same folder.)
 navigation_folder = "/navi/"  #outputfolder + trialname + / + navigation_folder + contmap.csv
@@ -29,10 +43,14 @@ approx_zero = 10.0**(-200)   #approximated value of log(0)
 
 word_increment = 1.0     #Increment number of word observation data (BoWs)
 
+#################### Option setting ####################
+#UseFT = 1       #画像特徴を使う場合(1), 使わない場合(0) 
+UseLM = 1       #言語モデルを更新する場合(1), しない場合(0) (音声認識・単語分割を含む)
+
 CNNmode = 1             # Select image feature descriptor
 Feture_times = 1        # 画像特徴量を何倍するか
 Feture_sum_1 = 1        # 画像特徴量を足して１になるようにする(1)
-Feture_noize = 10**(-5) # 画像特徴量に微小ノイズを足す(Feture_noize/DimImg)
+Feture_noize = 10.0**(-5) # 画像特徴量に微小ノイズを足す(Feture_noize/DimImg)
 
 if (CNNmode == 0):
   Descriptor = "SIFT_BoF"

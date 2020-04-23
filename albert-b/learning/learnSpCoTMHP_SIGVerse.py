@@ -385,23 +385,29 @@ def ReadImageData_SIGVerse():
 def ReadWordData(iteration):
   Otb_Samp     = [ [ [] for _ in xrange(DATA_NUM)] for _ in range(sample_num) ]
   W_index_Samp = [ [ [] for _ in xrange(DATA_NUM)] for _ in range(sample_num) ]
-  N = DATA_NUM
 
   ##発話認識文(単語)データを読み込む
   ##空白またはカンマで区切られた単語を行ごとに読み込むことを想定する
   for sample in xrange(sample_num):
-    #N = 0
     Otb = []
+
     #Read text file
-    for line in open(filename + '/out_gmm_' + str(iteration) + '/' + str(sample) + '_samp.100', 'r'):   ##*_samp.100を順番に読み込む
-      itemList = line[:-1].split(' ')
-      
-      #remove <s>,<sp>,</s> and "\r", "": if its were segmented to words.
-      itemList = Ignore_SP_Tags(itemList)
-      
-      #Otb[sample] = Otb[sample] + [itemList]
-      Otb = Otb + [itemList]
-      #N = N + 1  #count
+    if (UseLM == 1):
+      # Read Folder Path
+      WordDatafile = filename + '/out_gmm_' + str(iteration) + '/' + str(sample) + '_samp.100'
+      for line in open(WordDatafile, 'r'):   ##*_samp.100を順番に読み込む
+        itemList = line[:-1].split(' ')
+        itemList = Ignore_SP_Tags(itemList)  #remove <s>,<sp>,</s> and "\r", "": if its were segmented to words.
+        Otb = Otb + [itemList]
+    elif (UseLM == 0):
+      for word_data_num in range(DATA_NUM):
+        # Read Folder Path
+        WordDatafile = inputfolder + datasetname + word_folder + str(word_data_num) + ".txt"
+        f = open(WordDatafile, "r")
+        line = f.read()
+        itemList = line[:].split(' ')
+        itemList = Ignore_SP_Tags(itemList)  #remove <s>,<sp>,</s> and "\r", "": if its were segmented to words.
+        Otb = Otb + [itemList]
 
       #for j in xrange(len(itemList)):
       #    print "%s " % (str(itemList[j])),
@@ -409,7 +415,7 @@ def ReadWordData(iteration):
     
     ##For index of multinominal distribution of place names
     W_index = []
-    for n in xrange(N):
+    for n in xrange(DATA_NUM):
       for j in xrange(len(Otb[n])):
         if ( (Otb[n][j] in W_index) == False ):
           W_index.append(Otb[n][j])
@@ -421,9 +427,9 @@ def ReadWordData(iteration):
     print "]"
     
     ##Vectorize: Bag-of-Words for each time-step n (=t)
-    Otb_B = [ [0 for i in xrange(len(W_index))] for n in xrange(N) ]
+    Otb_B = [ [0 for i in xrange(len(W_index))] for n in xrange(DATA_NUM) ]
     
-    for n in xrange(N):
+    for n in xrange(DATA_NUM):
       for j in xrange(len(Otb[n])):
         for i in xrange(len(W_index)):
           if ( W_index[i] == Otb[n][j] ):
@@ -439,7 +445,7 @@ def ReadWordData(iteration):
 # Gibbs sampling
 ######################################################
 def Gibbs_Sampling(iteration, Otb_Samp, W_index_Samp, Xt, TN, Ft):
-    Ct_Samp     = [ [ 0 for _ in xrange(DATA_NUM)] for _ in range(sample_num) ]
+    #Ct_Samp     = [ [ 0 for _ in xrange(DATA_NUM)] for _ in range(sample_num) ]
     THETA_Samp  = [ [] for _ in range(sample_num) ]
     N = DATA_NUM
 
@@ -479,28 +485,41 @@ def Gibbs_Sampling(iteration, Otb_Samp, W_index_Samp, Xt, TN, Ft):
       
 
       if (IT_mode == "HMM"):
+        HMM_models  = [[] for _ in range(sample_num_IT)]
+        psi_samples = [[] for _ in range(sample_num_IT)]
+        Mu_samples  = [[] for _ in range(sample_num_IT)]
+        S_samples   = [[] for _ in range(sample_num_IT)]
         # Initial setting for GaussianHMM
-        model = hmm.GaussianHMM(
-          n_components=K, covariance_type="full", 
-          startprob_prior=gamma0, transmat_prior=np.ones((K,K))*omega0, 
-          means_weight=m0, means_prior=k0, # Mean and precision
-          covars_weight=V0, covars_prior=n0,
-          algorithm="viterbi", n_iter=100,
-          params="stmc", init_params="stmc"  # update, initialized 
-          #‘s’ for startprob, ‘t’ for transmat, ‘m’ for means and ‘c’ for covars. 
-        )
+        for samp_it in range(sample_num_IT):
+          HMM_models[samp_it] = hmm.GaussianHMM(
+            n_components=K, covariance_type="full", 
+            startprob_prior=gamma0, transmat_prior=np.ones((K,K))*omega0, 
+            means_weight=m0, means_prior=k0, # Mean and precision
+            covars_weight=V0, covars_prior=n0,
+            algorithm="viterbi", n_iter=1,
+            params="stmc", init_params=""  # update, initialized 
+            #‘s’ for startprob, ‘t’ for transmat, ‘m’ for means and ‘c’ for covars.
+          )
         
-        # HMM transition distribution (multinomial distribution [K][K])
-        if (nonpara == 1):  
-          psi = np.array([ stick_breaking(omega0, K) for _ in xrange(K) ])
-        elif (nonpara == 0):
-          psi = np.array([ [ 1.0/K for _ in xrange(K) ] for _ in xrange(K) ])
+          ## Uniform random numbers within the range
+          # the position distribution (Gaussian)の平均(x,y)[K]
+          Mu_samples[samp_it] = [ np.array([ int( random.uniform(WallXmin,WallXmax) ) ,
+                            int( random.uniform(WallYmin,WallYmax) ) ]) for _ in xrange(K) ]      
+          # the position distribution (Gaussian)の共分散(2×2-dimension)[K]
+          S_samples[samp_it]  = [ np.eye(dimx) * sig_init for _ in xrange(K) ]   
 
-        # Initial parameters setting
-        model.startprob_ = np.mean(phi, 0) #startprob
-        model.transmat_  = psi #transmat
-        model.means_     = Mu  #means
-        model.covars_    = S   #covars
+          # HMM transition distribution (multinomial distribution [K][K])
+          if (nonpara == 1):  
+            psi_samples[samp_it] = np.array([ stick_breaking(omega0, K) for _ in xrange(K) ])
+          elif (nonpara == 0):
+            psi_samples[samp_it] = np.array([ [ 1.0/K for _ in xrange(K) ] for _ in xrange(K) ])
+
+          # Initial parameters setting
+          #HMM_models[samp_it].startprob_ = np.mean(psi, 0) #startprob
+          #HMM_models[samp_it].transmat_  = psi #transmat
+          #HMM_models[samp_it].means_     = Mu  #means
+          #HMM_models[samp_it].covars_    = S   #covars
+        
 
       print ">> Mu\n", Mu
       print ">> Sig\n", S
@@ -525,26 +544,78 @@ def Gibbs_Sampling(iteration, Otb_Samp, W_index_Samp, Xt, TN, Ft):
         ########## ↓ ##### it(index of position distribution) is samplied ##### ↓ ##########
         print u"Sampling it...", IT_mode
         if (IT_mode == "HMM"):
-          # psi (model.transmat_) のパラメータをphi_cでリスケーリングする (データごとに指定できない)
-          psi_rescaling = psi * (phi[1] / np.sum(phi,0))
-          psi_rescaling = psi_rescaling / np.array([np.sum(psi_rescaling,1)]).T
-          model.transmat_ = psi_rescaling
+          # Initial parameters re-setting
+          #model.startprob_ = np.mean(psi, 0) #startprob
+          #model.transmat_  = psi #transmat
+          #model.means_     = Mu  #means
+          #model.covars_    = S   #covars
+          
+          rescaling_phi = np.ones(sample_num_IT) / float(sample_num_IT)
+          It_samples = [ [ 0 for _ in range(DATA_NUM) ] for _ in range(sample_num_IT) ]
 
-          It = model.predict(Xt) #本当はサンプリングにしたい
-          model.fit(Xt)  # fitting HMM parameters
+          # rescaling_phiに従ってモデルごとのパラメータの初期値を変更
+          param_init_samples = multinomial.rvs(sample_num_IT,rescaling_phi) # SIR (resampling)
+          
+          sample_it_temp = 0
+          for samp_it in range(sample_num_IT):
+            sample_num_temp = param_init_samples[samp_it]
+            while (sample_num_temp > 0):
+              # Initial parameters setting
+              HMM_models[sample_it_temp].startprob_ = np.mean(psi_samples[samp_it], 0) #startprob
+              HMM_models[sample_it_temp].transmat_  = psi_samples[samp_it] #transmat
+              HMM_models[sample_it_temp].means_     = Mu_samples[samp_it]  #means
+              HMM_models[sample_it_temp].covars_    = S_samples[samp_it]   #covars
+              sample_num_temp -= 1
+              sample_it_temp  += 1
+          
+          for samp_it in range(sample_num_IT):
+            # 複数modelをfitting (イテレーション1回？) #Itを直接サンプリングする代わりにパラメータ更新
+            HMM_models[samp_it].fit(Xt)
+
+            # 各model からITをpredict
+            It_samples[samp_it] = HMM_models[samp_it].predict(Xt) # SIR (sampling) #本当はサンプリングにしたい
+            print It_samples[samp_it]
+
+            # ラベルスイッチング対策に重みづけに必要なパラメータを再設定(未実装)
+            # or Itのラベルを最も整合性があるように付け替える(Serketのhead-to-headの実装が使えそう)
+
+            # 各ITごとにRescalingの重みづけ
+            for t in range(DATA_NUM):
+              rescaling_phi[samp_it] *= phi[Ct[t]][It[t]] / np.sum(phi,0)[It[t]] # SIR (importance)
+          rescaling_phi = rescaling_phi / np.sum(rescaling_phi)  #Normalization
+
+          # 重みに従ってITをサンプリング
+          MAX_IT = list(multinomial.rvs(1,rescaling_phi)).index(1)
+
+          # 対応するIt, psi, Mu, S を選択 (Mu, Sは後で推定するのでpsiのみでよい)
+          It = It_samples[MAX_IT]
           print It
+          
+          psi_samples = [ HMM_models[samp_it].transmat_ for samp_it in range(sample_num_IT) ]
+          Mu_samples  = [ HMM_models[samp_it].means_    for samp_it in range(sample_num_IT) ]
+          S_samples   = [ HMM_models[samp_it].covars_   for samp_it in range(sample_num_IT) ]
+
           print u"Sampling psi_k...", 
-          psi = model.transmat_
+          psi = psi_samples[MAX_IT]
+          
+
+          # psi (model.transmat_) のパラメータをphi_cでリスケーリングする (データごとに指定できない)
+          #psi_rescaling = psi * (phi[1] / np.sum(phi,0))
+          #psi_rescaling = psi_rescaling / np.array([np.sum(psi_rescaling,1)]).T
+          #model.transmat_ = psi #_rescaling
+          #It = model.predict(Xt) #本当はサンプリングにしたい
+          #model.fit(Xt)  # fitting HMM parameters
+          #print It
+          #print u"Sampling psi_k...", 
+          #psi = model.transmat_
 
         elif (IT_mode == "GMM"):
           #itと同じtのCtの値c番目のφc  の要素kごとに事後multinomial distributionの値を計算
           temp = np.zeros(K)
           for t in xrange(N):    #時刻tごとのdata
-            phi_c = phi[int(Ct[t])]
-            
             for k in xrange(K):
               #it=k番目のμΣについての2-dimension Gaussian distributionをitと同じtのxtから計算
-              temp[k] = multivariate_normal.pdf(Xt[TN[t]], mean=Mu[k], cov=S[k]) * phi_c[k]
+              temp[k] = multivariate_normal.pdf(Xt[TN[t]], mean=Mu[k], cov=S[k]) * phi[int(Ct[t])][k]
               
             temp = temp / np.sum(temp)  #Normalization
             It[t] = list(multinomial.rvs(1,temp)).index(1)
@@ -630,12 +701,12 @@ def Gibbs_Sampling(iteration, Otb_Samp, W_index_Samp, Xt, TN, Ft):
           Mu[k] = np.mean([multivariate_normal.rvs(mean=mN, cov=S[k]/kN) for _ in xrange(Robust_Mu)],0) #サンプリングをロバストに
           
         for k in xrange(K) : 
-          if (It.count(k) != 0):  #dataなしは表示しない
+          if (nk != 0):  #dataなしは表示しない
             print 'Mu'+str(k)+':'+str(Mu[k]),
         print ''
         
         for k in xrange(K):
-          if (It.count(k) != 0):  #dataなしは表示しない
+          if (nk != 0):  #dataなしは表示しない
             print 'sig'+str(k)+':'+str(S[k])
         ########## ↑ ##### μ, Σ (the position distribution (Gaussian distribution: mean and covariance matrix) is samplied ##### ↑ ##########
         
@@ -703,17 +774,17 @@ def Gibbs_Sampling(iteration, Otb_Samp, W_index_Samp, Xt, TN, Ft):
       SaveParameter_EachFile(filename, trialname, iteration, sample, THETA, Ct, It)
       
       if (IT_mode == "HMM"):
-        with open(filename + '/' + trialname + "_HMM_" + str(iteration) + "_" + str(sample)  + ".pkl", "wb") as file: pickle.dump(model, file)
+        with open(filename + '/' + trialname + "_HMM_" + str(iteration) + "_" + str(sample)  + ".pkl", "wb") as file: pickle.dump(HMM_models[MAX_IT], file)
         #joblib.dump(model, "filename.pkl")
 
 
       print 'File Output Successful!(filename:'+filename+ "_" +str(iteration) + "_" + str(sample) + ')\n'
       ########  ↑File output↑  ########
 
-      Ct_Samp[sample]    = Ct
+      #Ct_Samp[sample]    = Ct
       THETA_Samp[sample] = THETA
 
-    return Ct_Samp, THETA_Samp
+    return THETA_Samp #Ct_Samp, 
 
 ##発話した文章ごとに相互情報量を計算し、サンプリング結果を選ぶ
 def SelectMaxWordDict(iteration, THETA, W_index):
@@ -803,79 +874,79 @@ def WordDictionaryUpdate(iteration, W_index):
   TANGO     = []
   ##単語辞書の読み込み
   for line in open(lmfolder + lang_init, 'r'):
-      itemList = line[:-1].split('	')
-      LIST = LIST + [line]
-      for j in xrange(len(itemList)):
-          itemList[j] = itemList[j].replace("[", "")
-          itemList[j] = itemList[j].replace("]", "")
-      
-      TANGO = TANGO + [[itemList[1],itemList[2]]]   
+    itemList = line[:-1].split('	')
+    LIST = LIST + [line]
+    for j in xrange(len(itemList)):
+      itemList[j] = itemList[j].replace("[", "")
+      itemList[j] = itemList[j].replace("]", "")
+    
+    TANGO = TANGO + [[itemList[1],itemList[2]]]   
   #print TANGO
   
   ##W_indexの単語を順番に処理していく
   for c in xrange(i_best):    # i_best = len(W_index)
-          #W_list_sj = unicode(MI_best[c][i], encoding='shift_jis')
-          W_list_sj = unicode(W_index[c], encoding='shift_jis')
-          if len(W_list_sj) != 1:  ##１文字は除外
-            #for moji in xrange(len(W_list_sj)):
-            moji = 0
-            while (moji < len(W_list_sj)):
-              flag_moji = 0
-              #print len(W_list_sj),str(W_list_sj),moji,W_list_sj[moji]#,len(unicode(W_index[i], encoding='shift_jis'))
+    #W_list_sj = unicode(MI_best[c][i], encoding='shift_jis')
+    W_list_sj = unicode(W_index[c], encoding='shift_jis')
+    if len(W_list_sj) != 1:  ##１文字は除外
+      #for moji in xrange(len(W_list_sj)):
+      moji = 0
+      while (moji < len(W_list_sj)):
+        flag_moji = 0
+        #print len(W_list_sj),str(W_list_sj),moji,W_list_sj[moji]#,len(unicode(W_index[i], encoding='shift_jis'))
+        
+        for j in xrange(len(TANGO)):
+          if (len(W_list_sj)-2 > moji) and (flag_moji == 0): 
+            #print TANGO[j],j
+            #print moji
+            if (unicode(TANGO[j][0], encoding='shift_jis') == W_list_sj[moji]+"_"+W_list_sj[moji+2]) and (W_list_sj[moji+1] == "_"): 
+              ###print moji,j,TANGO[j][0]
+              hatsuon[c] = hatsuon[c] + TANGO[j][1]
+              moji = moji + 3
+              flag_moji = 1
               
-              for j in xrange(len(TANGO)):
-                if (len(W_list_sj)-2 > moji) and (flag_moji == 0): 
-                  #print TANGO[j],j
-                  #print moji
-                  if (unicode(TANGO[j][0], encoding='shift_jis') == W_list_sj[moji]+"_"+W_list_sj[moji+2]) and (W_list_sj[moji+1] == "_"): 
-                    ###print moji,j,TANGO[j][0]
-                    hatsuon[c] = hatsuon[c] + TANGO[j][1]
-                    moji = moji + 3
-                    flag_moji = 1
-                    
-              for j in xrange(len(TANGO)):
-                if (len(W_list_sj)-1 > moji) and (flag_moji == 0): 
-                  #print TANGO[j],j
-                  #print moji
-                  if (unicode(TANGO[j][0], encoding='shift_jis') == W_list_sj[moji]+W_list_sj[moji+1]):
-                    ###print moji,j,TANGO[j][0]
-                    hatsuon[c] = hatsuon[c] + TANGO[j][1]
-                    moji = moji + 2
-                    flag_moji = 1
-                    
-                #print len(W_list_sj),moji
-              for j in xrange(len(TANGO)):
-                if (len(W_list_sj) > moji) and (flag_moji == 0):
-                  if (unicode(TANGO[j][0], encoding='shift_jis') == W_list_sj[moji]):
-                      ###print moji,j,TANGO[j][0]
-                      hatsuon[c] = hatsuon[c] + TANGO[j][1]
-                      moji = moji + 1
-                      flag_moji = 1
-            print W_list_sj,hatsuon[c]
-          else:
-            print W_list_sj,W_index[c] + " (one name)"
+        for j in xrange(len(TANGO)):
+          if (len(W_list_sj)-1 > moji) and (flag_moji == 0): 
+            #print TANGO[j],j
+            #print moji
+            if (unicode(TANGO[j][0], encoding='shift_jis') == W_list_sj[moji]+W_list_sj[moji+1]):
+              ###print moji,j,TANGO[j][0]
+              hatsuon[c] = hatsuon[c] + TANGO[j][1]
+              moji = moji + 2
+              flag_moji = 1
+              
+          #print len(W_list_sj),moji
+        for j in xrange(len(TANGO)):
+          if (len(W_list_sj) > moji) and (flag_moji == 0):
+            if (unicode(TANGO[j][0], encoding='shift_jis') == W_list_sj[moji]):
+                ###print moji,j,TANGO[j][0]
+                hatsuon[c] = hatsuon[c] + TANGO[j][1]
+                moji = moji + 1
+                flag_moji = 1
+      print W_list_sj,hatsuon[c]
+    else:
+      print W_list_sj,W_index[c] + " (one name)"
         
   print JuliusVer,HMMtype
   if (JuliusVer == "v4.4" and HMMtype == "DNN"):
-      #hatsuonのすべての単語の音素表記を"*_I"にする
-      for i in range(len(hatsuon)):
-        hatsuon[i] = hatsuon[i].replace("_S","_I")
-        hatsuon[i] = hatsuon[i].replace("_B","_I")
-        hatsuon[i] = hatsuon[i].replace("_E","_I")
+    #hatsuonのすべての単語の音素表記を"*_I"にする
+    for i in range(len(hatsuon)):
+      hatsuon[i] = hatsuon[i].replace("_S","_I")
+      hatsuon[i] = hatsuon[i].replace("_B","_I")
+      hatsuon[i] = hatsuon[i].replace("_E","_I")
+    
+    #hatsuonの単語の先頭の音素を"*_B"にする
+    for i in range(len(hatsuon)):
+      #onsohyoki_index = onsohyoki.find(target)
+      hatsuon[i] = hatsuon[i].replace("_I","_B", 1)
       
-      #hatsuonの単語の先頭の音素を"*_B"にする
-      for i in range(len(hatsuon)):
-        #onsohyoki_index = onsohyoki.find(target)
-        hatsuon[i] = hatsuon[i].replace("_I","_B", 1)
-        
-        #hatsuonの単語の最後の音素を"*_E"にする
-        hatsuon[i] = hatsuon[i][0:-2] + "E "
-        
-        #hatsuonの単語の音素の例外処理（N,q）
-        hatsuon[i] = hatsuon[i].replace("q_S","q_I")
-        hatsuon[i] = hatsuon[i].replace("q_B","q_I")
-        hatsuon[i] = hatsuon[i].replace("N_S","N_I")
-        #print type(hatsuon),hatsuon,type("N_S"),"N_S"
+      #hatsuonの単語の最後の音素を"*_E"にする
+      hatsuon[i] = hatsuon[i][0:-2] + "E "
+      
+      #hatsuonの単語の音素の例外処理（N,q）
+      hatsuon[i] = hatsuon[i].replace("q_S","q_I")
+      hatsuon[i] = hatsuon[i].replace("q_B","q_I")
+      hatsuon[i] = hatsuon[i].replace("N_S","N_I")
+      #print type(hatsuon),hatsuon,type("N_S"),"N_S"
   
   ##各場所の名前の単語ごとに
   meishi = u'名詞'
@@ -889,18 +960,17 @@ def WordDictionaryUpdate(iteration, W_index):
   c = 0
   for mi in xrange(i_best):    # i_best = len(W_index)
     if hatsuon[mi] != "":
-        if ((W_index[mi] in LIST_plus) == False):  #同一単語を除外
-          flag_tango = 0
-          for j in xrange(len(TANGO)):
-            if(W_index[mi] == TANGO[j][0]):
-              flag_tango = -1
-          if flag_tango == 0:
-            LIST_plus = LIST_plus + [W_index[mi]]
-            
-            fp.write(LIST_plus[c] + "+" + meishi +"	[" + LIST_plus[c] + "]	" + hatsuon[mi])
-            fp.write('\n')
-            c += 1
-
+      if ((W_index[mi] in LIST_plus) == False):  #同一単語を除外
+        flag_tango = 0
+        for j in xrange(len(TANGO)):
+          if(W_index[mi] == TANGO[j][0]):
+            flag_tango = -1
+        if flag_tango == 0:
+          LIST_plus = LIST_plus + [W_index[mi]]
+          
+          fp.write(LIST_plus[c] + "+" + meishi +"	[" + LIST_plus[c] + "]	" + hatsuon[mi])
+          fp.write('\n')
+          c += 1
   fp.close()
   ###↑###単語辞書読み込み書き込み追加############################################
 
@@ -913,7 +983,7 @@ if __name__ == '__main__':
     print trialname
 
     ########## SIGVerse ##########
-    datasetNUM = sys.argv[2] #0
+    datasetNUM  = sys.argv[2] #0
     datasetname = "3LDK_" + datasets[int(datasetNUM)]
     print "ROOM:", datasetname #datasetPATH
     #print trialname
@@ -932,42 +1002,46 @@ if __name__ == '__main__':
       print "--------------------------------------------------"
       print "ITERATION:",i+1
       start_iter_time = time.time()
-      
-      Julius_lattice(i,trialname)    ##音声認識、ラティス形式出力、opemFST形式へ変換
-      
-      FST_PATH = filename + "/fst_gmm_" + str(i+1) + "/" + str(DATA_NUM-1).zfill(3) +".fst"
-      while (os.path.exists( FST_PATH ) != True):
-        print FST_PATH, os.path.exists( FST_PATH ), "wait(30s)... or ERROR?"
-        time.sleep(30.0) #sleep(秒指定)
-      print "ITERATION:",i+1," Julius complete!"
-      
-      sample = 0  ##latticelmのパラメータ通りだけサンプルする
-      for p1 in xrange(len(knownn)):
-        for p2 in xrange(len(unkn)):
-          #if sample < sample_num:
-          print "latticelm run. sample_num:" + str(sample)
-          latticelm_CMD = "latticelm -input fst -filelist " + filename + "/fst_gmm_" + str(i+1) + "/fstlist.txt -prefix " + filename + "/out_gmm_" + str(i+1) + "/" + str(sample) + "_ -symbolfile " + filename + "/fst_gmm_" + str(i+1) + "/isyms.txt -burnin 100 -samps 100 -samprate 100 -knownn " + str(knownn[p1]) + " -unkn " + str(unkn[p2])
-          ##latticelm  ## -annealsteps 10 -anneallength 15
-          OUT_PATH = filename + "/out_gmm_" + str(i+1) + "/" + str(sample) + "_samp.100"
 
-          p = os.popen( latticelm_CMD ) 
-          p.close()  
-          time.sleep(1.0) #sleep(秒指定)
-          while (os.path.exists( OUT_PATH ) != True):
-            print OUT_PATH, os.path.exists( OUT_PATH ),"wait(3.0s)... or ERROR?"
+      if (UseLM == 1):
+        Julius_lattice(i,trialname)    ##音声認識、ラティス形式出力、opemFST形式へ変換
+        
+        FST_PATH = filename + "/fst_gmm_" + str(i+1) + "/" + str(DATA_NUM-1).zfill(3) +".fst"
+        while (os.path.exists( FST_PATH ) != True):
+          print FST_PATH, os.path.exists( FST_PATH ), "wait(30s)... or ERROR?"
+          time.sleep(30.0) #sleep(秒指定)
+        print "ITERATION:",i+1," Julius complete!"
+        
+        sample = 0  ##latticelmのパラメータ通りだけサンプルする
+        for p1 in xrange(len(knownn)):
+          for p2 in xrange(len(unkn)):
+            #if sample < sample_num:
+            print "latticelm run. sample_num:" + str(sample)
+            latticelm_CMD = "latticelm -input fst -filelist " + filename + "/fst_gmm_" + str(i+1) + "/fstlist.txt -prefix " + filename + "/out_gmm_" + str(i+1) + "/" + str(sample) + "_ -symbolfile " + filename + "/fst_gmm_" + str(i+1) + "/isyms.txt -burnin 100 -samps 100 -samprate 100 -knownn " + str(knownn[p1]) + " -unkn " + str(unkn[p2])
+            ##latticelm  ## -annealsteps 10 -anneallength 15
+            OUT_PATH = filename + "/out_gmm_" + str(i+1) + "/" + str(sample) + "_samp.100"
+
             p = os.popen( latticelm_CMD ) 
-            p.close() 
-            time.sleep(3.0) #sleep(秒指定)
-          sample = sample + 1
-      print "ITERATION:",i+1," latticelm complete!"
+            p.close()  
+            time.sleep(1.0) #sleep(秒指定)
+            while (os.path.exists( OUT_PATH ) != True):
+              print OUT_PATH, os.path.exists( OUT_PATH ),"wait(3.0s)... or ERROR?"
+              p = os.popen( latticelm_CMD ) 
+              p.close() 
+              time.sleep(3.0) #sleep(秒指定)
+            sample = sample + 1
+        print "ITERATION:",i+1," latticelm complete!"
+      elif (UseLM == 0):
+        print "Without Language Acquisition."
       
       Otb_Samp, W_index_Samp = ReadWordData(i+1)   # Reading word data and Making word list
-      Ct_Samp, THETA_Samp = Gibbs_Sampling(i+1, Otb_Samp, W_index_Samp, Xt, TN, Ft) #         ##場所概念の学習
+      THETA_Samp = Gibbs_Sampling(i+1, Otb_Samp, W_index_Samp, Xt, TN, Ft) ##場所概念の学習
       print "ITERATION:",i+1," Learning complete!"
 
       W_index_MAX = SelectMaxWordDict(i+1, THETA_Samp, W_index_Samp)  ##相互情報量計算
-      WordDictionaryUpdate(i+1, W_index_MAX)  ##単語辞書登録
-      print "ITERATION:",i+1," Language Model update!"
+      if (UseLM == 1):
+        WordDictionaryUpdate(i+1, W_index_MAX)  ##単語辞書登録
+        print "ITERATION:",i+1," Language Model update!"
 
       end_iter_time = time.time()
       iteration_time[i] = end_iter_time - start_iter_time
