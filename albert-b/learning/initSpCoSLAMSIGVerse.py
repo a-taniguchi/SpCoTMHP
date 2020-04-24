@@ -5,7 +5,10 @@ import numpy as np
 
 ##### Add SpCoTMHP #####
 IT_mode = "HMM"  # "HMM" or "GMM"
-sample_num_IT = 10 
+transition_type = "sym" # "sym": 対象行列化 or "left2right": そのまま (or "reverse_replay": 逆順データも入力して学習)
+#sample_num_IT = 10 
+
+terminal_output_prams = 0
 
 nonpara    = 1     #Nonparametric Bayes method (ON:1,OFF:0)
 Robust_W   = 1000
@@ -14,7 +17,7 @@ Robust_Mu  = 1
 Robust_pi  = 1000
 Robust_phi = 1000
 Robust_theta = 1000
-Robust_psi = 1000  #予約(未使用)
+Robust_psi = 1000 
 
 ##### example (for SpCoNavi experiments) #####
 example = 0 #2 #1
@@ -44,13 +47,13 @@ approx_zero = 10.0**(-200)   #approximated value of log(0)
 word_increment = 1.0     #Increment number of word observation data (BoWs)
 
 #################### Option setting ####################
-#UseFT = 1       #画像特徴を使う場合(1), 使わない場合(0) 
-UseLM = 1       #言語モデルを更新する場合(1), しない場合(0) (音声認識・単語分割を含む)
+UseFT = 0       #画像特徴を使う場合(1), 使わない場合(0) 
+UseLM = 0       #言語モデルを更新する場合(1), しない場合(0) (音声認識・単語分割を含む)
 
 CNNmode = 1             # Select image feature descriptor
-Feture_times = 1        # 画像特徴量を何倍するか
-Feture_sum_1 = 1        # 画像特徴量を足して１になるようにする(1)
-Feture_noize = 10.0**(-5) # 画像特徴量に微小ノイズを足す(Feture_noize/DimImg)
+Feture_times = 100.0        # 画像特徴量を何倍するか
+Feture_sum_1 = 0       # 画像特徴量を足して１になるようにする(1)
+Feture_noize = 0.0 #approx_zero #10.0**(-5) # 画像特徴量に微小ノイズを足す(Feture_noize/DimImg)
 
 if (CNNmode == 0):
   Descriptor = "SIFT_BoF"
@@ -108,8 +111,8 @@ if (nonpara == 1):
   L = 20             #The number of spatial concepts #50 #100
   K = 20             #The number of position distributions #50 #100
   alpha0 = 20.0 / float(L)      #Hyperparameter of multinomial distribution for index of spatial concept
-  gamma0 = 0.10 / float(K)      #Hyperparameter of multinomial distribution for index of position (GMM mixtured component; spatial concept dependent)
-  omega0 = 0.10 / float(K)      #Hyperparameter of multinomial distribution for index of position distribution (HMM transition distribution)
+  gamma0 = 10.00 / float(K)      #Hyperparameter of multinomial distribution for index of position (GMM mixtured component; spatial concept dependent)
+  omega0 = 10.00 / float(K)      #Hyperparameter of multinomial distribution for index of position distribution (HMM transition distribution)
 else:
   L = 10             #The number of spatial concepts #50 #100
   K = 10             #The number of position distributions #50 #100
@@ -118,7 +121,7 @@ else:
   omega0 = 0.10      #Hyperparameter of multinomial distribution for index of position distribution (HMM transition distribution)
 
 beta0 = 0.1          #Hyperparameter in multinomial distribution P(W) for place names 
-chi0  = 0.1          #Hyperparameter in multinomial distribution P(φ) for image feature
+chi0  = 1.0          #Hyperparameter in multinomial distribution P(φ) for image feature
 k0 = 1e-3            #Hyperparameter in Gaussina distribution P(μ) (Influence degree of prior distribution of μ)
 m0 = np.zeros(dimx)  #Hyperparameter in Gaussina distribution P(μ) (prior mean vector)
 V0 = np.eye(dimx)*2  #Hyperparameter in Inverse Wishart distribution P(Σ) (prior covariance matrix) 
@@ -128,14 +131,14 @@ k0m0m0 = k0*np.dot(np.array([m0]).T,np.array([m0]))
 
 ##latticelm parameters
 knownn       = [3] #[2,3,4] #The n-gram length of the language model (3)
-unkn         = [3,4] #[3]   #The n-gram length of the spelling model (3)
+unkn         = [3] #[3,4]   #The n-gram length of the spelling model (3)
 annealsteps  = [3,5,10]     #The number of annealing steps to perform (3)
 anneallength = [5,10,15]    #The length of each annealing step in iterations (5)
 
 
 ##Parameters for mutual estimation in SpCoA++ 
 sample_num = len(knownn)*len(unkn)  #The number of samples (candidates for word segmentation results)  #len(knownn)*len(unkn)  
-ITERATION = 10                      #The number of iterations for mutual estimation
+ITERATION = 1                      #The number of iterations for mutual estimation
 
 ##単語の選択の閾値
 threshold = 0.01
