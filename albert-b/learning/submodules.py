@@ -1,6 +1,6 @@
 #coding:utf-8
 #This file for general modules (一般性の高い関数はこちらへ集約)
-#Akira Taniguchi 2018/11/26-2018/12/17-
+#Akira Taniguchi 2018/11/26-2018/12/17-2020/04/26-
 import os
 import numpy as np
 from math import pi as PI
@@ -17,6 +17,13 @@ def Makedir(dir):
 def fill_param(param, default):   ##パラメータをNone の場合のみデフォルト値に差し替える関数
     if (param == None): return default
     else: return param
+
+def log2prob(log_prob_array):  #Normalization
+   log_prob_array = log_prob_array - np.max(log_prob_array)
+   #prob_array = np.exp( log_prob_array - np.log(np.sum(np.exp(log_prob_array))) )
+   prob_array = np.exp(log_prob_array)
+   prob_array = prob_array / np.sum(prob_array)
+   return prob_array
         
 def multivariate_t_distribution(x, mu, Sigma, df):
     """
@@ -160,7 +167,7 @@ def levenshtein_distance(a, b):
 
 #remove <s>,<sp>,</s> and "\r", "": if its were segmented to words.
 def Ignore_SP_Tags(itemList):
-  for b in xrange(5):
+  for _ in xrange(5):
     if ("<s><s>" in itemList):
       itemList.pop(itemList.index("<s><s>"))
     if ("<s><sp>" in itemList):
@@ -188,7 +195,7 @@ def Ignore_SP_Tags(itemList):
   for j in xrange(len(itemList)):
     itemList[j] = itemList[j].replace("\r", "")  
 
-  for b in xrange(5):
+  for _ in xrange(5):
     if ("" in itemList):
       itemList.pop(itemList.index(""))
 
