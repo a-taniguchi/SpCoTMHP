@@ -9,21 +9,16 @@
 # python ./learnSpCoTMHP_SIGVerse.py trialname ** (3LDK_**)
 
 import glob
-#import codecs
-#import re
 import os
 import os.path
 import sys
 import random
-#import string
 import shutil
 import time
 import numpy as np
 import scipy as sp
-from numpy.random import uniform,dirichlet #multinomial
-from scipy.stats import multivariate_normal,invwishart,multinomial #,rv_discrete
-#from numpy.linalg import inv, cholesky
-#from scipy.stats import chi2
+from numpy.random import uniform,dirichlet
+from scipy.stats import multivariate_normal,invwishart,multinomial
 from math import pi as PI
 from math import cos,sin,sqrt,exp,log,fabs,fsum #,degrees,radians,atan2,gamma,lgamma
 from initSpCoSLAMSIGVerse import *
@@ -61,83 +56,7 @@ def Mutual_Info(W,pi):  #Mutual information: W, π
       # Calculate each term for MI
       MI = MI + ( POC * log( POC/(PO*PC), 2) )
   return MI
-"""
-# All parameters and initial values are output
-def SaveParameters_init(filename, trialname, iteration, sample, THETA_init, Ct_init, It_init, N, TN):
-  phi_init, pi_init, W_init, theta_init, Mu_init, S_init, psi_init = THETA_init  #THETA = [phi, pi, W, theta, Mu, S, psi]
 
-  fp_init = open( filename + '/' + trialname + '_init_' + str(iteration) + "_" + str(sample) + '.csv', 'w')
-  fp_init.write('init_data\n')  #num_iter = 10  #The number of iterations
-  fp_init.write('L,'+repr(L)+'\n')
-  fp_init.write('K,'+repr(K)+'\n')
-  fp_init.write('alpha0,'+repr(alpha0)+'\n')
-  fp_init.write('gamma0,'+repr(gamma0)+'\n')
-  fp_init.write('bata0,'+repr(beta0)+'\n')
-  fp_init.write('k0,'+repr(k0)+'\n')
-  fp_init.write('m0,'+repr(m0)+'\n')
-  fp_init.write('V0,'+repr(V0)+'\n')
-  fp_init.write('n0,'+repr(n0)+'\n')
-  fp_init.write('sigma_init,'+repr(sig_init)+'\n')
-  #fp_init.write('M,'+repr(M)+'\n')
-  fp_init.write('N,'+repr(N)+'\n')
-  fp_init.write('TN,'+repr(TN)+'\n')
-  fp_init.write('Ct_init\n')
-  for i in xrange(N):
-    fp_init.write(repr(i)+',')
-  fp_init.write('\n')
-  for i in xrange(N):
-    fp_init.write(repr(Ct_init[i])+',')
-  fp_init.write('\n')
-  fp_init.write('It_init\n')
-  for i in xrange(N):
-    fp_init.write(repr(i)+',')
-  fp_init.write('\n')
-  for i in xrange(N):
-    fp_init.write(repr(It_init[i])+',')
-  fp_init.write('\n')
-  fp_init.write('Position distribution_init\n')
-  for k in xrange(K):
-    fp_init.write('Mu_init'+repr(k)+',')
-    for dim in xrange(dimx):
-      fp_init.write(repr(float(Mu_init[k][dim]))+',')
-    fp_init.write('\n')
-  for k in xrange(K):
-    fp_init.write('Sig_init'+repr(k)+'\n')
-    fp_init.write(repr(S_init[k])+'\n')
-  for c in xrange(L):
-    fp_init.write('W_init'+repr(c)+','+repr(W_init[c])+'\n')
-  for c in xrange(L):
-    fp_init.write('theta_init'+repr(c)+','+repr(theta_init[c])+'\n')
-  for c in xrange(L):
-    fp_init.write(',')
-    for k in xrange(K):
-      fp_init.write(repr(k)+',')
-    fp_init.write('\n')
-    fp_init.write('phi_init'+repr(c)+',')
-    for k in xrange(K):
-      fp_init.write(repr(phi_init[c][k])+',')
-    fp_init.write('\n')
-  fp_init.write(',')
-  for c in xrange(L):
-    fp_init.write(repr(c)+',')
-  fp_init.write('\n')
-  fp_init.write('pi_init'+',')
-  for c in xrange(L):
-    fp_init.write(repr(pi_init[c])+',')
-  fp_init.write('\n')
-
-  for i in xrange(K):
-    fp_init.write(',')
-    for k in xrange(K):
-      fp_init.write(repr(k)+',')
-    fp_init.write('\n')
-    fp_init.write('psi_init'+repr(i)+',')
-    for k in xrange(K):
-      fp_init.write(repr(psi_init[i][k])+',')
-    fp_init.write('\n')
-
-  fp_init.close()
-"""
 # All parameter values are output for sampling results (or initial values)
 def SaveParameters_all(filename, trialname, iteration, sample, THETA, Ct, It, W_index, TN):
   phi, pi, W, theta, Mu, S, psi = THETA  #THETA = [phi, pi, W, theta, Mu, S, psi]
@@ -178,9 +97,9 @@ def SaveParameters_all(filename, trialname, iteration, sample, THETA, Ct, It, W_
     fp.write(repr(S[k])+'\n')
   
   for c in xrange(L):
-    fp.write(',')
+    #fp.write(',')
     for i in xrange(len(W_index)):
-      fp.write(W_index[i] + ',')   ##### 空白が入っているものがあるので注意(', ')
+      fp.write(',' + W_index[i])   ##### 空白が入っているものがあるので注意(', ')
     fp.write('\n')
     fp.write('W'+repr(c)+',')
     for i in xrange(len(W_index)):
@@ -188,9 +107,9 @@ def SaveParameters_all(filename, trialname, iteration, sample, THETA, Ct, It, W_
     fp.write('\n')
     
   for c in xrange(L):
-    fp.write(',')
+    #fp.write(',')
     for i in xrange(DimImg):
-      fp.write(repr(i) + ',')
+      fp.write(',' + repr(i))
     fp.write('\n')
     fp.write('theta'+repr(c)+',')
     for i in xrange(DimImg):
@@ -198,17 +117,17 @@ def SaveParameters_all(filename, trialname, iteration, sample, THETA, Ct, It, W_
     fp.write('\n')
 
   for c in xrange(L):
-    fp.write(',')
+    #fp.write(',')
     for k in xrange(K):
-      fp.write(repr(k)+',')
+      fp.write(',' + repr(k))
     fp.write('\n')
     fp.write('phi'+repr(c)+',')
     for k in xrange(K):
       fp.write(repr(phi[c][k])+',')
     fp.write('\n')
-  fp.write(',')
+  #fp.write(',')
   for c in xrange(L):
-    fp.write(repr(c)+',')
+    fp.write(',' + repr(c))
   fp.write('\n')
   fp.write('pi'+',')
   for c in xrange(L):
@@ -216,9 +135,9 @@ def SaveParameters_all(filename, trialname, iteration, sample, THETA, Ct, It, W_
   fp.write('\n')
 
   for i in xrange(K):
-    fp.write(',')
+    #fp.write(',')
     for k in xrange(K):
-      fp.write(repr(k)+',')
+      fp.write(',' + repr(k))
     fp.write('\n')
     fp.write('psi'+repr(i)+',')
     for k in xrange(K):
@@ -238,96 +157,27 @@ def SaveParameter_EachFile(filename, trialname, iteration, sample, THETA, Ct, It
   phi, pi, W, theta, Mu, S, psi = THETA  #THETA = [phi, pi, W, theta, Mu, S, psi]
   file_trialname   = filename + '/' + trialname
   iteration_sample = str(iteration) + "_" + str(sample) 
-  #N = DATA_NUM
 
   np.savetxt(file_trialname + '_Mu_'    + iteration_sample + '.csv', Mu,    delimiter=',')
   np.savetxt(file_trialname + '_W_'     + iteration_sample + '.csv', W,     delimiter=',')
-  np.savetxt(file_trialname + '_theta_' + iteration_sample + '.csv', theta, delimiter=',')
   np.savetxt(file_trialname + '_phi_'   + iteration_sample + '.csv', phi,   delimiter=',')
   np.savetxt(file_trialname + '_pi_'    + iteration_sample + '.csv', pi,    delimiter=',')
-  np.savetxt(file_trialname + '_Ct_'    + iteration_sample + '.csv', Ct,    delimiter=',')
-  np.savetxt(file_trialname + '_It_'    + iteration_sample + '.csv', It,    delimiter=',')
-  np.savetxt(file_trialname + '_W_'     + iteration_sample + '.csv', W,     delimiter=',')
+  np.savetxt(file_trialname + '_Ct_'    + iteration_sample + '.csv', Ct,    delimiter=',', fmt='%d')
+  np.savetxt(file_trialname + '_It_'    + iteration_sample + '.csv', It,    delimiter=',', fmt='%d')
 
-  np.save(file_trialname + '_Sig_' + iteration_sample, S)
-  np.save(file_trialname + '_psi_' + iteration_sample, psi)
-  
-  """
-  fp = open( file_trialname + '_Mu_'+ iteration_sample + '.csv', 'w')
-  for k in xrange(K):
-    for dim in xrange(dimx):
-      fp.write(repr(float(Mu[k][dim]))+',')
-    fp.write('\n')
-  fp.close()
+  np.save(file_trialname + '_Sig_'   + iteration_sample, S)
+  np.save(file_trialname + '_theta_' + iteration_sample, theta)
+  np.save(file_trialname + '_psi_'   + iteration_sample, psi)
 
-  fp = open( file_trialname + '_S_'+ iteration_sample + '.csv', 'w')
-  for k in xrange(K):
-    for dim in xrange(dimx):
-      for dim2 in xrange(dimx):
-        fp.write(repr(S[k][dim][dim2])+',')
-    fp.write('\n')
-  fp.close()
-
-  fp = open( file_trialname + '_W_'+ iteration_sample + '.csv', 'w')
-  for c in xrange(L):
-    for i in xrange(len(W[c])): #len(W_index)
-      fp.write(repr(W[c][i])+',')
-    fp.write('\n')
-  fp.close()
-
-  fp = open( file_trialname + '_theta_'+ iteration_sample + '.csv', 'w')
-  for c in xrange(L):
-    for i in xrange(len(theta[c])): 
-      fp.write(repr(theta[c][i])+',')
-    fp.write('\n')
-  fp.close()
-
-  fp = open( file_trialname + '_phi_'+ iteration_sample + '.csv', 'w')
-  for c in xrange(L):
-    for k in xrange(K):
-      fp.write(repr(phi[c][k])+',')
-    fp.write('\n')
-  fp.close()
-
-  fp = open( file_trialname + '_pi_'+ iteration_sample + '.csv', 'w')
-  for c in xrange(L):
-    fp.write(repr(pi[c])+',')
-  fp.write('\n')
-  fp.close()
-  
-  fp = open( file_trialname + '_Ct_'+ iteration_sample + '.csv', 'w')
-  for t in xrange(N):
-    fp.write(repr(Ct[t])+',')
-  fp.write('\n')
-  fp.close()
-  
-  fp = open( file_trialname + '_It_'+ iteration_sample + '.csv', 'w')
-  for t in xrange(N):
-    fp.write(repr(It[t])+',')
-  fp.write('\n')
-  fp.close()
-
-  fp = open( file_trialname + '_psi_'+ iteration_sample + '.csv', 'w')
-  for i in xrange(K):
-    for k in xrange(K):
-      fp.write(repr(psi[i][k])+',')
-    fp.write('\n')
-  fp.close()
-  """
-
-  #fp = open( filename + "/W_list.csv", 'w')
-  #for w in xrange(len(W_index)):
-  #  fp.write(W_index[w]+",")
-  #fp.close()
 
 # Output to file: the set of word recognition results
 def SaveWordData(filename, trialname, iteration, sample, W_index, Otb):
   N = DATA_NUM
   #filename_ot = raw_input("Otb:filename?(.csv) >")  #ファイル名を個別に指定する場合
   #filename_ot = trialname
-  fp = open(filename + '/' + trialname + '_ot_' + str(iteration) + "_" + str(sample) + '.csv', 'w')
+  fp  = open(filename + '/' + trialname + '_ot_' + str(iteration) + "_" + str(sample) + '.csv', 'w')
   fp2 = open(filename + '/' + trialname + '_w_index_' + str(iteration) + "_" + str(sample) + '.csv', 'w')
-  for n in xrange(N) : 
+  for n in xrange(N): 
     for j in xrange(len(Otb[n])):
       fp.write(Otb[n][j] + ',')
     fp.write('\n')
@@ -444,11 +294,18 @@ def ReadWordData(iteration):
     if (UseLM == 1):
       # Read Folder Path
       WordDatafile = filename + '/out_gmm_' + str(iteration) + '/' + str(sample) + '_samp.100'
-      for line in open(WordDatafile, 'r'):   ##*_samp.100を順番に読み込む
+      for line in open(WordDatafile, 'r'):   ## *_samp.100を順番に読み込む
         itemList = line[:-1].split(' ')
         itemList = Ignore_SP_Tags(itemList)  #remove <s>,<sp>,</s> and "\r", "": if its were segmented to words.
         Otb = Otb + [itemList]
-    elif (UseLM == 0):
+    elif (UseLM == 0) and (SIGVerse == 1):
+      # Read Folder Path
+      WordDatafile = inputfolder + word_folder
+      for line in open(WordDatafile, 'r'):   ## フォルダから発話単語列を順番に読み込む
+        itemList = line[:-1].split(' ')
+        itemList = Ignore_SP_Tags(itemList)  #remove <s>,<sp>,</s> and "\r", "": if its were segmented to words.
+        Otb = Otb + [itemList]
+    else: #(UseLM == 0)
       for word_data_num in range(DATA_NUM):
         # Read Folder Path
         WordDatafile = inputfolder + datasetname + word_folder + str(word_data_num) + ".txt"
@@ -493,14 +350,12 @@ def ReadWordData(iteration):
 ## Gibbs sampling
 ######################################################
 def Gibbs_Sampling(iteration, Otb_Samp, W_index_Samp, Xt, TN, Ft):
-    #Ct_Samp    = [ [ 0 for _ in xrange(DATA_NUM)] for _ in range(sample_num) ]
+    # TN = [i for i in xrange(N)]   #TN[N]: teaching time-step #テスト用教示時刻(step)集合
     THETA_Samp = [ [] for _ in range(sample_num) ]
     N = DATA_NUM
 
     for sample in xrange(sample_num):
-      #TN = [i for i in xrange(N)]   #TN[N]: teaching time-step #テスト用教示時刻(step)集合
-      #Otb_B[N][W_index]：時刻tごとの発話文をBOWにしたものの集合
-      Otb_B   = Otb_Samp[sample]
+      Otb_B   = Otb_Samp[sample]  # Otb_B[N][W_index]：時刻tごとの発話文をBOWにしたものの集合
       W_index = W_index_Samp[sample]
 
       ## Initialization of all parameters
@@ -566,66 +421,44 @@ def Gibbs_Sampling(iteration, Otb_Samp, W_index_Samp, Xt, TN, Ft):
         
         ########## ↓ ##### it(index of position distribution) is samplied ##### ↓ ##########
         print u"Sampling it... model:", IT_mode
-
-        #itと同じtのCtの値c番目のφc の要素kごとに事後multinomial distributionの値を計算
+        # itと同じtのCtの値c番目のφc の要素kごとに事後multinomial distributionの値を計算
         temp = np.ones(K)
-        for t in xrange(N):    #時刻tごとのdata
-          #it=k番目のμΣについての2-dimension Gaussian distributionをitと同じtのxtから計算
+        for t in xrange(N):    # 時刻tごとのdata
+          # it=k番目のμΣについての2-dimension Gaussian distributionをitと同じtのxtから計算
           temp = np.array([ multivariate_normal.logpdf(Xt[TN[t]], mean=Mu[k], cov=S[k]) 
-                            + np.log(phi[int(Ct[t])][k]) - np.log(np.sum(phi,0)[k]) 
-                             for k in xrange(K) ])
+                            + np.log(phi[int(Ct[t])][k]) for k in xrange(K) ])
           
           if (IT_mode == "HMM") and (t > 0):
-            temp += [ psi[k][It[t-1]] for k in xrange(K) ]  # Direct assignment sampling
+            temp += [ psi[k][It[t-1]] - np.log(np.sum(phi,0)[k]) for k in xrange(K) ]  # Direct assignment sampling
             
-          #temp = np.exp(temp)
-          #temp = temp / np.sum(temp)  #Normalization
           It[t] = list(multinomial.rvs(1,log2prob(temp))).index(1)
         print It
         ########## ↑ ##### it(index of position distribution) is samplied ##### ↑ ##########
         
         ########## ↓ ##### Ct(index of spatial concept) is samplied ##### ↓ ##########
         print u"Sampling Ct..."
-        #Ct～多項値P(Ot|Wc)*多項値P(it|φc)*多項P(c|π)  N個
-        
+        # Ct～多項値P(Ot|Wc)*多項値P(it|φc)*多項P(c|π)  N個
         temp = np.ones(L)
-        for t in xrange(N):    #時刻tごとのdata
+        for t in xrange(N):    # 時刻tごとのdata
+          # For each multinomial distribution (index of spatial concept)
           temp = np.array([ multinomial.logpmf(Otb_B[t], sum(Otb_B[t]), W[c]) 
                             + np.log(pi[c]) + np.log(phi[c][It[t]]) for c in xrange(L) ])
-          #for c in xrange(L):  # For each multinomial distribution (index of spatial concept)
-          #  temp[c] = pi[c] * phi[c][It[t]] * multinomial.pmf(Otb_B[t], sum(Otb_B[t]), W[c])
 
           if (UseFT == 1):
             temp += [ multinomial.logpmf(Ft[t], sum(Ft[t]), theta[c]) for c in xrange(L) ]
-            #print pi[c], phi[c][It[t]], multinomial.pmf(Otb_B[t], sum(Otb_B[t]), W[c]), multinomial.pmf(Ft[t], sum(Ft[t]), theta[c])
+            #print multinomial.pmf(Otb_B[t], sum(Otb_B[t]), W[c]), multinomial.pmf(Ft[t], sum(Ft[t]), theta[c])
             #print Ft[t]
 
-          #print "Ct",c,t,temp
-          #temp = np.exp(temp)
-          #temp = temp / np.sum(temp)  #Normalization
           Ct[t] = list(multinomial.rvs(1,log2prob(temp))).index(1)
         print Ct
         ########## ↑ ##### Ct(index of spatial concept) is samplied ##### ↑ ##########
         
         ########## ↓ ##### W(the name of place: multinomial distribution) is samplied ##### ↓ ##########
         print u"Sampling Wc..."
-        ##Dirichlet multinomial distributionからDirichlet Posterior distributionを計算しSamplingする
+        ## Dirichlet multinomial distributionからDirichlet Posterior distributionを計算しSamplingする
         temp = [ np.sum([int(Ct[t] == c)*np.array(Otb_B[t]) for t in range(N)],0)+beta0 for c in range(L) ]
-        """
-        temp = [ np.ones(len(W_index))*beta0 for c in xrange(L) ]  #集めて加算するための array :paramtersで初期化しておけばよい
-        #Ctがcであるときのdataを集める
-        for c in xrange(L):   #ctごとにL個分計算
-          #nc = 0
-          ##Posterior distributionのためのparamters計算
-          if c in Ct : 
-            for t in xrange(N): 
-              if Ct[t] == c : 
-                #dataを集めるたびに値を加算
-                temp[c] = temp[c] + np.array(Otb_B[t])
-                #nc = nc + 1  #counting the number of data
-            #print "%d n:%d %s" % (c,nc,temp[c])
-        """
-        #加算したdataとparamtersからPosterior distributionを計算しSampling
+
+        # 加算したdataとparamtersからPosterior distributionを計算しSampling
         W = [ np.mean(dirichlet(temp[c],Robust_W),0) for c in xrange(L) ] 
         
         if(terminal_output_prams == 1):
@@ -635,23 +468,10 @@ def Gibbs_Sampling(iteration, Otb_Samp, W_index_Samp, Xt, TN, Ft):
         ########## ↓ ##### theta(the image feature: multinomial distribution) is samplied ##### ↓ ##########
         if (UseFT == 1):
           print u"Sampling theta_c..."
-          ##Dirichlet multinomial distributionからDirichlet Posterior distributionを計算しSamplingする
+          ## Dirichlet multinomial distributionからDirichlet Posterior distributionを計算しSamplingする
           temp = [ np.sum([int(Ct[t] == c)*np.array(Ft[t]) for t in range(N)],0)+chi0 for c in range(L) ]
-          """
-          temp = [ np.ones(DimImg)*chi0 for c in xrange(L) ]  #集めて加算するための array :paramtersで初期化しておけばよい
-          #Ctがcであるときのdataを集める
-          for c in xrange(L) :   #ctごとにL個分計算
-            #nc = 0
-            ##Posterior distributionのためのparamters計算
-            if c in Ct : 
-              for t in xrange(N) : 
-                if Ct[t] == c : 
-                  #dataを集めるたびに値を加算
-                  temp[c] = temp[c] + np.array(Ft[t])
-                  #nc = nc + 1  #counting the number of data
-              #print "%d n:%d %s" % (c,nc,temp[c])
-          """
-          #加算したdataとparamtersからPosterior distributionを計算しSampling
+
+          # 加算したdataとparamtersからPosterior distributionを計算しSampling
           theta = [ np.mean(dirichlet(temp[c],Robust_theta),0) for c in xrange(L) ] 
           
           if(terminal_output_prams == 1):
@@ -661,37 +481,34 @@ def Gibbs_Sampling(iteration, Otb_Samp, W_index_Samp, Xt, TN, Ft):
         ########## ↓ ##### μ, Σ (the position distribution (Gaussian distribution: mean and covariance matrix) is samplied ##### ↓ ##########
         print u"Sampling Mu_i,Sigma_i..."
         np.random.seed()
-
-        for k in xrange(K) : 
+        for k in xrange(K):
           nk = It.count(k) #cc[k]
           kN,mN,nN,VN = PosteriorParameterGIW2(k,nk,N,It,Xt,k)
           
-          ##3.1##ΣをInv-WishartからSampling
-          S[k] = np.mean([invwishart.rvs(df=nN, scale=VN) for _ in xrange(Robust_Sig)],0) #サンプリングをロバストに
+          ##3.1## ΣをInv-WishartからSampling
+          S[k] = np.mean([invwishart.rvs(df=nN, scale=VN) for _ in xrange(Robust_Sig)],0) # サンプリングをロバストに
 
-          if np.linalg.det(S[k]) < -0.0: #半正定値を満たさない場合；エラー処理
+          if np.linalg.det(S[k]) < -0.0: # 半正定値を満たさない場合；エラー処理
             S[k] = invwishart.rvs(df=nN, scale=VN)
             print "Robust_Sig is NOT", Robust_Sig
           
-          ##3.2##μをGaussianからSampling
-          Mu[k] = np.mean([multivariate_normal.rvs(mean=mN, cov=S[k]/kN) for _ in xrange(Robust_Mu)],0) #サンプリングをロバストに
+          ##3.2## μをGaussianからSampling
+          Mu[k] = np.mean([multivariate_normal.rvs(mean=mN, cov=S[k]/kN) for _ in xrange(Robust_Mu)],0) # サンプリングをロバストに
           
         if(terminal_output_prams == 1):
-          for k in xrange(K) : 
-            if (It.count(k) != 0):  #dataなしは表示しない
-              print 'Mu'+str(k)+':'+str(Mu[k]),
-          print ''
-          if(terminal_output_prams == 1):
-            for k in xrange(K):
-              if (It.count(k) != 0):  #dataなしは表示しない
-                print 'sig'+str(k)+':'+str(S[k])
+          for k in xrange(K): 
+            if (It.count(k) != 0):  # dataなしは表示しない
+              print 'Mu'+str(k)+':'+str(Mu[k])
+          for k in xrange(K):
+            if (It.count(k) != 0):  # dataなしは表示しない
+              print 'Sig'+str(k)+':'+str(S[k])
         ########## ↑ ##### μ, Σ (the position distribution (Gaussian distribution: mean and covariance matrix) is samplied ##### ↑ ##########
         
        ########## ↓ ##### π(index of spatial conceptのmultinomial distribution) is samplied ##### ↓ ##########
         print u"Sampling PI..."
         temp = np.array([Ct.count(c) + alpha0 for c in xrange(L)])
 
-        #加算したdataとparamtersからPosterior distributionを計算しSampling
+        # 加算したdataとparamtersからPosterior distributionを計算しSampling
         pi = np.mean(dirichlet(temp,Robust_pi),0)
         if(terminal_output_prams == 1):
           print pi
@@ -699,20 +516,11 @@ def Gibbs_Sampling(iteration, Otb_Samp, W_index_Samp, Xt, TN, Ft):
         
         ########## ↓ ##### φ(index of position distributionのmultinomial distribution) is samplied ##### ↓ ##########
         print u"Sampling PHI_c..."
-        temp = [ np.sum([int(Ct[t] == c)*np.array([int(It[t] == k) for k in range(K)]) for t in range(N)],0)+gamma0 for c in xrange(L) ]
+        temp = [ np.sum([int(Ct[t] == c)*np.array([int(It[t] == k) for k in range(K)]) for t in range(N)],0)
+                 + gamma0 for c in xrange(L) ]
 
-        """
-        for c in xrange(L):  #L個分
-          temp = np.ones(K) * gamma0
-          #Ctとcが一致するdataを集める
-          if c in Ct :
-            for t in xrange(N):
-              if Ct[t] == c:  #Ctとcが一致したdataで
-                temp = temp + [int(It[t] == k) for k in range(K)] ## 変更、要確認
-                #index kごとに, dataとindex番号が一致したとき, 集めたdataを元にindex of position distributionごとに加算
-        """
-        #加算したdataとparamtersからPosterior distributionを計算しSampling
-        phi = [ np.mean(dirichlet(temp,Robust_phi),0) for c in range(L) ]
+        # 加算したdataとparamtersからPosterior distributionを計算しSampling
+        phi = [ np.mean(dirichlet(temp[c],Robust_phi),0) for c in range(L) ]
           
         if(terminal_output_prams == 1):
           for c in xrange(L):  #L個分
@@ -724,10 +532,8 @@ def Gibbs_Sampling(iteration, Otb_Samp, W_index_Samp, Xt, TN, Ft):
         if (IT_mode == "HMM"):
           print u"Sampling psi_k..." 
           temp = np.ones((K,K)) * omega0
-          for t in xrange(1,N):    #時刻tごとのdata
+          for t in xrange(1,N):    # 時刻tごとのdata
             temp[It[t]][It[t-1]] += 1.0
-            #for k in range(K):
-            # temp[k][It[t-1]] += int(It[t] == k) 
           if (transition_type == "sym"):
             temp = (temp + temp.T) #/ 2.0
           
@@ -742,6 +548,7 @@ def Gibbs_Sampling(iteration, Otb_Samp, W_index_Samp, Xt, TN, Ft):
       ####                 ↑Learning phase of spatial concept↑                 ####
       ############################################################################# 
       THETA = [phi, pi, W, theta, Mu, S, psi]
+      THETA_Samp[sample] = THETA
 
       ########  ↓File output↓  ########
       print "--------------------"
@@ -780,10 +587,7 @@ def Gibbs_Sampling(iteration, Otb_Samp, W_index_Samp, Xt, TN, Ft):
       print 'File Output Successful!(filename:'+filename+ "_" +str(iteration) + "_" + str(sample) + ')\n'
       ########  ↑File output↑  ########
 
-      #Ct_Samp[sample]    = Ct
-      THETA_Samp[sample] = THETA
-
-    return THETA_Samp #Ct_Samp, 
+    return THETA_Samp  
 
 ## 発話した文章ごとに相互情報量を計算し、サンプリング結果を選ぶ
 def SelectMaxWordDict(iteration, THETA, W_index):
@@ -833,7 +637,7 @@ def SelectMaxWordDict(iteration, THETA, W_index):
     #  print W_in
     
     ## 場所の名前W（多項分布）をW_inに含まれる単語のみにする
-    W_reco = [ [0.0 for j in xrange(len(W_in))] for c in xrange(L) ]  #場所の名前(多項分布：W_index次元)[L]
+    W_reco = np.array([ [0.0 for j in xrange(len(W_in))] for c in xrange(L) ])  # 場所の名前(多項分布：W_index次元)[L]
     for c in xrange(L):
       for j in xrange(len(W_index[sample])):
         for i in xrange(len(W_in)):
@@ -841,17 +645,18 @@ def SelectMaxWordDict(iteration, THETA, W_index):
             W_reco[c][i] = float(W[c][j])
       
       # 正規化処理(全要素が0になるのを回避する処理入り)
-      W_reco_sum    = fsum(W_reco[c])
-      W_reco_max    = max(W_reco[c])
+      W_reco_sum    = np.sum(W_reco[c])
+      W_reco_max    = np.max(W_reco[c])
       W_reco_summax = float(W_reco_sum) / W_reco_max
-      W_reco[c] = [float(float(W_reco[c][i])/W_reco_max) / W_reco_summax for i in xrange(len(W_in))]
+      W_reco[c] = (W_reco[c] / W_reco_max) / W_reco_summax
+      # [float(float(W_reco[c][i])/W_reco_max) / W_reco_summax for i in xrange(len(W_in))]
     #print W_reco
     
     ### 相互情報量を計算(それぞれの単語とCtとの共起性を見る)
     MI_Samp2[sample] = Mutual_Info(W_reco,pi)
     print "sample:",sample," MI:",MI_Samp2[sample]
     
-  MAX_Samp = MI_Samp2.index(max(MI_Samp2))  #相互情報量が最大のサンプル番号
+  MAX_Samp = MI_Samp2.index(max(MI_Samp2))  # 相互情報量が最大のサンプル番号
   
   ## ファイル出力
   fp = open(file_trialname + '_sougo_MI_' + str(iteration) + '.csv', 'w')
@@ -869,6 +674,7 @@ def WordDictionaryUpdate(iteration, W_index):
   i_best    = len(W_index)  ## 相互情報量上位の単語をどれだけ使うか(len(W_index):すべて)
   hatsuon   = [ "" for i in xrange(i_best) ]
   TANGO     = []
+
   ## 単語辞書の読み込み
   for line in open(lmfolder + lang_init, 'r'):
     itemList = line[:-1].split('	')
@@ -876,20 +682,17 @@ def WordDictionaryUpdate(iteration, W_index):
     for j in xrange(len(itemList)):
       itemList[j] = itemList[j].replace("[", "")
       itemList[j] = itemList[j].replace("]", "")
-    
     TANGO = TANGO + [[itemList[1],itemList[2]]]   
   #print TANGO
   
   ## W_indexの単語を順番に処理していく
-  for c in xrange(i_best):    # i_best = len(W_index)
-    #W_list_sj = unicode(MI_best[c][i], encoding='shift_jis')
+  for c in xrange(i_best):
     W_list_sj = unicode(W_index[c], encoding='shift_jis')
     if len(W_list_sj) != 1:  ##１文字は除外
-      #for moji in xrange(len(W_list_sj)):
       moji = 0
       while (moji < len(W_list_sj)):
         flag_moji = 0
-        #print len(W_list_sj),str(W_list_sj),moji,W_list_sj[moji]#,len(unicode(W_index[i], encoding='shift_jis'))
+        #print len(W_list_sj),str(W_list_sj),moji,W_list_sj[moji] #,len(unicode(W_index[i], encoding='shift_jis'))
         
         for j in xrange(len(TANGO)):
           if (len(W_list_sj)-2 > moji) and (flag_moji == 0): 
@@ -931,9 +734,8 @@ def WordDictionaryUpdate(iteration, W_index):
       hatsuon[i] = hatsuon[i].replace("_B","_I")
       hatsuon[i] = hatsuon[i].replace("_E","_I")
     
-    # hatsuonの単語の先頭の音素を"*_B"にする
     for i in range(len(hatsuon)):
-      #onsohyoki_index = onsohyoki.find(target)
+      # hatsuonの単語の先頭の音素を"*_B"にする
       hatsuon[i] = hatsuon[i].replace("_I","_B", 1)
       
       # hatsuonの単語の最後の音素を"*_E"にする
@@ -957,7 +759,7 @@ def WordDictionaryUpdate(iteration, W_index):
   c = 0
   for mi in xrange(i_best):    # i_best = len(W_index)
     if hatsuon[mi] != "":
-      if ((W_index[mi] in LIST_plus) == False):  #同一単語を除外
+      if ((W_index[mi] in LIST_plus) == False):  # 同一単語を除外
         flag_tango = 0
         for j in xrange(len(TANGO)):
           if (W_index[mi] == TANGO[j][0]):
@@ -965,7 +767,7 @@ def WordDictionaryUpdate(iteration, W_index):
         if flag_tango == 0:
           LIST_plus = LIST_plus + [W_index[mi]]
           
-          fp.write(LIST_plus[c] + "+" + meishi +"	[" + LIST_plus[c] + "]	" + hatsuon[mi])
+          fp.write(LIST_plus[c] + "+" + meishi + "	[" + LIST_plus[c] + "]	" + hatsuon[mi])
           fp.write('\n')
           c += 1
   fp.close()
@@ -974,7 +776,7 @@ def WordDictionaryUpdate(iteration, W_index):
 
 
 if __name__ == '__main__':
-    #Request a file name for output
+    # Request a file name for output
     #trialname = raw_input("trialname?(folder) >")
     trialname = sys.argv[1]
     print trialname
@@ -983,7 +785,6 @@ if __name__ == '__main__':
     datasetNUM  = sys.argv[2] #0
     datasetname = "3LDK_" + datasets[int(datasetNUM)]
     print "ROOM:", datasetname #datasetPATH
-    #print trialname
     ########## SIGVerse ##########
     
     start_time = time.time()
@@ -997,9 +798,9 @@ if __name__ == '__main__':
     # DATA read
     Xt, TN = ReadPositionData()  # Reading Position data 
     if (UseFT == 1):
-      Ft = ReadImageData_SIGVerse()     # Reading Image feature data
+      Ft = ReadImageData_SIGVerse()  # Reading Image feature data
     else:
-      Ft = []
+      Ft = []  #dummy
 
     for i in xrange(ITERATION):
       print "--------------------------------------------------"

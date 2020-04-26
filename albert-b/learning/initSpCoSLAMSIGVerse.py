@@ -10,6 +10,7 @@ word_increment = 1.0    # The increment number of word observation data (BoWs)
 dimx = 2                # The number of dimensions of xt (x,y)
 
 terminal_output_prams = 0  # Terminalにサンプリングされたパラメータを表示する (ON:1,OFF:0)
+SIGVerse = 1
 
 ##### SpCoA++ (word segmentation) #####
 ## latticelm parameters
@@ -41,7 +42,7 @@ sampling_method = "DA"   # "DA": Direct Assignment, "BGS":Blocked Gibbs Sampling
 if (nonpara == 1):
   L = 20             # The number of spatial concepts (weak-limit number) #50 #100
   K = 20             # The number of position distributions (weak-limit number) #50 #100
-  alpha0 = 20.00 / float(L)  # Hyperparameter of Dir(π) for index of spatial concept
+  alpha0 = 10.00 / float(L)  # Hyperparameter of Dir(π) for index of spatial concept
   gamma0 = 10.00 / float(K)  # Hyperparameter of Dir(φ) for index of position 
                              #  (GMM mixtured component; spatial concept dependent)
   omega0 = 10.00 / float(K)  # Hyperparameter of Dir(ψ) for index of position distribution
@@ -153,7 +154,8 @@ speech_folder = inputfolder + "speech/*.wav"
 PositionDataFile = '/position/position_AURO.csv' #'SpCoSLAM.csv'      # 'test000' 
 
 ## Word data folder path
-word_folder = "/name/per_100/word" # "/name/" + example_folder + "word"
+word_folder = "SpCoSLAM_human.csv"
+"/name/per_100/word" # "/name/" + example_folder + "word"
 
 ## Navigation folder (Other output files are also in same folder.)
 navigation_folder = "/navi/"  #outputfolder + trialname + / + navigation_folder + contmap.csv
