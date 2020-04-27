@@ -448,38 +448,56 @@ def Gibbs_Sampling(iteration, Otb_Samp, W_index_Samp, Xt, TN, Ft):
         for t in xrange(N):    # 時刻tごとのdata
           # For each multinomial distribution (index of spatial concept)
           temp = np.array([ multinomial.logpmf(Otb_B[t], sum(Otb_B[t]), W[c]) for c in xrange(L) ])
+          count_nan = 0
           while (True in np.isnan(temp)):
-              print "[nan]ot", temp
-              nanind = np.where(np.isnan(temp))[0]
-              print Otb_B[t], sum(Otb_B[t]), W[nanind[0]], np.sum(W[nanind[0]])
-              print multinomial.pmf(Otb_B[t], sum(Otb_B[t]), (W[nanind[0]]+approx_zero)/np.sum((W[nanind[0]]+approx_zero)))
-              temp[nanind[0]] = multinomial.pmf(Otb_B[t], sum(Otb_B[t]), (W[nanind[0]]+approx_zero)/np.sum((W[nanind[0]]+approx_zero)))
-              print temp[nanind[0]]
+            #print "[nan]ot", temp
+            nanind = np.where(np.isnan(temp))[0]
+            W_refine = (W[nanind[0]]+approx_zero)/np.sum((W[nanind[0]]+approx_zero))
+            #print Otb_B[t], sum(Otb_B[t]), W[nanind[0]], np.sum(W[nanind[0]])
+            #print multinomial.pmf(Otb_B[t], sum(Otb_B[t]), (W[nanind[0]]+approx_zero)/np.sum((W[nanind[0]]+approx_zero)))
+            temp[nanind[0]] = multinomial.logpmf(Otb_B[t], sum(Otb_B[t]), W_refine)
+            print "[nan] Wc", nanind[0], temp[nanind[0]]
+            count_nan += 1
+            if (True in [ temp[nanind[0]] ]):
+               temp[nanind[0]] = approx_zero
+            if (count_nan >= len(temp)):
+              temp = log2prob(temp)
           temp += np.array([ np.log(pi[c]+approx_zero) + np.log(phi[c][It[t]]+approx_zero) for c in xrange(L) ])
-          if (True in np.isnan(temp)):
-              print "[nan]pi phi", temp
+          #if (True in np.isnan(temp)):
+          #    print "[nan]pi phi", temp
 
           if (UseFT == 1):
-            if (True in np.isnan(temp)):
-              print "[nan]a"
+            #if (True in np.isnan(temp)):
+            #  print "[nan]a"
             temp = np.log(log2prob(temp))
-            if (True in np.isnan(temp)):
-              print "[nan]b"
+            #if (True in np.isnan(temp)):
+            #  print "[nan]b"
             temp_FT = np.array([ multinomial.logpmf(Ft[t], sum(Ft[t]), theta[c]) for c in xrange(L) ])
+            count_nan = 0
+            while (True in np.isnan(temp_FT)):
+              nanind = np.where(np.isnan(temp_FT))[0]
+              theta_refine = (theta[nanind[0]]+approx_zero)/np.sum((theta[nanind[0]]+approx_zero))
+              temp_FT[nanind[0]] = multinomial.logpmf(Ft[t], sum(Ft[t]), theta_refine)
+              print "[nan] theta_c", temp_FT[nanind[0]]
+              count_nan += 1
+              if (True in [ temp_FT[nanind[0]] ]):
+                temp_FT[nanind[0]] = approx_zero
+              if (count_nan >= len(temp_FT)):
+                temp_FT = log2prob(temp_FT)
             #print np.max(temp_FT)
-            temp_FT -= np.max(temp_FT)
-            temp += temp_FT
-            print np.array([( multinomial.pmf(Ft[t], sum(Ft[t]), theta[c]), 
-                              multinomial.logpmf(Ft[t], sum(Ft[t]), theta[c]) ) for c in range(L)])
+            #temp_FT -= np.max(temp_FT)
+            temp += np.log(log2prob(temp_FT)) #temp_FT
+            #print np.array([( multinomial.pmf(Ft[t], sum(Ft[t]), theta[c]), 
+            #                  multinomial.logpmf(Ft[t], sum(Ft[t]), theta[c]) ) for c in range(L)])
             #print Ft[t]
-            if (True in np.isnan(temp)):
-              print "[nan]c"
+            #if (True in np.isnan(temp)):
+            #  print "[nan]c"
 
           tempsamp = multinomial.rvs(1,log2prob(temp))
-          if (1 not in tempsamp):
-            print log2prob(temp)
-            print temp
-            print tempsamp
+          #if (1 not in tempsamp):
+          #  print log2prob(temp)
+          #  print temp
+          #  print tempsamp
           Ct[t] = list(tempsamp).index(1)
         print Ct
         ########## ↑ ##### Ct(index of spatial concept) is samplied ##### ↑ ##########
