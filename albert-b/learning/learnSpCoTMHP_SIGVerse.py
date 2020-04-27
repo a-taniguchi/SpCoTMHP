@@ -69,24 +69,26 @@ def SaveParameters_all(filename, trialname, iteration, sample, THETA, Ct, It, W_
   fp = open( filename + '/' + trialname + '_' + save_type + '_' + str(iteration) + "_" + str(sample) + '.csv', 'w')
   if (W_index[0] == "init"):
     fp.write('init_data\n')
-    fp.write('TN,'+repr(TN)+'\n')
+    fp.write('TN,'+repr(TN))
   else:
-     fp.write('sampling_data,'+repr(num_iter)+'\n')  #The number of iterations
-  fp.write('Ct\n')
+     fp.write('sampling_data,'+repr(num_iter))  #The number of iterations
+
+  fp.write('\nCt\n')
   for i in xrange(N):
     fp.write(repr(i)+',')
   fp.write('\n')
   for i in xrange(N):
     fp.write(repr(Ct[i])+',')
-  fp.write('\n')
-  fp.write('It\n')
+  #fp.write('\n')
+  fp.write('\nIt\n')
   for i in xrange(N):
     fp.write(repr(i)+',')
   fp.write('\n')
   for i in xrange(N):
     fp.write(repr(It[i])+',')
-  fp.write('\n')
-  fp.write('Position distribution\n')
+
+  #fp.write('\n')
+  fp.write('\nPosition distribution\n')
   for k in xrange(K):
     fp.write('Mu'+repr(k)+',')
     for dim in xrange(dimx):
@@ -94,37 +96,41 @@ def SaveParameters_all(filename, trialname, iteration, sample, THETA, Ct, It, W_
     fp.write('\n')
   for k in xrange(K):
     fp.write('Sig'+repr(k)+'\n')
-    fp.write(repr(S[k])+'\n')
+    for dim1 in range(dimx):
+      for dim2 in range(dimx):
+        fp.write(repr(S[k][dim1][dim2])+',')
+      fp.write('\n')
   
+  #fp.write(',')
+  for i in xrange(len(W_index)):
+    fp.write(',' + W_index[i])   # 空白が入っているものがあるので注意(', ')
+  fp.write('\n')
   for c in xrange(L):
-    #fp.write(',')
-    for i in xrange(len(W_index)):
-      fp.write(',' + W_index[i])   ##### 空白が入っているものがあるので注意(', ')
-    fp.write('\n')
     fp.write('W'+repr(c)+',')
     for i in xrange(len(W_index)):
       fp.write(repr(W[c][i])+',')
     fp.write('\n')
     
   for c in xrange(L):
-    #fp.write(',')
-    for i in xrange(DimImg):
-      fp.write(',' + repr(i))
-    fp.write('\n')
+    ##fp.write(',')
+    #for i in xrange(DimImg):
+    #  fp.write(',' + repr(i))
+    #fp.write('\n')
     fp.write('theta'+repr(c)+',')
     for i in xrange(DimImg):
       fp.write(repr(theta[c][i])+',')
     fp.write('\n')
 
   for c in xrange(L):
-    #fp.write(',')
-    for k in xrange(K):
-      fp.write(',' + repr(k))
-    fp.write('\n')
+    ##fp.write(',')
+    #for k in xrange(K):
+    #  fp.write(',' + repr(k))
+    #fp.write('\n')
     fp.write('phi'+repr(c)+',')
     for k in xrange(K):
       fp.write(repr(phi[c][k])+',')
     fp.write('\n')
+
   #fp.write(',')
   for c in xrange(L):
     fp.write(',' + repr(c))
@@ -135,10 +141,10 @@ def SaveParameters_all(filename, trialname, iteration, sample, THETA, Ct, It, W_
   fp.write('\n')
 
   for i in xrange(K):
-    #fp.write(',')
-    for k in xrange(K):
-      fp.write(',' + repr(k))
-    fp.write('\n')
+    ##fp.write(',')
+    #for k in xrange(K):
+    #  fp.write(',' + repr(k))
+    #fp.write('\n')
     fp.write('psi'+repr(i)+',')
     for k in xrange(K):
       fp.write(repr(psi[i][k])+',')
@@ -329,7 +335,7 @@ def ReadWordData(iteration):
     
     print "[",
     for i in xrange(len(W_index)):
-      print "\""+ str(i) + ":" + str(W_index[i]) + "\",",
+      print "\""+ str(i) + ":" + unicode(W_index[i], encoding='shift_jis') + "\",",
     print "]"
     
     ## Vectorize: Bag-of-Words for each time-step n (=t)
@@ -391,7 +397,7 @@ def Gibbs_Sampling(iteration, Otb_Samp, W_index_Samp, Xt, TN, Ft):
           psi = np.array([ stick_breaking(omega0*K, K) for _ in xrange(K) ])
         elif (nonpara == 0):
           psi = np.array([ [ 1.0/K for _ in xrange(K) ] for _ in xrange(K) ])
-        print ">> psi init\n", psi
+        #print ">> psi init\n", psi
       else:
         psi = np.ones((K,K)) #dummy
 
@@ -417,7 +423,7 @@ def Gibbs_Sampling(iteration, Otb_Samp, W_index_Samp, Xt, TN, Ft):
       print u"- <START> Learning of Spatial Concepts ver. NEW MODEL. -"
       
       for iter in xrange(num_iter):   # Iteration of Gibbs sampling
-        print '--- Iter.' + repr(iter+1) + '---'
+        print ' ----- Iter.' + repr(iter+1) + ' ----- '
         
         ########## ↓ ##### it(index of position distribution) is samplied ##### ↓ ##########
         print u"Sampling it... model:", IT_mode
@@ -441,15 +447,40 @@ def Gibbs_Sampling(iteration, Otb_Samp, W_index_Samp, Xt, TN, Ft):
         temp = np.ones(L)
         for t in xrange(N):    # 時刻tごとのdata
           # For each multinomial distribution (index of spatial concept)
-          temp = np.array([ multinomial.logpmf(Otb_B[t], sum(Otb_B[t]), W[c]) 
-                            + np.log(pi[c]) + np.log(phi[c][It[t]]) for c in xrange(L) ])
+          temp = np.array([ multinomial.logpmf(Otb_B[t], sum(Otb_B[t]), W[c]) for c in xrange(L) ])
+          while (True in np.isnan(temp)):
+              print "[nan]ot", temp
+              nanind = np.where(np.isnan(temp))[0]
+              print Otb_B[t], sum(Otb_B[t]), W[nanind[0]], np.sum(W[nanind[0]])
+              print multinomial.pmf(Otb_B[t], sum(Otb_B[t]), (W[nanind[0]]+approx_zero)/np.sum((W[nanind[0]]+approx_zero)))
+              temp[nanind[0]] = multinomial.pmf(Otb_B[t], sum(Otb_B[t]), (W[nanind[0]]+approx_zero)/np.sum((W[nanind[0]]+approx_zero)))
+              print temp[nanind[0]]
+          temp += np.array([ np.log(pi[c]+approx_zero) + np.log(phi[c][It[t]]+approx_zero) for c in xrange(L) ])
+          if (True in np.isnan(temp)):
+              print "[nan]pi phi", temp
 
           if (UseFT == 1):
-            temp += [ multinomial.logpmf(Ft[t], sum(Ft[t]), theta[c]) for c in xrange(L) ]
-            #print multinomial.pmf(Otb_B[t], sum(Otb_B[t]), W[c]), multinomial.pmf(Ft[t], sum(Ft[t]), theta[c])
+            if (True in np.isnan(temp)):
+              print "[nan]a"
+            temp = np.log(log2prob(temp))
+            if (True in np.isnan(temp)):
+              print "[nan]b"
+            temp_FT = np.array([ multinomial.logpmf(Ft[t], sum(Ft[t]), theta[c]) for c in xrange(L) ])
+            #print np.max(temp_FT)
+            temp_FT -= np.max(temp_FT)
+            temp += temp_FT
+            print np.array([( multinomial.pmf(Ft[t], sum(Ft[t]), theta[c]), 
+                              multinomial.logpmf(Ft[t], sum(Ft[t]), theta[c]) ) for c in range(L)])
             #print Ft[t]
+            if (True in np.isnan(temp)):
+              print "[nan]c"
 
-          Ct[t] = list(multinomial.rvs(1,log2prob(temp))).index(1)
+          tempsamp = multinomial.rvs(1,log2prob(temp))
+          if (1 not in tempsamp):
+            print log2prob(temp)
+            print temp
+            print tempsamp
+          Ct[t] = list(tempsamp).index(1)
         print Ct
         ########## ↑ ##### Ct(index of spatial concept) is samplied ##### ↑ ##########
         
@@ -688,7 +719,7 @@ def WordDictionaryUpdate(iteration, W_index):
   ## W_indexの単語を順番に処理していく
   for c in xrange(i_best):
     W_list_sj = unicode(W_index[c], encoding='shift_jis')
-    if len(W_list_sj) != 1:  ##１文字は除外
+    if len(W_list_sj) != 1:  ## 1文字は除外
       moji = 0
       while (moji < len(W_list_sj)):
         flag_moji = 0

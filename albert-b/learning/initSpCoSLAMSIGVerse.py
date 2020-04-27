@@ -27,7 +27,7 @@ threshold  = 0.01                   # 単語の選択の閾値 in SpCoA++
 
 ################### Change models ###################
 nonpara = 1     # Nonparametric Bayes method (ON:1,OFF:0)
-UseFT   = 0     # 画像特徴を使う場合(1), 使わない場合(0) 
+UseFT   = 1     # 画像特徴を使う場合(1), 使わない場合(0) 
 UseLM   = 0     # 言語モデルを更新する場合(1), しない場合(0) (音声認識・単語分割を含む)
 
 ##### Add SpCoTMHP #####
@@ -69,13 +69,13 @@ k0m0m0 = k0*np.dot(np.array([m0]).T,np.array([m0]))
 approx_zero = 10.0**(-200)   # approximated value of log(0)
 
 ## The number of samples for robust sampling 
-Robust_W     = 1000
-Robust_Sig   = 100
+Robust_W     = 1#000
+Robust_Sig   = 1#00
 Robust_Mu    = 1
-Robust_pi    = 1000
-Robust_phi   = 1000
-Robust_theta = 1000
-Robust_psi   = 1000 
+Robust_pi    = 1#000
+Robust_phi   = 1#000
+Robust_theta = 1#000
+Robust_psi   = 1#000 
 
 ## Image feature parameter setting
 CNNmode = 1            # Select image feature descriptor

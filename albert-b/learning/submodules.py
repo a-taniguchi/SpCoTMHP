@@ -15,15 +15,25 @@ def Makedir(dir):
         pass
         
 def fill_param(param, default):   ##パラメータをNone の場合のみデフォルト値に差し替える関数
-    if (param == None): return default
-    else: return param
+  if (param == None): return default
+  else: return param
 
 def log2prob(log_prob_array):  #Normalization
-   log_prob_array = log_prob_array - np.max(log_prob_array)
-   #prob_array = np.exp( log_prob_array - np.log(np.sum(np.exp(log_prob_array))) )
-   prob_array = np.exp(log_prob_array)
-   prob_array = prob_array / np.sum(prob_array)
-   return prob_array
+  while (True in np.isnan(log_prob_array)):
+    #nanind = np.where(np.isnan(log_prob_array))
+    np.nan_to_num(log_prob_array)  # 配列中のNaNを他の値に置換
+  max_prob = np.max(log_prob_array)
+  log_prob_array = log_prob_array - max_prob
+  #prob_array = np.exp( log_prob_array - np.log(np.sum(np.exp(log_prob_array))) )
+  prob_array = np.exp(log_prob_array)
+  sum_prob = np.sum(prob_array)
+  prob_array = prob_array / sum_prob
+  #if (max_prob in [ np.nan, -np.inf, np.inf, float("nan") ]) or (sum_prob in [ np.nan, -np.inf, np.inf, 0.0, float("nan") ]):
+  #  print "[Prob Error]", max_prob, sum_prob
+  if (float("nan") in prob_array) or (True in np.isnan(prob_array)):
+    print "[Prob Error (nan)]", max_prob, sum_prob
+    print prob_array
+  return prob_array
         
 def multivariate_t_distribution(x, mu, Sigma, df):
     """
