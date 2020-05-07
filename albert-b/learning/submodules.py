@@ -5,8 +5,8 @@ import os
 import numpy as np
 from math import pi as PI
 from math import cos,sin,sqrt,exp,log,fabs,fsum,degrees,radians,atan2,gamma,lgamma
-from initSpCoSLAMSIGVerse import *
-#from __init__ import *
+#from initSpCoSLAMSIGVerse import *
+from __init__ import *
 
 def Makedir(dir):
     try:

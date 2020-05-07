@@ -2,11 +2,11 @@
 
 ##############################################
 ## Spatial concept formation model (SpCoA++ with lexical acquisition)
-## For SpCoTMHP (on SIGVerse)
+## For SpCoTMHP (on SIGVerse and albert-b dataset)
 ## Learning algorithm is Gibbs sampling.
-## Akira Taniguchi 2020/04/14-2020/04/26-
+## Akira Taniguchi 2020/04/14-2020/04/26-2020/05/06-
 ##############################################
-# python ./learnSpCoTMHP_SIGVerse.py trialname ** (3LDK_**)
+# python ./learnSpCoTMHP.py trialname ** (3LDK_**)
 
 import glob
 import os
@@ -21,8 +21,9 @@ from numpy.random import uniform,dirichlet
 from scipy.stats import multivariate_normal,invwishart,multinomial
 from math import pi as PI
 from math import cos,sin,sqrt,exp,log,fabs,fsum #,degrees,radians,atan2,gamma,lgamma
-from initSpCoSLAMSIGVerse import *
-from JuliusLattice_dec_SIGVerse import *
+#from initSpCoSLAMSIGVerse import *
+from __init__ import *
+from JuliusLattice_dec import *
 from submodules import *
 
 # Mutual information (binary variable): word_index, W, π, Ct
@@ -248,15 +249,42 @@ def ReadPositionData():
     #exit()
   return Xt,TN
 
-# Read Image feature data (フォルダパス設定が必要)
+# Read Image feature data (フォルダパス設定が必要) (For SIGVerseと統合)
 def ReadImageData():
   FT = []
+  if (SIGVerse == 1):
+    files = glob.glob(datasetfolder + datasetname + '/' + Descriptor + "/*.csv")
+    files.sort()
+
   for s in xrange(DATA_NUM):
-    for line in open( datasetfolder + datasetname + '/img/ft' + str(s+1) + '.csv', 'r'):
-      itemList = line[:].split(',')
-    FT.append( [float(itemList[i]) for i in xrange(DimImg)] )
+    if (SIGVerse == 1):
+      FT_temp = []
+      i = 0
+      for line in open( files[s], 'r'):
+        if (i < DimImg):
+          FT_temp.append(float(line)*Feture_times)
+        i += 1
+    else:
+      for line in open( datasetfolder + datasetname + ImageFolder + Descriptor + '/ft' + str(s+1) + '.csv', 'r'):
+        itemList = line[:].split(',')
+        FT_temp = [float(itemList[i])*Feture_times for i in range(DimImg)] 
+      #FT.append( [float(itemList[i]) for i in xrange(DimImg)] )
+
+    if (Feture_noize > 0.0):
+      FT_temp = [FT_temp[i]+(Feture_noize/float(DimImg)) for i in range(DimImg)] 
+    if (Feture_sum_1 == 1):
+      Ft_sum = sum(FT_temp)
+      FT_temp = [FT_temp[i]/float(Ft_sum) for i in range(DimImg)] 
+    FT.append( FT_temp )
+
+  if( DATA_NUM != len(FT) ):
+    print "ERROR FT", DATA_NUM, len(FT)
+  else:
+    print "READ FT", DATA_NUM, len(FT[0])
+  #print FT
   return FT
 
+"""
 # Reading data for image feature (For SIGVerse)
 def ReadImageData_SIGVerse():
   FT = []
@@ -285,6 +313,7 @@ def ReadImageData_SIGVerse():
     print "READ FT", DATA_NUM, len(FT[0])
   #print FT
   return FT
+"""
 
 # Read Word data (segmenated word sequences)
 def ReadWordData(iteration):
@@ -306,15 +335,15 @@ def ReadWordData(iteration):
         Otb = Otb + [itemList]
     elif (UseLM == 0) and (SIGVerse == 1):
       # Read Folder Path
-      WordDatafile = inputfolder + word_folder
+      WordDatafile = datasetfolder + word_folder
       for line in open(WordDatafile, 'r'):   ## フォルダから発話単語列を順番に読み込む
         itemList = line[:-1].split(' ')
         itemList = Ignore_SP_Tags(itemList)  #remove <s>,<sp>,</s> and "\r", "": if its were segmented to words.
         Otb = Otb + [itemList]
-    else: #(UseLM == 0)
+    else: #(UseLM == 0) and not SIGVerse
       for word_data_num in range(DATA_NUM):
         # Read Folder Path
-        WordDatafile = inputfolder + datasetname + word_folder + str(word_data_num) + ".txt"
+        WordDatafile = datasetfolder + datasetname + word_folder + str(word_data_num) + ".txt"
         f = open(WordDatafile, "r")
         line = f.read()
         itemList = line[:].split(' ')
@@ -811,9 +840,12 @@ if __name__ == '__main__':
     print trialname
 
     ########## SIGVerse ##########
-    datasetNUM  = sys.argv[2] #0
-    datasetname = "3LDK_" + datasets[int(datasetNUM)]
-    print "ROOM:", datasetname #datasetPATH
+    if (SIGVerse == 1):
+      datasetNUM  = sys.argv[2] #0
+      datasetname = "3LDK_" + datasets[int(datasetNUM)]
+      print "ROOM:", datasetname #datasetPATH
+    else: 
+      datasetname = ""
     ########## SIGVerse ##########
     
     start_time = time.time()
@@ -827,7 +859,7 @@ if __name__ == '__main__':
     # DATA read
     Xt, TN = ReadPositionData()  # Reading Position data 
     if (UseFT == 1):
-      Ft = ReadImageData_SIGVerse()  # Reading Image feature data
+      Ft = ReadImageData()  # Reading Image feature data
     else:
       Ft = []  #dummy
 
@@ -858,7 +890,7 @@ if __name__ == '__main__':
             p.close()  
             time.sleep(1.0) #sleep(秒指定)
             while (os.path.exists( OUT_PATH ) != True):
-              print OUT_PATH, os.path.exists( OUT_PATH ),"wait(3.0s)... or ERROR?"
+              print OUT_PATH, os.path.exists( OUT_PATH ), "wait(3.0s)... or ERROR?"
               p = os.popen( latticelm_CMD ) 
               p.close() 
               time.sleep(3.0) #sleep(秒指定)

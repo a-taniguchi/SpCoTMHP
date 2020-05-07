@@ -1,4 +1,5 @@
 # encoding: shift_jis
+# Akira Taniguchi 2020/04/15
 # 実行すれば、自動的に指定フォルダ内にある音声ファイルを読み込み、Juliusでラティス認識した結果を出力してくれる。
 # 注意点：指定フォルダ名があっているか確認すること。
 import glob
@@ -6,7 +7,8 @@ import codecs
 import os
 import re
 import sys
-from initSpCoSLAM import *
+#from initSpCoSLAMSIGVerse import *
+from __init__ import *
 
 def Makedir(dir):
     try:
@@ -16,16 +18,17 @@ def Makedir(dir):
 
 
 # julisuに入力するためのwavファイルのリストファイルを作成
-def MakeTmpWavListFile( wavfile , filename):
-    Makedir( "tmp" )
-    Makedir( "tmp/" + filename )
-    fList = codecs.open( "tmp/" + filename + "/list.txt" , "w" , "sjis" )
+def MakeTmpWavListFile( wavfile , trialname):
+    Makedir( outputfolder + "tmp" )
+    Makedir( outputfolder + "tmp/" + trialname )
+    fList = codecs.open( outputfolder + "tmp/" + trialname + "/list.txt" , "w" , "sjis" )
     fList.write( wavfile )
     fList.close()
 
 # Lattice認識
-def RecogLattice( wavfile , iteration , filename ):
-    MakeTmpWavListFile( wavfile , filename )
+def RecogLattice( wavfile , iteration , trialname ):
+    filename = outputfolder + trialname
+    MakeTmpWavListFile( wavfile , trialname )
     if (JuliusVer == "v4.4"):
       binfolder = "bin/linux/julius"
     else:
@@ -33,28 +36,18 @@ def RecogLattice( wavfile , iteration , filename ):
     
     if (JuliusVer == "v4.4" and HMMtype == "DNN"):
       if (iteration == 0):  #最初は日本語音節のみの単語辞書を使用
-        p = os.popen( Juliusfolder + binfolder + " -C " + Juliusfolder + "syllable.jconf -C " + Juliusfolder + "am-dnn.jconf -v " + lmfolder + lang_init + " -demo -filelist tmp/"+ filename + "/list.txt -lattice -dnnconf " + Juliusfolder + "julius.dnnconf $*"  ) #元設定-n 5 # -gram type -n 5-charconv UTF-8 SJIS -confnet 
+        p = os.popen( Juliusfolder + binfolder + " -C " + Juliusfolder + "syllable.jconf -C " + Juliusfolder + "am-dnn.jconf -v " + lmfolder + lang_init + " -demo -filelist " + outputfolder + "tmp/" + trialname+ "/list.txt -lattice -dnnconf " + Juliusfolder + "julius.dnnconf $*"  ) #元設定-n 5 # -gram type -n 5-charconv UTF-8 SJIS -confnet 
         print "Julius",JuliusVer,HMMtype,"Read dic:" ,lang_init , iteration
       else:  #更新した単語辞書を使用
-        p = os.popen( Juliusfolder + binfolder + " -C " + Juliusfolder + "syllable.jconf -C " + Juliusfolder + "am-dnn.jconf -v ./data/" + filename + "/web.000s_" + str(iteration) + ".htkdic -demo -filelist tmp/" + filename + "/list.txt -lattice -dnnconf " + Juliusfolder + "julius.dnnconf $*" ) #元設定-n 5 # -gram type -n 5-charconv UTF-8 SJIS  -confnet
-        print "Julius",JuliusVer,HMMtype,"Read dic:web.000s_" + str(iteration) + ".htkdic" , iteration
+        p = os.popen( Juliusfolder + binfolder + " -C " + Juliusfolder + "syllable.jconf -C " + Juliusfolder + "am-dnn.jconf -v " + filename + "/WD_" + str(iteration) + ".htkdic -demo -filelist " + outputfolder + "tmp/" + trialname + "/list.txt -lattice -dnnconf " + Juliusfolder + "julius.dnnconf $*" ) #元設定-n 5 # -gram type -n 5-charconv UTF-8 SJIS  -confnet
+        print "Julius",JuliusVer,HMMtype,"Read dic:WD_" + str(iteration) + ".htkdic" , iteration
     else:
       if (iteration == 0):  #最初は日本語音節のみの単語辞書を使用
-        p = os.popen( Juliusfolder + binfolder + " -C " + Juliusfolder + "syllable.jconf -C " + Juliusfolder + "am-gmm.jconf -v " + lmfolder + lang_init + " -demo -filelist tmp/"+ filename + "/list.txt -lattice" ) #元設定-n 5 # -gram type -n 5-charconv UTF-8 SJIS -confnet 
+        p = os.popen( Juliusfolder + binfolder + " -C " + Juliusfolder + "syllable.jconf -C " + Juliusfolder + "am-gmm.jconf -v " + lmfolder + lang_init + " -demo -filelist " + outputfolder + "tmp/" + trialname+ "/list.txt -lattice" ) #元設定-n 5 # -gram type -n 5-charconv UTF-8 SJIS -confnet 
         print "Julius",JuliusVer,HMMtype,"Read dic:" ,lang_init , iteration
       else:  #更新した単語辞書を使用
-        p = os.popen( Juliusfolder + binfolder + " -C " + Juliusfolder + "syllable.jconf -C " + Juliusfolder + "am-gmm.jconf -v ./data/" + filename + "/web.000s_" + str(iteration) + ".htkdic -demo -filelist tmp/" + filename + "/list.txt -lattice" ) #元設定-n 5 # -gram type -n 5-charconv UTF-8 SJIS  -confnet
-        print "Julius",JuliusVer,HMMtype,"Read dic:web.000s_" + str(iteration) + ".htkdic" , iteration
-      
-      """
-      if (iteration == 0):  #最初は日本語音節のみの単語辞書を使用
-        p = os.popen( "~/Dropbox/Julius/dictation-kit-v4.3.1-linux/bin/julius -C ~/Dropbox/Julius/dictation-kit-v4.3.1-linux/syllable.jconf -C ~/Dropbox/Julius/dictation-kit-v4.3.1-linux/am-gmm.jconf -v lang_m/" + lang_init + " -demo -filelist tmp/" + filename + "/list.txt -confnet -lattice" ) #元設定-n 5 # -gram type -n 5-charconv UTF-8 SJIS 
-        print "Read dic:" ,lang_init , iteration
-      else:  #更新した単語辞書を使用
-        p = os.popen( "~/Dropbox/Julius/dictation-kit-v4.3.1-linux/bin/julius -C ~/Dropbox/Julius/dictation-kit-v4.3.1-linux/syllable.jconf -C ~/Dropbox/Julius/dictation-kit-v4.3.1-linux/am-gmm.jconf -v data/" + filename + "/web.000s_" + str(iteration) + ".htkdic -demo -filelist tmp/" + filename + "/list.txt -confnet -lattice" ) #元設定-n 5 # -gram type -n 5-charconv UTF-8 SJIS 
-        print "Read dic:web.000s_" + str(iteration) + ".htkdic" , iteration
-      """
-
+        p = os.popen( Juliusfolder + binfolder + " -C " + Juliusfolder + "syllable.jconf -C " + Juliusfolder + "am-gmm.jconf -v " + filename + "/WD_" + str(iteration) + ".htkdic -demo -filelist " + outputfolder + "tmp/" + trialname + "/list.txt -lattice" ) #元設定-n 5 # -gram type -n 5-charconv UTF-8 SJIS  -confnet
+        print "Julius",JuliusVer,HMMtype,"Read dic:WD_" + str(iteration) + ".htkdic" , iteration
 
     startWordGraphData = False
     wordGraphData = []
@@ -84,8 +77,6 @@ def RecogLattice( wavfile , iteration , filename ):
             startWordGraphData = True
         line = p.readline()
     p.close()
-
-
     return wordGraphData
 
 # 認識したlatticeをopenFST形式で保存
@@ -97,14 +88,13 @@ def SaveLattice( wordGraphData , filename ):
             l = wordData["index"].decode("sjis")
             w = wordData["name"].decode("sjis")
             
-            
             if int(r) < len(wordGraphData):     #len(wordGraphData)は終端の数字を表す
                 s = wordGraphData[int(r)]["AMavg"] #graphcmで良いのか？音響尤度ならばAMavgでは？
                 s = str(float(s) *wight_scale)              #AMavgを使用時のみ(HDecodeの場合と同様の処理？)
                 if (lattice_weight == "exp"):
                   s_exp = exp(float(s))
                   s = str(s_exp)
-
+                  
                 r = str(int(r) + 1)  ###右に繋がっているノードの番号を＋１する                
                 #print l,s,w
                 #print wordData.get("left","None")
@@ -126,10 +116,10 @@ def SaveLattice( wordGraphData , filename ):
 
 # テキスト形式をバイナリ形式へコンパイル
 def FSTCompile( txtfst , syms , outBaseName , filename ):
-    Makedir( "tmp" )
-    Makedir( "tmp/" + filename )
+    #Makedir( "tmp" )
+    #Makedir( "tmp/" + filename )
     os.system( "fstcompile --isymbols=%s --osymbols=%s %s %s.fst" % ( syms , syms , txtfst , outBaseName ) )
-    os.system( "fstdraw  --isymbols=%s --osymbols=%s %s.fst > tmp/%s/fst.dot" % ( syms , syms , outBaseName , filename ) )
+    os.system( "fstdraw  --isymbols=%s --osymbols=%s %s.fst > %s/fst.dot" % ( syms , syms , outBaseName , filename ) )
 
     # sjisをutf8に変換して，日本語フォントを指定
     #codecs.open( "tmp/" + filename + "/fst_utf.dot" , "w" , "utf-8" ).write( codecs.open( "tmp/" + filename + "/fst.dot" , "r" , "sjis" ).read().replace( 'label' , u'fontname="MS UI Gothic" label' ) )
@@ -140,14 +130,15 @@ def FSTCompile( txtfst , syms , outBaseName , filename ):
     #os.system( "ps2pdf %s.ps %s.pdf" % (outBaseName, outBaseName) )
 
 
-def Julius_lattice(iteration , filename):
+def Julius_lattice(iteration , trialname):
+    filename = outputfolder + trialname
     iteration = int(iteration)
-    Makedir( "data/" + filename + "/fst_gmm_" + str(iteration+1) )
-    Makedir( "data/" + filename + "/out_gmm_" + str(iteration+1) )
-    #Makedir( "data/" + filename + "/out_gmm_" + str(iteration) )
+    Makedir( filename + "/fst_gmm_" + str(iteration+1) )
+    Makedir( filename + "/out_gmm_" + str(iteration+1) )
+    #Makedir( filename + "/out_gmm_" + str(iteration) )
 
     # wavファイルを指定
-    files = glob.glob(speech_folder)   #./../../../Julius/directory/CC3Th2/ (相対パス)
+    files = glob.glob(speech_folder)
     #print files
     files.sort()
 
@@ -156,11 +147,11 @@ def Julius_lattice(iteration , filename):
 
     # 1つづつ認識してFSTフォーマットで保存
     for f in files:
-        txtfstfile = "data/" + filename + "/fst_gmm_" + str(iteration+1) + "/%03d.txt" % num
+        txtfstfile = filename + "/fst_gmm_" + str(iteration+1) + "/%03d.txt" % num
         print "count...", f , num
 
         # Lattice認識&保存
-        graph = RecogLattice( f , iteration ,filename )
+        graph = RecogLattice( f, iteration, trialname )
         SaveLattice( graph , txtfstfile )
 
         # 単語辞書に追加
@@ -171,7 +162,7 @@ def Julius_lattice(iteration , filename):
         
     
     # 単語辞書を作成
-    f = codecs.open( "data/" + filename + "/fst_gmm_" + str(iteration+1) + "/isyms.txt" , "w" , "sjis" )
+    f = codecs.open( filename + "/fst_gmm_" + str(iteration+1) + "/isyms.txt" , "w" , "sjis" )
     wordDic = list(wordDic)
     f.write( "<eps>	0\n" )  # latticelmでこの2つは必要らしい
     f.write( "<phi>	1\n" )
@@ -180,23 +171,14 @@ def Julius_lattice(iteration , filename):
     f.close()
     
     # バイナリ形式へコンパイル
-    fList = open( "data/" + filename + "/fst_gmm_" + str(iteration+1) + "/fstlist.txt" , "wb" )  # 改行コードがLFでないとダメなのでバイナリ出力で保存
+    fList = open( filename + "/fst_gmm_" + str(iteration+1) + "/fstlist.txt" , "wb" )  # 改行コードがLFでないとダメなのでバイナリ出力で保存
     for i in range(num):
-        print "now compile..." , "data/" + filename + "/fst_gmm_" + str(iteration+1) + "/%03d.txt" % i
+        print "now compile..." , filename + "/fst_gmm_" + str(iteration+1) + "/%03d.txt" % i
         
         # FSTコンパイル
-        FSTCompile( "data/" + filename + "/fst_gmm_" + str(iteration+1) + "/%03d.txt" % i , "data/" + filename + "/fst_gmm_" + str(iteration+1) + "/isyms.txt" , "data/" + filename + "/fst_gmm_" + str(iteration+1) + "/%03d" % i  ,filename)
+        FSTCompile( filename + "/fst_gmm_" + str(iteration+1) + "/%03d.txt" % i , filename + "/fst_gmm_" + str(iteration+1) + "/isyms.txt" , filename + "/fst_gmm_" + str(iteration+1) + "/%03d" % i  ,filename)
         
-        # lattice lm用のリストファイルを作成
-        fList.write( "data/" + filename + "/fst_gmm_" + str(iteration+1) + "/%03d.fst" % i )
+        # latticelm用のリストファイルを作成
+        fList.write( filename + "/fst_gmm_" + str(iteration+1) + "/%03d.fst" % i )
         fList.write( "\n" )
     fList.close()
-    #print "fstへの変換は、Ubuntuで行ってください"
-
-"""
-if __name__ == '__main__':
-    #param = sys.argv
-    #print param
-    param = [0, "test001"]
-    Julius_lattice(param[0],param[1])
-"""

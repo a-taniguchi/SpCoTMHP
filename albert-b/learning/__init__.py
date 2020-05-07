@@ -20,7 +20,7 @@ unkn         = [3] #[3,4]    # The n-gram length of the spelling model (3)
 #anneallength = [5,10,15]    # The length of each annealing step in iterations (5) for SpCoSLAM
 
 ## Parameters for mutual estimation in SpCoA++ 
-sample_num = len(knownn)*len(unkn)  # The number of samples (candidates for word segmentation results)  
+sample_num = 6 #len(knownn)*len(unkn)  # The number of samples (candidates for word segmentation results)  
 ITERATION  = 1                      # The number of iterations for mutual estimation
 threshold  = 0.01                   # 単語の選択の閾値 in SpCoA++ 
 #######################################
@@ -84,20 +84,17 @@ Feture_sum_1 = 0       # 画像特徴量を足して１になるようにする(
 Feture_noize = 0.0     # 画像特徴量に微小ノイズを足す(Feture_noize/DimImg) #approx_zero #10.0**(-5)
 
 if (CNNmode == 1):
-  Descriptor = "googlenet_prob_AURO" #"CNN_softmax"
+  Descriptor = "googlenet_prob_AURO" #"CNN_softmax" (for SIGverse dataset)
   DimImg     = 1000 # Dimension of image feature
   Feture_times = float(Feture_times)/100.0  # googlenet_probのデータはすでに100倍されている
 elif (CNNmode == 2):
   Descriptor = "CNN_fc6"
   DimImg     = 4096 # Dimension of image feature
 elif (CNNmode == 3):
-  Descriptor = "CNN_Place205"
+  Descriptor = "places205"
   DimImg     = 205  # Dimension of image feature
-elif (CNNmode == 4):
-  Descriptor = "hybridCNN"
-  DimImg     = 1183 # Dimension of image feature
 elif (CNNmode == 5):
-  Descriptor = "CNN_Place365"
+  Descriptor = "places365"
   DimImg     = 365  # Dimension of image feature
 
 ## For initialization of parameters in Gaussian distribution 
@@ -130,6 +127,80 @@ else:
   lang_init = 'web.000.htkdic'     # 'trueword_syllable.htkdic' #'phonemes.htkdic' 
 lmfolder = "/home/akira/Dropbox/SpCoSLAM/learning/lang_m/"
 
+if (SIGVerse == 1):
+  ##### SIGVerse dataset ####
+  ## Folder of training data set
+  datasetfolder = "/mnt/hgfs/D/Dropbox/SpCoSLAM/SpCoTMHP/SIGVerse/dataset/similar/3LDK_small/" 
+  ## Output folder
+  outputfolder  = "/mnt/hgfs/D/Dropbox/SpCoSLAM/SpCoTMHP/SIGVerse/data/"  
+
+  datasets      = ["00","01","02","03","04","05","06","07","08","09","10"] 
+  #["00","01","04","05","06","09","02","03","07","08","10"] #[dataset1,dataset2]
+
+  ## 位置推定の教示データ(旧 ./../sample/フォルダ内)
+  PositionDataFile = '/position/position_AURO.csv' #'SpCoSLAM.csv'      # 'test000' 
+
+  ## Word data folder path
+  word_folder = "SpCoSLAM_human.csv"
+  #"/name/per_100/word" # "/name/" + example_folder + "word"
+
+  ## Image data folder path
+  ImageFolder = ""
+
+  ## 教示の音声データフォルダ(Ubuntu full path) #*.wav"
+  speech_folder = datasetfolder + "speech/*.wav" 
+  #"/home/akira/Dropbox/Julius/directory/SpCoSLAM/*.wav" 
+
+  ## 命令の音声データフォルダ(Ubuntu full path) #*.wav" (SpCoNavi for SIGVerseでは未使用)
+  #speech_folder_go = "/home/akira/Dropbox/Julius/directory/SpCoSLAMgo/*.wav" 
+  
+else:
+  ##### albert-B dataset #####
+  ## Folder of training data set
+  datasetfolder = "/mnt/hgfs/D/Dropbox/SpCoSLAM/SpCoTMHP/albert-b/dataset/TMHP/"
+  ## Output folder
+  outputfolder  = "/mnt/hgfs/D/Dropbox/SpCoSLAM/SpCoTMHP/albert-b/data/"  
+
+  datasets      = []
+
+  ## 位置推定の教示データ(旧 ./../sample/フォルダ内)
+  PositionDataFile = 'Data_position_Xt.csv' 
+
+  ## Word data folder path
+  word_folder = "Data_words_phrase_segment_jp.csv"
+
+  ## Image data folder path
+  ImageFolder = "img_feature/"
+
+  ## 教示の音声データフォルダ(Ubuntu full path) #*.wav"
+  speech_folder = "/home/akira/Dropbox/Julius/directory/SpCoSLAM/*.wav" 
+
+  ## 命令の音声データフォルダ(Ubuntu full path) #*.wav" (SpCoNavi for SIGVerseでは未使用)
+  #speech_folder_go = "/home/akira/Dropbox/Julius/directory/SpCoSLAMgo/*.wav" 
+
+
+## Navigation folder (Other output files are also in same folder.)
+navigation_folder = "/navi/"  #outputfolder + trialname + / + navigation_folder + contmap.csv
+
+###### example (for SpCoNavi experiments) #######
+example = 0 #2 #1
+example_folder = ""
+if (example == 1):
+  example_folder = "example1/"
+  word_folder    = "/name/" + example_folder + "word" # "/name/per_100/word"
+elif (example == 2):
+  example_folder = "example2/"
+  word_folder    = "/name/" + example_folder + "word" # "/name/per_100/word"
+#################################################
+
+## True data files for evaluation (評価用正解データファイル)
+correct_Ct = 'Ct_correct.csv'        # データごとの正解のCt番号
+correct_It = 'It_correct.csv'        # データごとの正解のIt番号
+correct_data = 'SpCoSLAM_human.csv'  # データごとの正解の文章（単語列、区切り文字つき）(./data/)
+correct_name = 'name_correct.csv'    # データごとの正解の場所の名前（音素列）
+
+
+"""
 ##### NEW #####
 inputfolder  = "/mnt/hgfs/D/Dropbox/SpCoSLAM/SpCoTMHP/SIGVerse/dataset/similar/3LDK_small/"
 outputfolder = "/mnt/hgfs/D/Dropbox/SpCoSLAM/SpCoTMHP/albert-b/data/"  
@@ -155,27 +226,11 @@ PositionDataFile = '/position/position_AURO.csv' #'SpCoSLAM.csv'      # 'test000
 
 ## Word data folder path
 word_folder = "SpCoSLAM_human.csv"
-"/name/per_100/word" # "/name/" + example_folder + "word"
+#"/name/per_100/word" # "/name/" + example_folder + "word"
 
-## Navigation folder (Other output files are also in same folder.)
-navigation_folder = "/navi/"  #outputfolder + trialname + / + navigation_folder + contmap.csv
-
-###### example (for SpCoNavi experiments) #######
-example = 0 #2 #1
-example_folder = ""
-if (example == 1):
-  example_folder = "example1/"
-  word_folder    = "/name/" + example_folder + "word" # "/name/per_100/word"
-elif (example == 2):
-  example_folder = "example2/"
-  word_folder    = "/name/" + example_folder + "word" # "/name/per_100/word"
-#################################################
-
-## True data files for evaluation (評価用正解データファイル)
-correct_Ct = 'Ct_correct.csv'        # データごとの正解のCt番号
-correct_It = 'It_correct.csv'        # データごとの正解のIt番号
-correct_data = 'SpCoSLAM_human.csv'  # データごとの正解の文章（単語列、区切り文字つき）(./data/)
-correct_name = 'name_correct.csv'    # データごとの正解の場所の名前（音素列）
+## Image data folder path
+ImageFolder = "/img_feature/"
+"""
 
 
 #################################################
@@ -195,4 +250,6 @@ correct_name = 'name_correct.csv'    # データごとの正解の場所の名�
 #if (CNNmode == 0):
 #  Descriptor = "SIFT_BoF"
 #  DimImg     = 100  #Dimension of image feature
-#el
+#elif (CNNmode == 4):
+#  Descriptor = "hybridCNN"
+#  DimImg     = 1183 # Dimension of image feature
