@@ -271,10 +271,12 @@ def ReadImageData():
       #FT.append( [float(itemList[i]) for i in xrange(DimImg)] )
 
     if (Feture_noize > 0.0):
-      FT_temp = [FT_temp[i]+(Feture_noize/float(DimImg)) for i in range(DimImg)] 
+      FT_temp = [FT_temp[i]+(Feture_noize) for i in range(DimImg)] 
     if (Feture_sum_1 == 1):
       Ft_sum = sum(FT_temp)
       FT_temp = [FT_temp[i]/float(Ft_sum) for i in range(DimImg)] 
+    if (Feture_int == 1):
+      FT_temp = [int(FT_temp[i]) for i in range(DimImg)] 
     FT.append( FT_temp )
 
   if( DATA_NUM != len(FT) ):
@@ -478,7 +480,7 @@ def Gibbs_Sampling(iteration, Otb_Samp, W_index_Samp, Xt, TN, Ft):
         for t in xrange(N):    # 時刻tごとのdata
           # For each multinomial distribution (index of spatial concept)
           temp = np.array([ multinomial.logpmf(Otb_B[t], sum(Otb_B[t]), W[c]) for c in xrange(L) ])
-          count_nan = 0s
+          count_nan = 0
           while (True in np.isnan(temp)): # nan があったときのエラー対処処理
             nanind = np.where(np.isnan(temp))[0]
             W_refine = (W[nanind[0]]+approx_zero)/np.sum((W[nanind[0]]+approx_zero))
@@ -489,7 +491,7 @@ def Gibbs_Sampling(iteration, Otb_Samp, W_index_Samp, Xt, TN, Ft):
               temp[nanind[0]] = approx_zero
             if (count_nan >= len(temp)):
               temp = log2prob(temp)
-          temp += np.array([ np.log(pi[c]+approx_zero) + np.log(phi[c][It[t]]+approx_zero) for c in xrange(L) ])
+          temp += np.array([ np.log(pi[c]) + np.log(phi[c][It[t]]) for c in xrange(L) ])
 
           if (UseFT == 1):
             temp = np.log(log2prob(temp))
@@ -854,7 +856,7 @@ if __name__ == '__main__':
     Makedir( filename )
 
     # init.pyをコピー
-    shutil.copy( "./initSpCoSLAMSIGVerse.py", filename )
+    shutil.copy( "./__init__.py", filename )
 
     # DATA read
     Xt, TN = ReadPositionData()  # Reading Position data 

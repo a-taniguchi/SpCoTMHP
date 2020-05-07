@@ -28,7 +28,7 @@ threshold  = 0.01                   # 単語の選択の閾値 in SpCoA++
 ################### Change models ###################
 nonpara = 1     # Nonparametric Bayes method (ON:1,OFF:0)
 UseFT   = 1     # 画像特徴を使う場合(1), 使わない場合(0) 
-UseLM   = 0     # 言語モデルを更新する場合(1), しない場合(0) (音声認識・単語分割を含む)
+UseLM   = 0     # 言語モデルを更新する場合(1), しない場合(0) (音声認識・単語分割を含む．音声データが必要)
 
 ##### Add SpCoTMHP #####
 IT_mode         = "HMM"  # "HMM" or "GMM"
@@ -43,7 +43,7 @@ if (nonpara == 1):
   L = 20             # The number of spatial concepts (weak-limit number) #50 #100
   K = 20             # The number of position distributions (weak-limit number) #50 #100
   alpha0 = 10.00 / float(L)  # Hyperparameter of Dir(π) for index of spatial concept
-  gamma0 = 10.00 / float(K)  # Hyperparameter of Dir(φ) for index of position 
+  gamma0 = 1.000 / float(K)  # Hyperparameter of Dir(φ) for index of position 
                              #  (GMM mixtured component; spatial concept dependent)
   omega0 = 10.00 / float(K)  # Hyperparameter of Dir(ψ) for index of position distribution
                              #  (HMM transition distribution)
@@ -79,9 +79,10 @@ Robust_psi   = 1000
 
 ## Image feature parameter setting
 CNNmode = 1            # Select image feature descriptor
-Feture_times = 100.0   # 画像特徴量を何倍するか
+Feture_times = 10.0    # 画像特徴量を何倍するか(SIGVerse dataの場合100を推奨)
 Feture_sum_1 = 0       # 画像特徴量を足して１になるようにする(1)
-Feture_noize = 0.0     # 画像特徴量に微小ノイズを足す(Feture_noize/DimImg) #approx_zero #10.0**(-5)
+Feture_noize = 1.0     # 画像特徴量に微小ノイズを足す  #approx_zero #10.0**(-5)
+Feture_int   = 1       # 画像特徴量を整数化（ヒストグラムのカウント）
 
 if (CNNmode == 1):
   Descriptor = "googlenet_prob_AURO" #"CNN_softmax" (for SIGverse dataset)
