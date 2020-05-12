@@ -116,4 +116,5 @@ data/
 #SIGVerse/
 output/
 latex/
-.xlsx
+*.xlsx
+.gitignore~
