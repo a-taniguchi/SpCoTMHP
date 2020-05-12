@@ -265,7 +265,7 @@ def ReadImageData():
           FT_temp.append(float(line)*Feture_times)
         i += 1
     else:
-      for line in open( datasetfolder + datasetname + ImageFolder + Descriptor + '/ft' + str(s+1) + '.csv', 'r'):
+      for line in open( datasetfolder + datasetname + ImageFolder + Descriptor + '/ft(' + str(s+1).zfill(2) + ').csv', 'r'):
         itemList = line[:].split(',')
         FT_temp = [float(itemList[i])*Feture_times for i in range(DimImg)] 
       #FT.append( [float(itemList[i]) for i in xrange(DimImg)] )
@@ -335,14 +335,14 @@ def ReadWordData(iteration):
         itemList = line[:-1].split(' ')
         itemList = Ignore_SP_Tags(itemList)  #remove <s>,<sp>,</s> and "\r", "": if its were segmented to words.
         Otb = Otb + [itemList]
-    elif (UseLM == 0) and (SIGVerse == 1):
+    elif (UseLM == 0): #and (SIGVerse == 1):
       # Read Folder Path
       WordDatafile = datasetfolder + word_folder
       for line in open(WordDatafile, 'r'):   ## フォルダから発話単語列を順番に読み込む
         itemList = line[:-1].split(' ')
         itemList = Ignore_SP_Tags(itemList)  #remove <s>,<sp>,</s> and "\r", "": if its were segmented to words.
         Otb = Otb + [itemList]
-    else: #(UseLM == 0) and not SIGVerse
+    else: #(UseLM == 0) and another SIGVerse data
       for word_data_num in range(DATA_NUM):
         # Read Folder Path
         WordDatafile = datasetfolder + datasetname + word_folder + str(word_data_num) + ".txt"

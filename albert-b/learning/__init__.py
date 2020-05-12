@@ -5,12 +5,17 @@ import numpy as np
 
 ################### Parameters ###################
 num_iter = 100          # The number of iterations of Gibbs sampling for spatial concept learning
-DATA_NUM = 60           # The number of training data #100
+SIGVerse = 0
+if (SIGVerse == 1):
+  DATA_NUM = 60           # The number of training data (for SIGVerse)
+else:
+  DATA_NUM = 70           # The number of training data (for albert-b) # 50
+
 word_increment = 1.0    # The increment number of word observation data (BoWs)
 dimx = 2                # The number of dimensions of xt (x,y)
 
 terminal_output_prams = 0  # Terminalにサンプリングされたパラメータを表示する (ON:1,OFF:0)
-SIGVerse = 1
+
 
 ##### SpCoA++ (word segmentation) #####
 ## latticelm parameters
@@ -20,7 +25,7 @@ unkn         = [3] #[3,4]    # The n-gram length of the spelling model (3)
 #anneallength = [5,10,15]    # The length of each annealing step in iterations (5) for SpCoSLAM
 
 ## Parameters for mutual estimation in SpCoA++ 
-sample_num = 6 #len(knownn)*len(unkn)  # The number of samples (candidates for word segmentation results)  
+sample_num = 10 #len(knownn)*len(unkn)  # The number of samples (candidates for word segmentation results)  
 ITERATION  = 1                      # The number of iterations for mutual estimation
 threshold  = 0.01                   # 単語の選択の閾値 in SpCoA++ 
 #######################################
@@ -78,7 +83,10 @@ Robust_theta = 1000
 Robust_psi   = 1000 
 
 ## Image feature parameter setting
-CNNmode = 1            # Select image feature descriptor
+if (SIGVerse == 1):
+  CNNmode = 1            # Select image feature descriptor
+else:
+  CNNmode = 5            # Select image feature descriptor
 Feture_times = 10.0    # 画像特徴量を何倍するか(SIGVerse dataの場合100を推奨)
 Feture_sum_1 = 0       # 画像特徴量を足して１になるようにする(1)
 Feture_noize = 1.0     # 画像特徴量に微小ノイズを足す  #approx_zero #10.0**(-5)
@@ -168,12 +176,12 @@ else:
   PositionDataFile = 'Data_position_Xt.csv' 
 
   ## Word data folder path
-  word_folder = "Data_words_phrase_segment_jp.csv"
+  word_folder = "Data_words_phrase_segment_jp.csv"  #Data_words_morphological_segment_jp.csv
 
   ## Image data folder path
   ImageFolder = "img_feature/"
 
-  ## 教示の音声データフォルダ(Ubuntu full path) #*.wav"
+  ## 教示の音声データフォルダ(Ubuntu full path) #*.wav" (not use)
   speech_folder = "/home/akira/Dropbox/Julius/directory/SpCoSLAM/*.wav" 
 
   ## 命令の音声データフォルダ(Ubuntu full path) #*.wav" (SpCoNavi for SIGVerseでは未使用)
