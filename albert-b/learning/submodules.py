@@ -21,7 +21,7 @@ def fill_param(param, default):   ##パラメータをNone の場合のみデフ
 def log2prob(log_prob_array):  #Normalization # log_prob_array: np.array()
   while (True in np.isnan(log_prob_array)):
     print "[Prob Error (nan)]", log_prob_array
-    log_prob_array = np.nan_to_num(log_prob_array, nan=approx_zero)  # 配列中のNaNを他の値に置換
+    log_prob_array = np.nan_to_num(log_prob_array, nan=approx_zero)  # 配列中のNaNを他の値に置換 (>= numpy version 1.17)
   max_prob = np.max(log_prob_array)
   log_prob_array = log_prob_array - max_prob
   #prob_array = np.exp( log_prob_array - np.log(np.sum(np.exp(log_prob_array))) )

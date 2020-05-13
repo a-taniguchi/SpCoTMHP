@@ -203,11 +203,12 @@ elif (example == 2):
 #################################################
 
 ## True data files for evaluation (評価用正解データファイル)
-correct_Ct = 'Ct_correct.csv'        # データごとの正解のCt番号
-correct_It = 'It_correct.csv'        # データごとの正解のIt番号
+correct_Ct = 'GT_place_category_Ct.csv'        # データごとの正解のCt番号
+correct_It = 'GT_position_category_it.csv'        # データごとの正解のIt番号
 correct_data = 'SpCoSLAM_human.csv'  # データごとの正解の文章（単語列、区切り文字つき）(./data/)
 correct_name = 'name_correct.csv'    # データごとの正解の場所の名前（音素列）
 
+EVALUATE_PAR = 0    # PARの評価をする場合(evaluateSpCoTMHP.py)
 
 """
 ##### NEW #####
