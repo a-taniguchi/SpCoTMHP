@@ -36,8 +36,8 @@ UseFT   = 1     # 画像特徴を使う場合(1), 使わない場合(0)
 UseLM   = 0     # 言語モデルを更新する場合(1), しない場合(0) (音声認識・単語分割を含む．音声データが必要)
 
 ##### Add SpCoTMHP #####
-IT_mode         = "HMM"  # "HMM" or "GMM"
-transition_type = "sym"  # "sym": (事後ハイパーパラメータの)対象行列化, "left2right": そのまま 
+IT_mode         = "GMM"  # "HMM" or "GMM"
+transition_type = "left2right"  # "sym": (事後ハイパーパラメータの)対象行列化, "left2right": そのまま 
                          # "reverse_replay": 逆順データも入力して学習 (未実装)
 sampling_method = "DA"   # "DA": Direct Assignment, "BGS":Blocked Gibbs Sampling (未実装)
 ########################
@@ -76,7 +76,7 @@ approx_zero = 10.0**(-200)   # approximated value of log(0)
 ## The number of samples for robust sampling 
 Robust_W     = 1000
 Robust_Sig   = 100
-Robust_Mu    = 1
+Robust_Mu    = 100 #1
 Robust_pi    = 1000
 Robust_phi   = 1000
 Robust_theta = 1000
@@ -118,6 +118,38 @@ resolution = 0.1              # m/grid (0.050000)
 margin     = 10.0*resolution  # margin value for place area in gird map 
                               #  (margin[m] = margin[grid]*resolution)
 
+## For SpCoVisualizer.py ############################################
+# インデックス毎のカラーリスト
+#colorlist = ['red','green','blue','cyan','magenta','darkblue','orange','purple','yellowgreen','yellow','darkred']
+COLOR = ['red','green','blue','cyan','magenta','darkblue','orange','purple','yellowgreen','yellow','darkred',
+  [1.0,0.0,0.0],[0.0,1.0,0.0],[0.0,0.0,1.0],[0.5,0.5,0.0],[0.5,0.0,0.5], #4
+  [0.0,0.5,0.5],[0.8,0.1,0.1],[0.1,0.8,0.1],[0.1,0.1,0.8],[0.6,0.2,0.2],#9
+  [0.2,0.6,0.2],[0.2,0.2,0.6],[0.4,0.3,0.3],[0.3,0.4,0.3],[0.3,0.3,0.4], #14
+  [0.7,0.2,0.1],[0.7,0.1,0.2],[0.2,0.7,0.1],[0.1,0.7,0.2],[0.2,0.1,0.7],#19
+  [0.1,0.2,0.7],[0.5,0.2,0.3],[0.5,0.3,0.2],[0.3,0.5,0.2],[0.2,0.5,0.3],#24
+  [0.3,0.2,0.5],[0.2,0.3,0.5],[0.7,0.15,0.15],[0.15,0.7,0.15],[0.15,0.15,0.7],#29
+  [0.6,0.3,0.1],[0.6,0.1,0.3],[0.1,0.6,0.3],[0.3,0.6,0.1],[0.3,0.1,0.6],#34
+  [0.1,0.3,0.6],[0.8,0.2,0.0],[0.8,0.0,0.2],[0.2,0.8,0.0],[0.0,0.8,0.2],#39
+  [0.2,0.0,0.8],[0.0,0.2,0.8],[0.7,0.3,0.0],[0.7,0.0,0.3],[0.3,0.7,0.0],#44
+  [0.3,0.0,0.7],[0.0,0.7,0.3],[0.0,0.3,0.7],[0.25,0.25,0.5],[0.25,0.5,0.25], #49
+  [1.0,0.0,0.0],[0.0,1.0,0.0],[0.0,0.0,1.0],[0.5,0.5,0.0],[0.5,0.0,0.5], #54
+  [0.0,0.5,0.5],[0.8,0.1,0.1],[0.1,0.8,0.1],[0.1,0.1,0.8],[0.6,0.2,0.2],#59
+  [0.2,0.6,0.2],[0.2,0.2,0.6],[0.4,0.3,0.3],[0.3,0.4,0.3],[0.3,0.3,0.4], #64
+  [0,7,0.2,0.1],[0.7,0.1,0.2],[0.2,0.7,0.1],[0.1,0.7,0.2],[0.2,0.1,0.7],#69
+  [0.1,0.2,0.7],[0.5,0.2,0.3],[0.5,0.3,0.2],[0.3,0.5,0.2],[0.2,0.5,0.3],#74
+  [0.3,0.2,0.5],[0.2,0.3,0.5],[0.7,0.15,0.15],[0.15,0.7,0.15],[0.15,0.15,0.7],#79
+  [0.6,0.3,0.1],[0.6,0.1,0.3],[0.1,0.6,0.3],[0.3,0.6,0.1],[0.3,0.1,0.6],#84
+  [0.1,0.3,0.6],[0.8,0.2,0.0],[0.8,0.0,0.2],[0.2,0.8,0.0],[0.0,0.8,0.2],#89
+  [0.2,0.0,0.8],[0.0,0.2,0.8],[0.7,0.3,0.0],[0.7,0.0,0.3],[0.3,0.7,0.0],#94
+  [0.3,0.0,0.7],[0.0,0.7,0.3],[0.0,0.3,0.7],[0.25,0.25,0.5],[0.25,0.5,0.25] #99
+]
+
+# 楕円の確率値
+el_prob  = 0.68 # 1σ:0.68, 2σ:0.95
+#el_c     = np.sqrt(ss.chi2.ppf(el_prob, 2))
+
+#####################################################################
+
 ## Julius parameters (See syllable.jconf in Julius folder)
 JuliusVer      = "v4.4"   # "v.4.3.1"
 HMMtype        = "DNN"    # "GMM"
@@ -139,9 +171,9 @@ lmfolder = "/home/akira/Dropbox/SpCoSLAM/learning/lang_m/"
 if (SIGVerse == 1):
   ##### SIGVerse dataset ####
   ## Folder of training data set
-  datasetfolder = "/mnt/hgfs/D/Dropbox/SpCoSLAM/SpCoTMHP/SIGVerse/dataset/similar/3LDK_small/" 
+  datasetfolder = "/mnt/hgfs/D/akira/Dropbox/SpCoSLAM/SpCoTMHP/SIGVerse/dataset/similar/3LDK_small/" 
   ## Output folder
-  outputfolder  = "/mnt/hgfs/D/Dropbox/SpCoSLAM/SpCoTMHP/SIGVerse/data/"  
+  outputfolder  = "/mnt/hgfs/D/akira/Dropbox/SpCoSLAM/SpCoTMHP/SIGVerse/data/"  
 
   datasets      = ["00","01","02","03","04","05","06","07","08","09","10"] 
   #["00","01","04","05","06","09","02","03","07","08","10"] #[dataset1,dataset2]
@@ -166,11 +198,14 @@ if (SIGVerse == 1):
 else:
   ##### albert-B dataset #####
   ## Folder of training data set
-  datasetfolder = "/mnt/hgfs/D/Dropbox/SpCoSLAM/SpCoTMHP/albert-b/dataset/TMHP/"
+  datasetfolder = "/mnt/hgfs/D/akira/Dropbox/SpCoSLAM/SpCoTMHP/albert-b/dataset/TMHP/"
   ## Output folder
-  outputfolder  = "/mnt/hgfs/D/Dropbox/SpCoSLAM/SpCoTMHP/albert-b/data/"  
+  outputfolder  = "/mnt/hgfs/D/akira/Dropbox/SpCoSLAM/SpCoTMHP/albert-b/data/"  
 
   datasets      = []
+
+  ## map fileのフォルダファイル名 (**.pgm and **.yaml)
+  map_file = "map/map312"
 
   ## 位置推定の教示データ(旧 ./../sample/フォルダ内)
   PositionDataFile = 'Data_position_Xt.csv' 

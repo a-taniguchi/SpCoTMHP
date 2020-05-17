@@ -2,7 +2,7 @@
 # 相互推定のイテレーションごとに選ばれた学習結果の評価値（ARI、コーパスPAR、単語PAR）、（事後確率値）を出力
 # 単語PARはp(O_best|x_t)と正解を比較。x_tは正しいデータの平均値とする。
 # Akira Taniguchi 2020/05/13
-# TODO: パラメータ読み込みのフォルダファイルパスを変更する
+# パラメータ読み込みのフォルダファイルパスを変更:PAR以外はOK
 import sys
 import os.path
 import random
@@ -776,7 +776,7 @@ def Evaluation(trialname,datasetname):
   MAX_Samp  = [0 for j in xrange(ITERATION)]
   
   #イテレーションごとに選ばれた学習結果の評価値をすべて保存するファイル
-  fp = open(outputfolder + trialname + '/' + trialname + '_A_sougo_Evaluation.csv', 'w')  
+  fp = open(outputfolder + trialname + '/' + trialname + '_A_sougo_Evaluation_maxMI.csv', 'w')  
   
   #相互推定のイテレーションと単語分割結果の候補のすべてのパターンの評価値を保存
   fp_ARIc = open(outputfolder + trialname + '/' + trialname + '_A_sougo_ARIc.csv', 'w')  

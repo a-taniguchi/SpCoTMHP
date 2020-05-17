@@ -10,7 +10,7 @@ import rospy
 from std_msgs.msg import String
 from nav_msgs.msg import OccupancyGrid
 from __init__ import *
-from submodules import *
+#from submodules import *
 
 class CostMap(object):
 
