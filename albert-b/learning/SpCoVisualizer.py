@@ -13,7 +13,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib import patheffects as path_effects
 from matplotlib.patches import Ellipse
-from PIL import Image,ImageOps, ImageDraw
+from PIL import Image,ImageOps #, ImageDraw
 import yaml
 from __init__ import *
 
@@ -65,7 +65,7 @@ iteration_sample = str(iteration+1) + "_" + str(sample_max)
 
 # Spatial concept の Gaussian distribution parameters (mu and sigma) を読み込む
 Mu  = np.loadtxt(file_trialname + '_Mu_' + iteration_sample + '.csv', delimiter=',')
-Mu_origin = Mu/(resolution) - np.array([origin[0],origin[1]])/(resolution)
+Mu_origin = ( Mu - np.array([origin[0],origin[1]]) ) / resolution
 Sig = np.load(file_trialname + '_Sig_'   + iteration_sample + '.npy')
 
 # Spatial concept の Transition probability parameter (psi) を読み込む

@@ -1,5 +1,5 @@
 #coding:utf-8
-#The file for setting parameters [SpCoA++, SpCoTMHP (learnSpCoTMHP_SIGVerse.py) for SIGVerse]
+#The file for setting parameters [SpCoA++, SpCoTMHP (learnSpCoTMHP.py) for SIGVerse and albert-B]
 #Akira Taniguchi 2020/04/11-2020/04/26-
 import numpy as np
 

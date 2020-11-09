@@ -1,6 +1,6 @@
 #coding:utf-8
-#The file for setting parameters
-#Akira Taniguchi 2018/12/13-2019/03/10-2019/07/25
+#The file for setting parameters [SpCoNavi, SpCoTMHP (naviSpCoTMHP.py) for SIGVerse and albert-B]
+#Akira Taniguchi 2020/05/18-
 import numpy as np
 
 ##Command

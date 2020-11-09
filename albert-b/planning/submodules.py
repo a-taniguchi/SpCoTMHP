@@ -1,10 +1,11 @@
 #coding:utf-8
 #This file for general modules (一般性の高い関数はこちらへ集約)
-#Akira Taniguchi 2018/11/26-2018/12/17-
+#Akira Taniguchi 2018/11/26-2018/12/17-2020/04/26-
 import os
 import numpy as np
 from math import pi as PI
 from math import cos,sin,sqrt,exp,log,fabs,fsum,degrees,radians,atan2,gamma,lgamma
+#from initSpCoSLAMSIGVerse import *
 from __init__ import *
 
 def Makedir(dir):
@@ -14,8 +15,22 @@ def Makedir(dir):
         pass
         
 def fill_param(param, default):   ##パラメータをNone の場合のみデフォルト値に差し替える関数
-    if (param == None): return default
-    else: return param
+  if (param == None): return default
+  else: return param
+
+def log2prob(log_prob_array):  #Normalization # log_prob_array: np.array()
+  while (True in np.isnan(log_prob_array)):
+    print "[Prob Error (nan)]", log_prob_array
+    log_prob_array = np.nan_to_num(log_prob_array, nan=approx_zero)  # 配列中のNaNを他の値に置換 (>= numpy version 1.17)
+  max_prob = np.max(log_prob_array)
+  log_prob_array = log_prob_array - max_prob
+  #prob_array = np.exp( log_prob_array - np.log(np.sum(np.exp(log_prob_array))) )
+  prob_array = np.exp(log_prob_array)
+  prob_array = prob_array / np.sum(prob_array) # prob_array / sum_prob
+  if (np.sum(prob_array) == 0.0):
+    print "[Prob Error (sum zero to uniform)]", prob_array
+    prob_array = [ 1.0/float(len(prob_array)) for _ in range(len(prob_array)) ]
+  return prob_array
         
 def multivariate_t_distribution(x, mu, Sigma, df):
     """
@@ -73,10 +88,10 @@ def Check_VN(VN):
     VN = V0
   return VN
 
-# ガウス-逆ウィシャート分布(NIW)の事後分布のパラメータ推定の計算
+# ガウス-逆ウィシャート分布(NIW)の事後分布のパラメータ推定の計算 (XTがParticleの構造体クラス)
 def PosteriorParameterGIW(k,nk,step,IT,XT,icitems_k0):
   ###kについて、ITが同じものを集める
-  if nk != 0 :  #もしzaの中にkがあれば(計算短縮処理)        ##0ワリ回避
+  if nk != 0 :  #もしITの中にkがあれば(計算短縮処理)        ##0ワリ回避
     xk = []
     for s in xrange(step) : 
       if IT[s] == icitems_k0 : 
@@ -100,6 +115,35 @@ def PosteriorParameterGIW(k,nk,step,IT,XT,icitems_k0):
     VN = V0
   
   return kN,mN,nN,VN
+
+# ガウス-逆ウィシャート分布(NIW)の事後分布のパラメータ推定の計算 (XTがnp.arrayのlist)
+def PosteriorParameterGIW2(k,nk,step,IT,XT,icitems_k0):
+  ###kについて、ITが同じものを集める
+  if nk != 0 :  #もしITの中にkがあれば(計算短縮処理)        ##0ワリ回避
+    xk = []
+    for s in xrange(step) : 
+      if IT[s] == icitems_k0 : 
+        xk = xk + [ np.array(XT[s]) ]
+    m_ML = sum(xk) / float(nk) #fsumではダメ
+    print "K%d n:%d m_ML:%s" % (k,nk,str(m_ML))
+    
+    ##ハイパーパラメータ更新
+    kN = k0 + nk
+    mN = ( k0*m0 + nk*m_ML ) / kN  #dim 次元横ベクトル
+    nN = n0 + nk
+    #VN = V0 + sum([np.dot(np.array([xk[j]-m_ML]).T,np.array([xk[j]-m_ML])) for j in xrange(nk)]) + (k0*nk/kN)*np.dot(np.array([m_ML-m0]).T,np.array([m_ML-m0])) #旧バージョン
+    VN = V0 + sum([np.dot(np.array([xk[j]]).T,np.array([xk[j]])) for j in xrange(nk)]) + k0m0m0 - kN*np.dot(np.array([mN]).T,np.array([mN]))  #speed up? #NIWを仮定した場合、V0は逆行列にしなくてよい
+    VN = Check_VN(VN)
+    
+  else:  #データがないとき
+    #print "nk["+str(k)+"]="+str(nk)
+    kN = k0
+    mN = m0
+    nN = n0
+    VN = V0
+  
+  return kN,mN,nN,VN
+
 
 #http://nbviewer.ipython.org/github/fonnesbeck/Bios366/blob/master/notebooks/Section5_2-Dirichlet-Processes.ipynb
 def stick_breaking(alpha, k):
@@ -127,3 +171,39 @@ def levenshtein_distance(a, b):
             m[i][j] = min(m[i - 1][j] + 1, m[i][ j - 1] + 1, m[i - 1][j - 1] + x)
     # print m
     return m[-1][-1]
+
+#remove <s>,<sp>,</s> and "\r", "": if its were segmented to words.
+def Ignore_SP_Tags(itemList):
+  for _ in xrange(5):
+    if ("<s><s>" in itemList):
+      itemList.pop(itemList.index("<s><s>"))
+    if ("<s><sp>" in itemList):
+      itemList.pop(itemList.index("<s><sp>"))
+    if ("<s>" in itemList):
+      itemList.pop(itemList.index("<s>"))
+    if ("<sp>" in itemList):
+      itemList.pop(itemList.index("<sp>"))
+    if ("<sp><sp>" in itemList):
+      itemList.pop(itemList.index("<sp><sp>"))
+    if ("</s>" in itemList):
+      itemList.pop(itemList.index("</s>"))
+    if ("<sp></s>" in itemList):
+      itemList.pop(itemList.index("<sp></s>"))
+    if ("" in itemList):
+      itemList.pop(itemList.index(""))
+
+  #remove <s>,<sp>,</s>: if its exist in words.
+  for j in xrange(len(itemList)):
+    itemList[j] = itemList[j].replace("<s><s>", "")
+    itemList[j] = itemList[j].replace("<s>", "")
+    itemList[j] = itemList[j].replace("<sp>", "")
+    itemList[j] = itemList[j].replace("</s>", "")
+
+  for j in xrange(len(itemList)):
+    itemList[j] = itemList[j].replace("\r", "")  
+
+  for _ in xrange(5):
+    if ("" in itemList):
+      itemList.pop(itemList.index(""))
+
+  return itemList
