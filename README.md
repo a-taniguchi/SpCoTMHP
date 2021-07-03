@@ -1,7 +1,7 @@
 # SpCoTMHP
 Topometric-SpCoSLAM (Hierarchical-SpCoNavi)
 
-# Folders
+## Folders
  - /src/: ソースコード
  - /SIGVerse/: SIGVerseでの家庭環境データセット
  - /albert-b/: 実環境オープンデータセット

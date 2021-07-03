@@ -1,1 +1,0 @@
-# Spatial_Concept_Acquisition_Model
