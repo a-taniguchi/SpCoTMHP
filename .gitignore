@@ -108,13 +108,14 @@ devel/
 torioki/
 sankou/
 img/
-#dataset/
 data/
 *.py~
 *.sh~
 .lnk
-#SIGVerse/
 output/
 latex/
 *.xlsx
 .gitignore~
+*.md~
+serket/
+lang_m/
