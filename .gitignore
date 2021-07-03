@@ -108,7 +108,7 @@ devel/
 torioki/
 sankou/
 img/
-data/
+SIGVerse/data/
 *.py~
 *.sh~
 .lnk
@@ -120,3 +120,4 @@ latex/
 serket/
 lang_m/
 3LDK_small/
+.vscode
