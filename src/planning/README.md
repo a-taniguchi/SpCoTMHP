@@ -1,4 +1,4 @@
-# Planning codes of SpCoNavi
+# Planning codes of SpCoNavi (SIGVerse)
 
 【Files】  
  - `README.md`: Read me file (This file)
