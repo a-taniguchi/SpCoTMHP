@@ -1,7 +1,7 @@
 #coding:utf-8
 
 ##############################################
-## Spatial concept formation model (SpCoA++ with lexical acquisition)
+## Spatial concept formation model (SpCoA++ with/without lexical acquisition)
 ## For SpCoTMHP (on SIGVerse and albert-b dataset)
 ## Learning algorithm is Gibbs sampling.
 ## Akira Taniguchi 2020/04/14-2020/04/26-2020/05/06-

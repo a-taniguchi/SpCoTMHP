@@ -1,7 +1,8 @@
 #coding:utf-8
 ##############################################
 ## Spatial concept formation model (SpCoA without lexical acquisition)
-## For SpCoTMHP (on SIGVerse)
+## For SpCoNavi -> TMHP (on SIGVerse; /3LDK/ dateset) 
+## [Note] Still SpCoSLAM (Gibbs). Can not learn psi.
 ## Learning algorithm is Gibbs sampling.
 ## Akira Taniguchi 2020/04/12-
 ##############################################

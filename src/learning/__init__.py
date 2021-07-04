@@ -239,6 +239,7 @@ elif (example == 2):
 #################################################
 
 ## True data files for evaluation (評価用正解データファイル)
+# 現状、alber-b用のみ
 correct_Ct = 'GT_place_category_Ct.csv'        # データごとの正解のCt番号
 correct_It = 'GT_position_category_it.csv'        # データごとの正解のIt番号
 correct_data = 'SpCoSLAM_human.csv'  # データごとの正解の文章（単語列、区切り文字つき）(./data/)

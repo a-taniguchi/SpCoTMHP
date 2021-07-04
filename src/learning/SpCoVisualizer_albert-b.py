@@ -2,8 +2,10 @@
 # -*- coding: utf-8 -*-
 # Spatial concept Topometric Map Visualizaer (Python only w/o ROS)
 # 場所概念の位置分布（ガウス分布）および、その隣接関係のグラフ（遷移確率）を地図上に描画する
+# SpCoA++の要領で複数回施行している場合は、相互情報量最大の候補を選択
 # Akira Taniguchi 2020/05/16 - 2020/05/18
 # This code is based on em_spcoae_map_srv.py
+# [command] $ python SpCoVisualizer_albert-b.py <trialname>
 
 import sys
 import numpy as np
