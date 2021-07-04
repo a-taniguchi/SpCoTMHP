@@ -14,4 +14,3 @@ Topometric-SpCoSLAM (Hierarchical-SpCoNavi)
  -  /spconavi_ros/の中身をこのリポジトリに反映させた（SpCoNaviではなく、SpCoTMHPとして直接中身をいじるため）
  - albert-bの学習用プログラム・結果の描画プログラムのみ完了
  - 不要なファイルの削除
- 
