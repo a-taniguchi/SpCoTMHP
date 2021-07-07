@@ -452,62 +452,63 @@ def Gibbs_Sampling(iteration):
       for iter in xrange(num_iter):   # Iteration of Gibbs sampling
         print ' ----- Iter.' + repr(iter+1) + ' ----- '
         
-        ########## ↓ ##### it(index of position distribution) is samplied ##### ↓ ##########
-        print u"Sampling it... model:", IT_mode
-        # itと同じtのCtの値c番目のφc の要素kごとに事後multinomial distributionの値を計算
-        temp = np.ones(K)
-        for t in xrange(N):    # 時刻tごとのdata
-          # it=k番目のμΣについての2-dimension Gaussian distributionをitと同じtのxtから計算
-          temp = np.array([ multivariate_normal.logpdf(Xt[TN[t]], mean=Mu[k], cov=S[k]) 
-                            + np.log(phi[int(Ct[t])][k]) for k in xrange(K) ])
-          
-          if (IT_mode == "HMM") and (t > 0):
-            temp = np.log(log2prob(temp))
-            temp += [ psi[k][It[t-1]] - np.log(np.sum(phi,0)[k]) for k in xrange(K) ]  # Direct assignment sampling
+        if (LEARN_MODE != "GT"): # GTのときは実行しない
+          ########## ↓ ##### it(index of position distribution) is samplied ##### ↓ ##########
+          print u"Sampling it... model:", IT_mode
+          # itと同じtのCtの値c番目のφc の要素kごとに事後multinomial distributionの値を計算
+          temp = np.ones(K)
+          for t in xrange(N):    # 時刻tごとのdata
+            # it=k番目のμΣについての2-dimension Gaussian distributionをitと同じtのxtから計算
+            temp = np.array([ multivariate_normal.logpdf(Xt[TN[t]], mean=Mu[k], cov=S[k]) 
+                              + np.log(phi[int(Ct[t])][k]) for k in xrange(K) ])
             
-          It[t] = list(multinomial.rvs(1,log2prob(temp))).index(1)
-        print It
-        ########## ↑ ##### it(index of position distribution) is samplied ##### ↑ ##########
-        
-        ########## ↓ ##### Ct(index of spatial concept) is samplied ##### ↓ ##########
-        print u"Sampling Ct..."
-        # Ct～多項値P(Ot|Wc)*多項値P(it|φc)*多項P(c|π)  N個
-        temp = np.ones(L)
-        for t in xrange(N):    # 時刻tごとのdata
-          # For each multinomial distribution (index of spatial concept)
-          temp = np.array([ multinomial.logpmf(Otb_B[t], sum(Otb_B[t]), W[c]) for c in xrange(L) ])
-          count_nan = 0
-          while (True in np.isnan(temp)): # nan があったときのエラー対処処理
-            nanind = np.where(np.isnan(temp))[0]
-            W_refine = (W[nanind[0]]+approx_zero)/np.sum((W[nanind[0]]+approx_zero))
-            temp[nanind[0]] = multinomial.logpmf(Otb_B[t], sum(Otb_B[t]), W_refine)
-            print "[nan] Wc", nanind[0], temp[nanind[0]]
-            count_nan += 1
-            if (True in [ temp[nanind[0]] ]):
-              temp[nanind[0]] = approx_zero
-            if (count_nan >= len(temp)):
-              temp = log2prob(temp)
-          temp += np.array([ np.log(pi[c]) + np.log(phi[c][It[t]]) for c in xrange(L) ])
-
-          if (UseFT == 1):
-            temp = np.log(log2prob(temp))
-            temp_FT = np.array([ multinomial.logpmf(Ft[t], sum(Ft[t]), theta[c]) for c in xrange(L) ])
+            if (IT_mode == "HMM") and (t > 0):
+              temp = np.log(log2prob(temp))
+              temp += [ psi[k][It[t-1]] - np.log(np.sum(phi,0)[k]) for k in xrange(K) ]  # Direct assignment sampling
+              
+            It[t] = list(multinomial.rvs(1,log2prob(temp))).index(1)
+          print It
+          ########## ↑ ##### it(index of position distribution) is samplied ##### ↑ ##########
+          
+          ########## ↓ ##### Ct(index of spatial concept) is samplied ##### ↓ ##########
+          print u"Sampling Ct..."
+          # Ct～多項値P(Ot|Wc)*多項値P(it|φc)*多項P(c|π)  N個
+          temp = np.ones(L)
+          for t in xrange(N):    # 時刻tごとのdata
+            # For each multinomial distribution (index of spatial concept)
+            temp = np.array([ multinomial.logpmf(Otb_B[t], sum(Otb_B[t]), W[c]) for c in xrange(L) ])
             count_nan = 0
-            while (True in np.isnan(temp_FT)): # nan があったときのエラー対処処理
-              nanind = np.where(np.isnan(temp_FT))[0]
-              theta_refine = (theta[nanind[0]]+approx_zero)/np.sum((theta[nanind[0]]+approx_zero))
-              temp_FT[nanind[0]] = multinomial.logpmf(Ft[t], sum(Ft[t]), theta_refine)
-              print "[nan] theta_c", temp_FT[nanind[0]]
+            while (True in np.isnan(temp)): # nan があったときのエラー対処処理
+              nanind = np.where(np.isnan(temp))[0]
+              W_refine = (W[nanind[0]]+approx_zero)/np.sum((W[nanind[0]]+approx_zero))
+              temp[nanind[0]] = multinomial.logpmf(Otb_B[t], sum(Otb_B[t]), W_refine)
+              print "[nan] Wc", nanind[0], temp[nanind[0]]
               count_nan += 1
-              if (True in [ temp_FT[nanind[0]] ]):
-                temp_FT[nanind[0]] = approx_zero
-              if (count_nan >= len(temp_FT)):
-                temp_FT = log2prob(temp_FT)
-            temp += np.log(log2prob(temp_FT)) #temp_FT
+              if (True in [ temp[nanind[0]] ]):
+                temp[nanind[0]] = approx_zero
+              if (count_nan >= len(temp)):
+                temp = log2prob(temp)
+            temp += np.array([ np.log(pi[c]) + np.log(phi[c][It[t]]) for c in xrange(L) ])
 
-          Ct[t] = list(multinomial.rvs(1,log2prob(temp))).index(1)
-        print Ct
-        ########## ↑ ##### Ct(index of spatial concept) is samplied ##### ↑ ##########
+            if (UseFT == 1):
+              temp = np.log(log2prob(temp))
+              temp_FT = np.array([ multinomial.logpmf(Ft[t], sum(Ft[t]), theta[c]) for c in xrange(L) ])
+              count_nan = 0
+              while (True in np.isnan(temp_FT)): # nan があったときのエラー対処処理
+                nanind = np.where(np.isnan(temp_FT))[0]
+                theta_refine = (theta[nanind[0]]+approx_zero)/np.sum((theta[nanind[0]]+approx_zero))
+                temp_FT[nanind[0]] = multinomial.logpmf(Ft[t], sum(Ft[t]), theta_refine)
+                print "[nan] theta_c", temp_FT[nanind[0]]
+                count_nan += 1
+                if (True in [ temp_FT[nanind[0]] ]):
+                  temp_FT[nanind[0]] = approx_zero
+                if (count_nan >= len(temp_FT)):
+                  temp_FT = log2prob(temp_FT)
+              temp += np.log(log2prob(temp_FT)) #temp_FT
+
+            Ct[t] = list(multinomial.rvs(1,log2prob(temp))).index(1)
+          print Ct
+          ########## ↑ ##### Ct(index of spatial concept) is samplied ##### ↑ ##########
         
         ########## ↓ ##### W(the name of place: multinomial distribution) is samplied ##### ↓ ##########
         print u"Sampling Wc..."

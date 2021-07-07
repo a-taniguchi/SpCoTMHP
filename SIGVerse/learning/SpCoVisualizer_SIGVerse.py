@@ -3,9 +3,9 @@
 # Spatial concept Topometric Map Visualizaer (Python only w/o ROS)
 # 場所概念の位置分布（ガウス分布）および、その隣接関係のグラフ（遷移確率）を地図上に描画する
 # SpCoA++の要領で複数回施行している場合は、相互情報量最大の候補を選択
-# Akira Taniguchi 2020/05/16 - 2020/05/18
+# Akira Taniguchi 2020/05/16 - 2020/05/18 - 2021/07/07
 # This code is based on em_spcoae_map_srv.py
-# [command] $ python SpCoVisualizer_albert-b.py <trialname>
+# [command] $ python SpCoVisualizer_SIGVerse.py <trialname>
 
 import sys
 import numpy as np
@@ -20,6 +20,8 @@ import yaml
 from __init__ import *
 
 iteration = 0 # if (ITERATION == 1 )
+sample_max = 0
+datasetfolder = inputfolder
 
 # 学習済みパラメータフォルダ名 trialname を得る
 trialname = sys.argv[1]
@@ -35,12 +37,6 @@ with open(datasetfolder + map_file + '.yaml') as file:
 
 print((origin,resolution))
 
-# For the map on albert-B dataset
-x_min = 380 #X_init_index[0] - T_horizon
-x_max = 800 #X_init_index[0] + T_horizon
-y_min = 180 #X_init_index[1] - T_horizon
-y_max = 510 #X_init_index[1] + T_horizon
-
 # map の .pgm file を読み込み
 map_file_path = datasetfolder + map_file + '.pgm' #roslib.packages.get_pkg_dir('em_spco_ae') + '/map/' + self.map_file + '/map.pgm'
 map_image     = Image.open(map_file_path)
@@ -50,8 +46,13 @@ map_image     = ImageOps.flip(map_image)      # 上下反転
 width, height = map_image.size
 print(map_image.size)
 
+# For the map on SIGVerse dataset
+x_min = 0 #380 #X_init_index[0] - T_horizon
+x_max = width #800 #X_init_index[0] + T_horizon
+y_min = 0 #180 #X_init_index[1] - T_horizon
+y_max = height #510 #X_init_index[1] + T_horizon
 
-
+"""
 # MIが最大のsampleの番号を得る
 MI_List   = [[0.0 for i in xrange(sample_num)] for j in xrange(ITERATION)]
 MAX_Samp  = [0 for j in xrange(ITERATION)]
@@ -63,6 +64,7 @@ for line in open(outputfolder + trialname + '/' + trialname + '_sougo_MI_' + str
         MI_List[iteration][int(itemList[0])] = float(itemList[1])
 MAX_Samp[iteration] = MI_List[iteration].index(max(MI_List[iteration]))  #相互情報量が最大のサンプル番号
 sample_max = MAX_Samp[iteration]
+"""
 
 
 file_trialname   = outputfolder + trialname +'/' + trialname
@@ -74,7 +76,7 @@ Mu_origin = ( Mu - np.array([origin[0],origin[1]]) ) / resolution
 Sig = np.load(file_trialname + '_Sig_'   + iteration_sample + '.npy')
 
 # Spatial concept の Transition probability parameter (psi) を読み込む
-#psi = np.load(file_trialname + '_psi_'   + iteration_sample + '.npy')
+psi = np.load(file_trialname + '_psi_'   + iteration_sample + '.npy')
 
 ##itの読み込み
 It = np.loadtxt( file_trialname + '_It_'+ iteration_sample + '.csv', dtype=int )
@@ -101,7 +103,7 @@ for k in xrange(K):
         #el2                  = Ellipse(xy=Mu_origin[k],width=1.0,height=1.0,color=COLOR[k])  # matplotlib.patches.Ellipse
         #ax.add_patch(el2)
 
-        txt = ax.text(Mu_origin[k][0]+4, Mu_origin[k][1]+4, str(k), size = 7, color = "midnightblue", zorder=3)
+        txt = ax.text(Mu_origin[k][0]+2, Mu_origin[k][1]+2, str(k), size = 8, color = "midnightblue", zorder=3)
         txt.set_path_effects([path_effects.Stroke(linewidth=2, foreground='white', alpha=0.8),
                               path_effects.Normal()])
     except:
@@ -127,12 +129,12 @@ print edge_list
 
 
 # 地図描画
-plt.imshow(map_image,cmap='gray')
+plt.imshow(map_image,cmap='gray', interpolation='none', origin='lower')
 #,extent=(origin[0],origin[0]+height*resolution,origin[1],origin[1]+width*resolution)
 
 for edge in edge_list:
     plt.plot( (Mu_origin[edge[0]][0], Mu_origin[edge[1]][0]), (Mu_origin[edge[0]][1], Mu_origin[edge[1]][1]),
-              color='dimgray', linestyle = "-", linewidth=10*psi_sym[edge[0]][edge[1]], zorder=1 ) #, alpha=10*psi_sym[edge[0]][edge[1]]) #psi_sym[edge[0]][edge[1]])
+              color='dimgray', linestyle = "-", linewidth=5.0*psi_sym[edge[0]][edge[1]], zorder=1 ) #, alpha=10*psi_sym[edge[0]][edge[1]]) #psi_sym[edge[0]][edge[1]])
 #darkslategrey
 
 ##axの場合
@@ -145,8 +147,8 @@ plt.tick_params(axis='x', which='major', labelsize=8)
 plt.tick_params(axis='y', which='major', labelsize=8)
 plt.xlabel('X', fontsize=10)
 plt.ylabel('Y', fontsize=10)
-#plt.xlim(x_min,x_max)
-#plt.ylim(y_min,y_max)
+plt.xlim(x_min,x_max)
+plt.ylim(y_min,y_max)
 plt.savefig(file_trialname + '_A_SpCoGraph_' + iteration_sample + '.png', dpi=300)
 plt.savefig(file_trialname + '_A_SpCoGraph_' + iteration_sample + '.pdf', dpi=300)
 
