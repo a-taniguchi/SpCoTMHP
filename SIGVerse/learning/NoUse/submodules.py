@@ -1,11 +1,10 @@
 #coding:utf-8
 #This file for general modules (一般性の高い関数はこちらへ集約)
-#Akira Taniguchi 2018/11/26-2018/12/17-2020/04/26-
+#Akira Taniguchi 2018/11/26-2018/12/17-
 import os
 import numpy as np
 from math import pi as PI
 from math import cos,sin,sqrt,exp,log,fabs,fsum,degrees,radians,atan2,gamma,lgamma
-#from initSpCoSLAMSIGVerse import *
 from __init__ import *
 
 def Makedir(dir):
@@ -15,22 +14,8 @@ def Makedir(dir):
         pass
         
 def fill_param(param, default):   ##パラメータをNone の場合のみデフォルト値に差し替える関数
-  if (param == None): return default
-  else: return param
-
-def log2prob(log_prob_array):  #Normalization # log_prob_array: np.array()
-  while (True in np.isnan(log_prob_array)):
-    print "[Prob Error (nan)]", log_prob_array
-    log_prob_array = np.nan_to_num(log_prob_array, nan=approx_zero)  # 配列中のNaNを他の値に置換 (>= numpy version 1.17)
-  max_prob = np.max(log_prob_array)
-  log_prob_array = log_prob_array - max_prob
-  #prob_array = np.exp( log_prob_array - np.log(np.sum(np.exp(log_prob_array))) )
-  prob_array = np.exp(log_prob_array)
-  prob_array = prob_array / np.sum(prob_array) # prob_array / sum_prob
-  if (np.sum(prob_array) == 0.0):
-    print "[Prob Error (sum zero to uniform)]", prob_array
-    prob_array = [ 1.0/float(len(prob_array)) for _ in range(len(prob_array)) ]
-  return prob_array
+    if (param == None): return default
+    else: return param
         
 def multivariate_t_distribution(x, mu, Sigma, df):
     """
@@ -174,7 +159,7 @@ def levenshtein_distance(a, b):
 
 #remove <s>,<sp>,</s> and "\r", "": if its were segmented to words.
 def Ignore_SP_Tags(itemList):
-  for _ in xrange(5):
+  for b in xrange(5):
     if ("<s><s>" in itemList):
       itemList.pop(itemList.index("<s><s>"))
     if ("<s><sp>" in itemList):
@@ -202,7 +187,7 @@ def Ignore_SP_Tags(itemList):
   for j in xrange(len(itemList)):
     itemList[j] = itemList[j].replace("\r", "")  
 
-  for _ in xrange(5):
+  for b in xrange(5):
     if ("" in itemList):
       itemList.pop(itemList.index(""))
 

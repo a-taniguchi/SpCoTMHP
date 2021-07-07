@@ -108,7 +108,7 @@ devel/
 torioki/
 sankou/
 img/
-SIGVerse/data/
+#SIGVerse/data/
 *.py~
 *.sh~
 .lnk

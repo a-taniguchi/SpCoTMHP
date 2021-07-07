@@ -5,7 +5,7 @@ import numpy as np
 
 ################### Parameters ###################
 num_iter = 100          # The number of iterations of Gibbs sampling for spatial concept learning
-SIGVerse = 0
+SIGVerse = 1
 if (SIGVerse == 1):
   DATA_NUM = 60           # The number of training data (for SIGVerse)
 else:
@@ -172,12 +172,15 @@ lmfolder = "/home/akira/Dropbox/SpCoSLAM/learning/lang_m/"
 if (SIGVerse == 1):
   ##### SIGVerse dataset ####
   ## Folder of training data set
-  datasetfolder = "/mnt/hgfs/D/akira/Dropbox/SpCoSLAM/SpCoTMHP/SIGVerse/dataset/similar/3LDK_small/" 
+  datasetfolder = "/mnt/hgfs/D/akira/Dropbox/SpCoSLAM/SpCoTMHP/SIGVerse/dataset/similar/3LDK/" 
   ## Output folder
   outputfolder  = "/mnt/hgfs/D/akira/Dropbox/SpCoSLAM/SpCoTMHP/SIGVerse/data/"  
 
   datasets      = ["00","01","02","03","04","05","06","07","08","09","10"] 
   #["00","01","04","05","06","09","02","03","07","08","10"] #[dataset1,dataset2]
+
+  ## map fileのフォルダファイル名 (**.pgm and **.yaml)
+  map_file = "/map/s"
 
   ## 位置推定の教示データ(旧 ./../sample/フォルダ内)
   PositionDataFile = '/position/position_AURO.csv' #'SpCoSLAM.csv'      # 'test000' 

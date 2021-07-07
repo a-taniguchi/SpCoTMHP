@@ -2,7 +2,7 @@
 
 ##############################################
 ## Spatial concept formation model (SpCoA++ with/without lexical acquisition)
-## For SpCoTMHP (on SIGVerse and albert-b dataset)
+## For SpCoTMHP (on SIGVerse /3LDK_small/ and albert-b dataset)
 ## Learning algorithm is Gibbs sampling.
 ## Akira Taniguchi 2020/04/14-2020/04/26-2020/05/06-
 ##############################################
@@ -21,9 +21,8 @@ from numpy.random import uniform,dirichlet
 from scipy.stats import multivariate_normal,invwishart,multinomial
 from math import pi as PI
 from math import cos,sin,sqrt,exp,log,fabs,fsum #,degrees,radians,atan2,gamma,lgamma
-#from initSpCoSLAMSIGVerse import *
 from __init__ import *
-from JuliusLattice_dec import *
+#from JuliusLattice_dec import *
 from submodules import *
 
 # Mutual information (binary variable): word_index, W, π, Ct
