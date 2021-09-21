@@ -1,16 +1,31 @@
 #!/usr/bin/env python
 #coding:utf-8
 import os
+import numpy as np
+import scipy as sp
 import collections
 import spconavi_read_data
 import spconavi_save_data
 from scipy.stats import multinomial
+from scipy.stats import chi2,multivariate_normal,multinomial
 from __init__ import *
 from submodules import *
 from itertools import izip
 
 read_data = spconavi_read_data.ReadingData()
 save_data = spconavi_save_data.SavingData()
+
+def PostProbMap_nparray_jit( CostMapProb,Mu,Sig,Phi_l,LookupTable_ProbCt,map_length,map_width,L,K): #,IndexMap):
+        x,y = np.meshgrid(np.linspace(-10.0,9.1,map_width),np.linspace(-10.0,9.1,map_length))
+        pos = np.dstack((x,y))	
+        #PostProbMap = np.array([ [ PostProb_ij([width, length],Mu,Sig,map_length,map_width, CostMapProb,it) for width in xrange(map_width) ] for length in xrange(map_length) ])
+        for i in range(K):
+          if i==0:
+            PostProbMap=Phi_l[i][4]*multivariate_normal(Mu[i],Sig[i]).pdf(pos)
+          else:
+            PostProbMap+=Phi_l[i][4]*multivariate_normal(Mu[i],Sig[i]).pdf(pos)
+        return CostMapProb * PostProbMap
+
 
 class PathPlanner:
 
@@ -37,14 +52,14 @@ class PathPlanner:
 
         print "Please wait for PostProbMap"
         output = outputfile + "N"+str(N_best)+"G"+str(speech_num) + "_PathWeightMap.csv"
-        if (os.path.isfile(output) == False) or (UPDATE_PostProbMap == 1):  #すでにファイルがあれば作成しない
+        #if (os.path.isfile(output) == False) or (UPDATE_PostProbMap == 1):  #すでにファイルがあれば作成しない
             #PathWeightMap = PostProbMap_jit(CostMapProb,Mu,Sig,Phi_l,LookupTable_ProbCt,map_length,map_width,L,K) #マルチCPUで高速化できるかも #CostMapProb * PostProbMap #後の処理のために, この時点ではlogにしない
-            PathWeightMap = read_data.PostProbMap_nparray_jit(CostMapProb,Mu,Sig,Phi_l,LookupTable_ProbCt,map_length,map_width,L,K) #,IndexMap) 
+        PathWeightMap = PostProbMap_nparray_jit(CostMapProb,Mu,Sig,Phi_l,LookupTable_ProbCt,map_length,map_width,L,K) #,IndexMap) 
         
             #[TEST]計算結果を先に保存
-            save_data.SaveProbMap(PathWeightMap, outputfile, speech_num)
-        else:
-            PathWeightMap = read_data.ReadProbMap(outputfile)
+        save_data.SaveProbMap(PathWeightMap, outputfile, speech_num)
+        #else:
+           # PathWeightMap = read_data.ReadProbMap(outputfile)
             #print "already exists:", output
         print "[Done] PathWeightMap."
 

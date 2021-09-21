@@ -16,13 +16,13 @@ elif (example == 2):
   example_folder = "example2/"
 
 ##### NEW #####
-inputfolder_SIG = "/root/HSR/catkin_ws/src/spconavi_ros/src/data/"
-outputfolder_SIG = "/root/HSR/catkin_ws/src/spconavi_ros/src/data/"
+inputfolder_SIG = "/root/HSR/catkin_ws/src/SpCoTMHP-1/SIGVerse/data/"
+outputfolder_SIG = "/root/HSR/catkin_ws/src/SpCoTMHP-1/SIGVerse/data/"
 #inputfolder_SIG  = "/mnt/hgfs/Dropbox/SpCoNavi/CoRL/dataset/similar/3LDK/"  #"/home/akira/Dropbox/SpCoNavi/data/"
 #outputfolder_SIG = "/mnt/hgfs/Dropbox/SpCoNavi/CoRL/data/" + example_folder  #"/home/akira/Dropbox/SpCoNavi/data/"
 
 # Note: Don't be tupple! Only list! [*,*]
-Start_Position = [[100,100],[100,110],[120,60],[60,90],[90,120],[75,75],[90,50],[90,60],[110,80],[130,95]] #(y,x). not (x,y). (Same as coordinates in Astar_*.py) 
+Start_Position = [[100,100],[150,130],[120,60],[60,90],[90,120],[75,75],[90,50],[90,60],[110,80],[130,95]] #(y,x). not (x,y). (Same as coordinates in Astar_*.py) 
 Goal_Word      = ["玄関","リビング","ダイニング","キッチン","風呂","洗面所","トイレ","寝室","テレビ前","子犬休み場","北","南","AND","OR"] #,"テレビ前","子犬休み場","北","南"] # In Japanese
 #Goal_Word_example = ["テレビ前","子犬休み場","北","南"] # In Japanese
 #Example1 = ["リビング","テレビ前","子犬休み場"]
@@ -33,8 +33,8 @@ Example_OR = ["ダイニング","キッチン"] #13
 #0:玄関,1:リビング,2:ダイニング,3:キッチン,4:風呂,5:洗面所,6:トイレ,7:寝室,8:テレビ前,9:子犬休み場,10:北,11:南
 
 #Same values as /learning/__init.py__
-L = 10 #100                  #The number of spatial concepts
-K = 10 #100                  #The number of position distributions
+L = 11 #100                  #The number of spatial concepts
+K = 11 #100                  #The number of position distributions
 
 memory_reduction = 1 #0 #Memory reduction process (ON:1, OFF:0)
 NANAME = 0              #Action pattern: up, down, left and right (0), and add diagonal (oblique) movements (１)
@@ -61,7 +61,7 @@ costmap_folder = navigation_folder  #"/costmap/"
 
 
 #################### Parameters ####################
-T_horizon  = 200     #Planning horizon #may be over 150~200. depends on memory and computational limits
+T_horizon  = 100    #Planning horizon #may be over 150~200. depends on memory and computational limits
 N_best     = word_increment #10      #N of N-best (N<=10)
 #step       = 50      #The end number of time-step in SpCoSLAM (the number of training data)
 

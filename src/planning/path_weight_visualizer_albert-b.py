@@ -125,8 +125,8 @@ if __name__ == '__main__':
     plt.xlabel('X', fontsize=10)
     plt.ylabel('Y', fontsize=10)
 
-    plt.imshow(PathMap, origin='lower', cmap='autumn') #, vmin=wmin, vmax=wmax) #gnuplot, inferno,magma,plasma  #
-
+    plt.imshow(PathMap, origin='lower', cmap='r') #, vmin=wmin, vmax=wmax) #gnuplot, inferno,magma,plasma  #
+    
 
     #地図をカラー画像として保存
     #output = outputfile + "N"+str(N_best)+"G"+str(speech_num)
