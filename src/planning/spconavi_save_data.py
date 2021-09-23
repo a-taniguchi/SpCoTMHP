@@ -14,16 +14,16 @@ class SavingData:
     #Save the path trajectory
     def SavePath(self, X_init, Path, Path_ROS, outputname):
         print "PathSave"
-        if (SAVE_X_init == 1):
+        #if (SAVE_X_init == 1):
             # Save the robot initial position to the file (index)
-            np.savetxt(outputname + "_X_init.csv", X_init, delimiter=",")
+            #np.savetxt(outputname + "_X_init.csv", X_init, delimiter=",")
             # Save the robot initial position to the file (ROS)
-            np.savetxt(outputname + "_X_init_ROS.csv", read_data.Array_index_To_Map_coordinates(X_init), delimiter=",")
+            #np.savetxt(outputname + "_X_init_ROS.csv", read_data.Array_index_To_Map_coordinates(X_init), delimiter=",")
 
         # Save the result to the file (index)
-        np.savetxt(outputname + "_Path.csv", Path, delimiter=",")
+        #np.savetxt(outputname + "_Path.csv", Path, delimiter=",")
         # Save the result to the file (ROS)
-        np.savetxt(outputname + "_Path_ROS.csv", Path_ROS, delimiter=",")
+        #np.savetxt(outputname + "_Path_ROS.csv", Path_ROS, delimiter=",")
         print "Save Path: " + outputname + "_Path.csv and _Path_ROS.csv"
 
     #Save the path trajectory
@@ -42,7 +42,7 @@ class SavingData:
         # Save the result to the file (index)
         np.savetxt(outputname + "_Path" + str(temp) + ".csv", Path_2D_index_original, delimiter=",")
         # Save the result to the file (ROS)
-        np.savetxt(outputname + "_Path_ROS" + str(temp) + ".csv", Path_ROS, delimiter=",")
+        #np.savetxt(outputname + "_Path_ROS" + str(temp) + ".csv", Path_ROS, delimiter=",")
         print "Save Path: " + outputname + "_Path" + str(temp) + ".csv and _Path_ROS" + str(temp) + ".csv"
 
     def SaveTrellis(self, trellis, outputname, temp):

@@ -24,8 +24,11 @@ from math import pi as PI
 from math import cos,sin,sqrt,exp,log,fabs,fsum,degrees,radians,atan2
 import matplotlib.pyplot as plt
 import collections
+import spconavi_path_calculate
 from __init__ import *
 #from submodules import *
+
+path_calculate = spconavi_path_calculate.PathPlanner()
 
 def right(pos):
     return (pos[0], pos[1] + 1)
@@ -181,7 +184,7 @@ def ReadParameters(iteration, sample, filename, trialname):
       
     i = 0
     ##Mu is read from the file
-    for line in open(filename + "/" + trialname + '_Myu_' + str(iteration) + '_' + str(sample) + '.csv', 'r'):
+    for line in open(filename + "/" + trialname + '_Mu_' + str(iteration) + '_' + str(sample) + '.csv', 'r'):
         itemList = line[:-1].split(',')
         #Mu[i] = np.array([ float(itemList[0]) - origin[0] , float(itemList[1]) - origin[1] ]) / resolution
         Mu[i] = np.array([ float(itemList[0]) , float(itemList[1]) ])
@@ -189,12 +192,14 @@ def ReadParameters(iteration, sample, filename, trialname):
       
     i = 0
     ##Sig is read from the file
-    for line in open(filename + "/" + trialname + '_S_' + str(iteration) + '_' + str(sample) + '.csv', 'r'):
+    Sig = np.load(filename + "/" + trialname + '_Sig_' + str(iteration) + '_' + str(sample) + '.npy')
+    '''
+    for line in open(filename + "/" + trialname + '_Sig_' + str(iteration) + '_' + str(sample) + '.npy', 'r'):
         itemList = line[:-1].split(',')
         #Sig[i] = np.array([[ float(itemList[0])/ resolution, float(itemList[1]) ], [ float(itemList[2]), float(itemList[3])/ resolution ]]) #/ resolution
-        Sig[i] = np.array([[ float(itemList[0]), float(itemList[1]) ], [ float(itemList[2]), float(itemList[3]) ]]) 
+        Sig[i] = np.array([[ float(itemList[0]), float(itemList[1]) ], [ float(itemList[2]), float(itemList[3])]]) 
         i = i + 1
-      
+      '''
     ##phi is read from the file
     c = 0
     #Read text file
@@ -342,6 +347,7 @@ for h in range(height):
 infile.close
 ##########
 """
+
 maze = ReadMap(outputfile)
 height, width = maze.shape
 
@@ -360,6 +366,8 @@ print("BoW:", Otb_B)
 #Path, Path_ROS, PathWeightMap, Path_one = PathPlanner(Otb_B, Start_Position[int(init_position_num)], THETA, CostMapProb) #gridmap, costmap)
 
 #Read the emission probability file 
+CostMapProb = ReadCostMapProb(outputfile)
+path_calculate.PathPlanner(path_calculate, N_best, 1, THETA, CostMapProb, outputfile, speech_num, outputname)
 PathWeightMap = ReadProbMap(outputfile)
 
 #####描画

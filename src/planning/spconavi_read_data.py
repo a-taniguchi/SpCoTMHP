@@ -49,7 +49,7 @@ class ReadingData:
         
         i = 0
         ##Mu is read from the file
-        for line in open(filename + "/" + trialname + '_Myu_' + str(iteration) + '_' + str(sample) + '.csv', 'r'):
+        for line in open(filename + "/" + trialname + '_Mu_' + str(iteration) + '_' + str(sample) + '.csv', 'r'):
             itemList = line[:-1].split(',')
             #Mu[i] = np.array([ float(itemList[0]) - origin[0] , float(itemList[1]) - origin[1] ]) / resolution
             Mu[i] = np.array([ float(itemList[0]) , float(itemList[1]) ])

@@ -4,11 +4,11 @@
 import numpy as np
 
 ################### Parameters ###################
-LEARN_MODE = "GT"       # ground truth
+LEARN_MODE = "GT"
 if (LEARN_MODE == "GT"):
   num_iter = 1
 else:
-  num_iter = 100        # The number of iterations of Gibbs sampling for spatial concept learning
+  num_iter = 100          # The number of iterations of Gibbs sampling for spatial concept learning
 SIGVerse = 1
 
 word_increment = 1.0    # The increment number of word observation data (BoWs)
