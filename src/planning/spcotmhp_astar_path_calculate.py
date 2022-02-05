@@ -345,7 +345,7 @@ Distance_save=[ [0.0 for atem in range(K)] for aky in range(K) ]
 ##FullPath of folder
 filename = outputfolder_SIG + trialname #+ "/" 
 print(filename, iteration, sample)
-outputfile = filename + navigation_folder #outputfolder + trialname + navigation_folder
+outputfile = filename + navigation_folder + "astar_node/" #outputfolder + trialname + navigation_folder
 #outputname = outputfile + "Astar_SpCo_"+"N"+str(N_best)+"A"+str(Approx)+"S"+str(init_position_num)+"G"+str(speech_num)
 #outputname = outputfile + "Astar_Approx_expect_"+"N"+str(N_best)+"A"+str(Approx)+"S"+str(start)+"G"+str(speech_num)
 
@@ -659,5 +659,5 @@ for st_i in range(K):
   	#print(str(st_i)+"_"+str(gl_i)) 		
 outputname=outputfile+"Astar_SpCoTMHP_"
 np.savetxt(outputname+"distance.csv",Distance_save,delimiter=",")
-np.savetxt(outputname+"psi.csv",psi,delimiter=",")
+#np.savetxt(outputname+"psi.csv",psi,delimiter=",")
 np.savetxt(outputname+"cost.csv",Like_save,delimiter=",")

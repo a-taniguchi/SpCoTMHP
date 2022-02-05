@@ -95,9 +95,9 @@ if __name__ == '__main__':
 
     #Save the emission probability in the map as a color image
     output = outputfile + "N"+str(N_best)+"G"+str(speech_num)
-    #plt.savefig(output + '_PathWeight.eps', dpi=300)#, transparent=True
-    plt.savefig(output + '_PathWeight.png', dpi=300)#, transparent=True
-    plt.savefig(output + '_PathWeight.pdf', dpi=300, transparent=True)#, transparent=True
+    #plt.savefig(output + '_Weight.eps', dpi=300)#, transparent=True
+    plt.savefig(output + '_Weight.png', dpi=300)#, transparent=True
+    plt.savefig(output + '_Weight.pdf', dpi=300, transparent=True)#, transparent=True
     plt.clf()
 
     #plt.show()

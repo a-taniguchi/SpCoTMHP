@@ -1,13 +1,13 @@
 #coding:utf-8
 #The file for setting parameters
-#Akira Taniguchi 2018/12/13-2019/03/10-2019/07/25
+#Akira Taniguchi 2022/02/05
 import numpy as np
 
 ##Command
 #python ./SpCoNavi0.1_SIGVerse.py trialname iteration(1) sample(0) init_position_num speech_num
 #python ./SpCoNavi0.1_SIGVerse.py 3LDK_01 1 0 0 0
 
-##### example #####
+##### example (for SpCoNavi exp) #####
 example = 0 #1
 example_folder = ""
 if (example == 1):
@@ -16,25 +16,19 @@ elif (example == 2):
   example_folder = "example2/"
 
 ##### NEW #####
-inputfolder_SIG = "/root/HSR/catkin_ws/src/SpCoTMHP-1/SIGVerse/data/"
-outputfolder_SIG = "/root/HSR/catkin_ws/src/SpCoTMHP-1/SIGVerse/data/"
-#inputfolder_SIG  = "/mnt/hgfs/Dropbox/SpCoNavi/CoRL/dataset/similar/3LDK/"  #"/home/akira/Dropbox/SpCoNavi/data/"
-#outputfolder_SIG = "/mnt/hgfs/Dropbox/SpCoNavi/CoRL/data/" + example_folder  #"/home/akira/Dropbox/SpCoNavi/data/"
+inputfolder_SIG  = "../../SIGVerse/data/"
+outputfolder_SIG = "../../SIGVerse/data/"
+#inputfolder_SIG  = "/mnt/hgfs/D/Dropbox/SpCoNavi/CoRL/dataset/similar/3LDK/" 
+#outputfolder_SIG = "/mnt/hgfs/D/Dropbox/SpCoNavi/CoRL/data/" + example_folder  
 
-# Note: Don't be tupple! Only list! [*,*]
-Start_Position = [[100,100],[150,130],[120,60],[60,90],[90,120],[75,75],[90,50],[90,60],[110,80],[130,95]] #(y,x). not (x,y). (Same as coordinates in Astar_*.py) 
-Goal_Word      = ["玄関","リビング","ダイニング","キッチン","風呂","洗面所","トイレ","寝室","テレビ前","子犬休み場","北","南","AND","OR"] #,"テレビ前","子犬休み場","北","南"] # In Japanese
-#Goal_Word_example = ["テレビ前","子犬休み場","北","南"] # In Japanese
-#Example1 = ["リビング","テレビ前","子犬休み場"]
-Example_AND = ["北","寝室"] #12
-Example_OR = ["ダイニング","キッチン"] #13
-
-#Goal_Word = ["Entrance","Living room","Dining room","Kitchen","Bath room","Washroom","Toilet","Bedroom"]
-#0:玄関,1:リビング,2:ダイニング,3:キッチン,4:風呂,5:洗面所,6:トイレ,7:寝室,8:テレビ前,9:子犬休み場,10:北,11:南
+# Note: Don't be tupple! Only list! [*,*]  #(y,x). not (x,y). (Same as coordinates in Astar_*.py) 
+Start_Position = [[100,100],[150,130],[120,60],[60,90],[90,120],[75,75],[90,50],[90,60],[110,80],[130,95]] 
+Goal_Word      = ["玄関","リビング","ダイニング","キッチン","風呂","洗面所","トイレ","寝室", "物置き", "廊下"]
+#0:玄関, 1:リビング, 2:ダイニング, 3:キッチン, 4:風呂, 5:洗面所, 6:トイレ, 7:寝室, 8:物置き, 9:廊下
 
 #Same values as /learning/__init.py__
-L = 11 #100                  #The number of spatial concepts
-K = 11 #100                  #The number of position distributions
+L = 11                   #The number of spatial concepts
+K = 11                   #The number of position distributions
 
 memory_reduction = 1 #0 #Memory reduction process (ON:1, OFF:0)
 NANAME = 0              #Action pattern: up, down, left and right (0), and add diagonal (oblique) movements (１)
@@ -42,9 +36,9 @@ word_increment = 6 #10     #Increment number of word observation data (BoWs)
 
 #################### Folder PATH ####################
 #Setting of PATH for a folder of learned spatial concept parameters
-datafolder    = "/mnt/hgfs/D/Dropbox/SpCoSLAM/data/" #"/home/akira/Dropbox/SpCoSLAM/data/" 
+datafolder    = "/mnt/hgfs/D/Dropbox/SpCoSLAM/data/" 
 #Setting of PATH for output folder
-outputfolder  = "/mnt/hgfs/D/Dropbox/SpCoSLAM/data/"  #"/home/akira/Dropbox/SpCoNavi/data/"
+outputfolder  = "/mnt/hgfs/D/Dropbox/SpCoSLAM/data/"  
 
 #File folder of speech data
 #speech_folder    = "/home/akira/Dropbox/Julius/directory/SpCoSLAM/*.wav"    #Teaching speech data folder
@@ -52,7 +46,7 @@ outputfolder  = "/mnt/hgfs/D/Dropbox/SpCoSLAM/data/"  #"/home/akira/Dropbox/SpCo
 #lmfolder         = "/mnt/hgfs/D/Dropbox/SpCoSLAM/learning/lang_m/"  #Language model (word dictionary)
 
 #Navigation folder (Other output files are also in same folder.)
-navigation_folder = "/navi/"  #outputfolder + trialname + / + navigation_folder + contmap.csv
+navigation_folder = "/tmhp/"  #outputfolder + trialname + / + navigation_folder + contmap.csv
 # follow folder format of learning result in spatial concept
 
 #Cost map folder

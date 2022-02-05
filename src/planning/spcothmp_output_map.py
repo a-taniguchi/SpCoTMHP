@@ -1,5 +1,5 @@
 #coding:utf-8
-#Akira Taniguchi 2019/01/22-2019/02/05-
+#Akira Taniguchi (Ito Shuya) 2022/02/05
 #For Visualization of Posterior emission probability (PathWeightMap) on the grid map
 import sys
 #from math import pi as PI
@@ -23,11 +23,10 @@ def ReadMap(outputfile):
 #Load the probability value map used for path calculation
 def ReadProbMap(outputfile):
     # Read the result file
-    output = outputfile+"N6G4_PathWeightMap.csv"
+    output = outputfile + "N"+str(N_best)+"G"+str(speech_num) + "_PathWeightMap.csv" #"N6G4_PathWeightMap.csv"
     PathWeightMap = np.loadtxt(output, delimiter=",")
     print "Read PathWeightMap: " + output
     return PathWeightMap
-
 
 #ROSの地図座標系をPython内の2次元配列のインデックス番号に対応付ける
 def Map_coordinates_To_Array_index(X):
@@ -61,20 +60,8 @@ if __name__ == '__main__':
     gridmap = ReadMap(outputfile)
 
     #Read the PathWeightMap file
-    psi     = [ [0.0 for atem in range(K)] for aky in range(K) ]
-    c=0
-    i=0
-    for line in open(outputfolder_SIG + trialname + "/"+trialname+ '_psi_'  + 'setting.csv', 'r'):
-        itemList = line[:-1].split(',')
-        for i in range(len(itemList)):
-            if itemList[i] != "":
-              psi[c][i] = float(itemList[i])
-        c = c + 1 
-    #for s_n in range(K):
-     # for g_n in range(K):
-       # if s_n != g_n:
-         # if psi[s_n][g_n]==1:
     PathWeightMap = ReadProbMap(outputfile)
+
     """
 	    y_min = 380 #X_init_index[0] - T_horizon
 	    y_max = 800 #X_init_index[0] + T_horizon
@@ -85,10 +72,12 @@ if __name__ == '__main__':
 	    gridmap = gridmap[x_min:x_max, y_min:y_max]
     """
 
-	    #length and width of the MAP cells
+	#length and width of the MAP cells
     map_length = len(PathWeightMap)  #len(costmap)
     map_width  = len(PathWeightMap[0])  #len(costmap[0])
     print "MAP[length][width]:",map_length,map_width
+
+    ###v### Add by Ito ###v###
     Path   = [ np.array([ 0.0, 0.0 ]) for i in range(T_horizon) ]
     PathR   = [ np.array([ 0.0, 0.0 ]) for i in range(T_horizon) ]
     i = 0
@@ -101,8 +90,7 @@ if __name__ == '__main__':
 		i = i + 1
 		
     PathMap = np.array([[np.inf for j in xrange(map_width)] for i in xrange(map_length)])
-	    
-	    
+	 
     for t in xrange(len(Path)):
 	     for i in xrange(map_length):
 		for j in xrange(map_width):
@@ -115,7 +103,9 @@ if __name__ == '__main__':
     PathWeightMap = PathWeightMap[0:map_width,0:map_length] # X[-T+I[0]:T+I[0],-T+I[1]:T+I[1]]
     PathMap = PathMap[0:map_width,0:map_length] # X[-T+I[0]:T+I[0],-T+I[1]:T+I[1]]
     gridmap = gridmap[0:map_width,0:map_length]  
-	    #Add the weights on the map (heatmap)
+    ###^### Add by Ito ###^###
+	
+    #Add the weights on the map (heatmap)
     plt.imshow(gridmap + (40+1)*(gridmap == -1), origin='lower', cmap='binary', vmin = 0, vmax = 100, interpolation='none') #, vmin = 0.0, vmax = 1.0)
     plt.imshow(PathWeightMap,norm=LogNorm(), origin='lower', cmap='viridis', interpolation='none') #, vmin=wmin, vmax=wmax) #gnuplot, inferno,magma,plasma  #
 	    #extent=[0, PathWeightMap.shape[1], PathWeightMap.shape[0],0 ] ) #, vmin = 0.0, vmax = 1.0) + np.log((np.exp(wmin)+np.exp(wmax))/2.0)
@@ -131,15 +121,11 @@ if __name__ == '__main__':
     plt.xlabel('X', fontsize=10)
     plt.ylabel('Y', fontsize=10)
     plt.imshow(PathMap, origin='lower', cmap='autumn')
-	#    print(Path)
-	    #Save the emission probability in the map as a color image
-	    
-    output = outputfile + "navi4"
-	    #plt.savefig(output + '_PathWeight.eps', dpi=300)#, transparent=True
-	    #plt.savefig(output + '_PathWeight.png', dpi=300)#, transparent=True
+
+	#Save the emission probability in the map as a color image 
+    output = outputfile + "N"+str(N_best)+"G"+str(speech_num) #"navi4"
+
     plt.savefig(output + '_PathWeight.pdf', dpi=300, transparent=True)
-    plt.savefig(output + '_PathWeight.eps', dpi=300, transparent=True)#, transparent=True
+    plt.savefig(output + '_PathWeight.eps', dpi=300, transparent=True)
     plt.clf()
 
-	    #plt.show()
-	    
