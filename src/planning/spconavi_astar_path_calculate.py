@@ -9,8 +9,8 @@
 ###########################################################
 
 ##Command: 
-#python spconavi_astar_path_calculate.py trialname mapname iteration sample init_position_num speech_num initial_position_x initial_position_y
-#python spconavi_astar_path_calculate.py 3LDK_01 s1DK_01 1 0 0 7 100 100 
+#python3 spconavi_astar_path_calculate.py trialname mapname iteration sample init_position_num speech_num initial_position_x initial_position_y
+#python3 spconavi_astar_path_calculate.py 3LDK_01 s1DK_01 1 0 0 7 100 100 
 
 import sys
 import random
@@ -24,11 +24,11 @@ from math import pi as PI
 from math import cos,sin,sqrt,exp,log,fabs,fsum,degrees,radians,atan2
 import matplotlib.pyplot as plt
 import collections
-import spconavi_path_calculate
+#import spconavi_path_calculate #Ito
 from __init__ import *
 #from submodules import *
 
-path_calculate = spconavi_path_calculate.PathPlanner()
+#path_calculate = spconavi_path_calculate.PathPlanner() #Ito
 
 def right(pos):
     return (pos[0], pos[1] + 1)
@@ -351,8 +351,6 @@ infile.close
 maze = ReadMap(outputfile)
 height, width = maze.shape
 
-action_functions = [right, left, up, down, stay] #, migiue, hidariue, migisita, hidarisita]
-cost_of_actions  = np.log( np.ones(len(action_functions)) / float(len(action_functions)) ) #[    1/5,    1/5,  1/5,    1/5,    1/5]) #, ,    1,        1,        1,          1]
 
 #Read the files of learned parameters  #THETA = [W,W_index,Mu,Sig,Pi,Phi_l,K,L]
 THETA = ReadParameters(iteration, sample, filename, trialname)
@@ -366,8 +364,8 @@ print("BoW:", Otb_B)
 #Path, Path_ROS, PathWeightMap, Path_one = PathPlanner(Otb_B, Start_Position[int(init_position_num)], THETA, CostMapProb) #gridmap, costmap)
 
 #Read the emission probability file 
-CostMapProb = ReadCostMapProb(outputfile)
-path_calculate.PathPlanner(path_calculate, N_best, 1, THETA, CostMapProb, outputfile, speech_num, outputname)
+#CostMapProb = ReadCostMapProb(outputfile) #Ito
+#path_calculate.PathPlanner(path_calculate, N_best, 1, THETA, CostMapProb, outputfile, speech_num, outputname) #Ito
 PathWeightMap = ReadProbMap(outputfile)
 
 #####描画
@@ -400,9 +398,8 @@ if(J != THETA[6]):
 p_cost_candidate = [0.0 for j in range(J)]
 Path_candidate = [[0.0] for j in range(J)]
 
-###goal候補ごとにA*を実行
-for gc_index in range(J):
-    goal = goal_candidate[gc_index]
+# A star algorithm (by Ryo Ozaki)
+def a_star(start, goal, maze, action_functions, cost_of_actions, PathWeightMap):
     if (maze[goal[0]][goal[1]] != 0):
         print("[ERROR] goal",maze[goal[0]][goal[1]],"is not 0.")
 
@@ -490,8 +487,14 @@ for gc_index in range(J):
         #i -= 1
 
     print(goal,": Total cost using A* algorithm is "+ str(p_cost))
+    return Path, p_cost
+
+###goal候補ごとにA*を実行
+for gc_index in range(J):
+    goal = goal_candidate[gc_index]
+    Path, p_cost = a_star(start, goal, maze, action_functions, cost_of_actions, PathWeightMap)    
     p_cost_candidate[gc_index] = p_cost / float(len(Path))
-    Path_candidate[gc_index] = Path    
+    Path_candidate[gc_index] = Path
 
     """
     #PathWeightMapとPathからlog likelihoodの値を再計算する

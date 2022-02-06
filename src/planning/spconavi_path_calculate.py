@@ -15,6 +15,9 @@ from itertools import izip
 read_data = spconavi_read_data.ReadingData()
 save_data = spconavi_save_data.SavingData()
 
+ITO = 0 # 伊藤くん改変を適用する（１）
+
+#v# Ito #v#
 def PostProbMap_nparray_jit( CostMapProb,Mu,Sig,Phi_l,LookupTable_ProbCt,map_length,map_width,L,K): #,IndexMap):
         x,y = np.meshgrid(np.linspace(-10.0,9.1,map_width),np.linspace(-10.0,9.1,map_length))
         pos = np.dstack((x,y))	
@@ -25,7 +28,7 @@ def PostProbMap_nparray_jit( CostMapProb,Mu,Sig,Phi_l,LookupTable_ProbCt,map_len
           else:
             PostProbMap+=Phi_l[i][4]*multivariate_normal(Mu[i],Sig[i]).pdf(pos)
         return CostMapProb * PostProbMap
-
+#^# Ito #^#
 
 class PathPlanner:
 
@@ -52,15 +55,21 @@ class PathPlanner:
 
         print "Please wait for PostProbMap"
         output = outputfile + "N"+str(N_best)+"G"+str(speech_num) + "_PathWeightMap.csv"
-        #if (os.path.isfile(output) == False) or (UPDATE_PostProbMap == 1):  #すでにファイルがあれば作成しない
-            #PathWeightMap = PostProbMap_jit(CostMapProb,Mu,Sig,Phi_l,LookupTable_ProbCt,map_length,map_width,L,K) #マルチCPUで高速化できるかも #CostMapProb * PostProbMap #後の処理のために, この時点ではlogにしない
-        PathWeightMap = PostProbMap_nparray_jit(CostMapProb,Mu,Sig,Phi_l,LookupTable_ProbCt,map_length,map_width,L,K) #,IndexMap) 
+        if ITO == 1:
+            PathWeightMap = PostProbMap_nparray_jit(CostMapProb,Mu,Sig,Phi_l,LookupTable_ProbCt,map_length,map_width,L,K) #,IndexMap)  # Ito
         
             #[TEST]計算結果を先に保存
-        save_data.SaveProbMap(PathWeightMap, outputfile, speech_num)
-        #else:
-           # PathWeightMap = read_data.ReadProbMap(outputfile)
-            #print "already exists:", output
+            save_data.SaveProbMap(PathWeightMap, outputfile, speech_num)
+        else:
+            if (os.path.isfile(output) == False) or (UPDATE_PostProbMap == 1):  #すでにファイルがあれば作成しない
+              #PathWeightMap = PostProbMap_jit(CostMapProb,Mu,Sig,Phi_l,LookupTable_ProbCt,map_length,map_width,L,K) #マルチCPUで高速化できるかも #CostMapProb * PostProbMap #後の処理のために, この時点ではlogにしない
+              PathWeightMap = read_data.PostProbMap_nparray_jit(CostMapProb,Mu,Sig,Phi_l,LookupTable_ProbCt,map_length,map_width,L,K) #,IndexMap) 
+                
+              #[TEST]計算結果を先に保存
+              save_data.SaveProbMap(PathWeightMap, outputfile, speech_num)
+            else:
+               PathWeightMap = read_data.ReadProbMap(outputfile)
+              #print "already exists:", output
         print "[Done] PathWeightMap."
 
         PathWeightMap_origin = PathWeightMap

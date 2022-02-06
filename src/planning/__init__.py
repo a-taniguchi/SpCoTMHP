@@ -4,8 +4,9 @@
 import numpy as np
 
 ##Command
-#python ./SpCoNavi0.1_SIGVerse.py trialname iteration(1) sample(0) init_position_num speech_num
-#python ./SpCoNavi0.1_SIGVerse.py 3LDK_01 1 0 0 0
+#python ./spcotmhp_viterbi_planning.py trialname iteration(1) sample(0) init_position_num speech_num
+#python ./spcotmhp_astar_execute.py trialname iteration(1) sample(0) init_position_num speech_num
+#python ./spcotmhp_viterbi_planning.py 3LDK_01 1 0 0 0
 
 ##### example (for SpCoNavi exp) #####
 example = 0 #1
@@ -30,8 +31,8 @@ Goal_Word      = ["玄関","リビング","ダイニング","キッチン","風�
 L = 11                   #The number of spatial concepts
 K = 11                   #The number of position distributions
 
-memory_reduction = 1 #0 #Memory reduction process (ON:1, OFF:0)
-NANAME = 0              #Action pattern: up, down, left and right (0), and add diagonal (oblique) movements (１)
+memory_reduction = 1 #0    #Memory reduction process (ON:1, OFF:0)
+NANAME = 0                 #Action pattern: up, down, left and right (0), and add diagonal (oblique) movements (１)
 word_increment = 6 #10     #Increment number of word observation data (BoWs)
 
 #################### Folder PATH ####################
@@ -53,11 +54,10 @@ navigation_folder = "/tmhp/"  #outputfolder + trialname + / + navigation_folder 
 costmap_folder = navigation_folder  #"/costmap/" 
 
 
-
 #################### Parameters ####################
-T_horizon  = 100    #Planning horizon #may be over 150~200. depends on memory and computational limits
-N_best     = word_increment #10      #N of N-best (N<=10)
-#step       = 50      #The end number of time-step in SpCoSLAM (the number of training data)
+T_horizon  = 100             #Planning horizon #may be over 150~200. depends on memory and computational limits
+N_best     = word_increment  #N of N-best (N<=10)
+#step       = 50             #The end number of time-step in SpCoSLAM (the number of training data)
 
 #Initial position (position candidates)
 X_candidates = Start_Position  #Index coordinates on 2 dimension list
@@ -84,6 +84,10 @@ Sampling_J = 10
 #Dynamics of state transition (motion model): (Deterministic:0, Probabilistic:1, Approximation:2(Unimplemented))
 #Dynamics = 0
 
+action_functions = [right, left, up, down, stay] #, migiue, hidariue, migisita, hidarisita]
+cost_of_actions  = np.log( np.ones(len(action_functions)) / float(len(action_functions)) ) #[    1/5,    1/5,  1/5,    1/5,    1/5]) #, ,    1,        1,        1,          1]
+
+
 cmd_vel = 1  #Movement amount of robot (ROS: cmd_vel [m/s], [rad/s]) [default:1 (int)]
 #MotionModelDist = "Gauss"  #"Gauss": Gaussian distribution, "Triangular": Triangular distribution
 
@@ -107,28 +111,6 @@ origin     = np.array([-10.000000, -10.000000]) #np.array([x,y]) #np.array([-30.
 #map_length = 0
 #map_width  = 0
 
-"""
-#Julius parameters
-JuliusVer      = "v4.4"   #"v.4.3.1"
-HMMtype        = "DNN"    #"GMM"
-lattice_weight = "AMavg"  #"exp" #acoustic likelihood (log likelihood: "AMavg", likelihood: "exp")
-wight_scale    = -1.0
-#WDs = "0"   #DNN版の単語辞書の音素を*_Sだけにする("S"), BIE or Sにする("S"以外)
-##In other parameters, please see "main.jconf" in Julius folder
-
-if (JuliusVer ==  "v4.4"):
-  Juliusfolder = "/home/akira/Dropbox/Julius/dictation-kit-v4.4/"
-else:
-  Juliusfolder = "/home/akira/Dropbox/Julius/dictation-kit-v4.3.1-linux/"
-
-if (HMMtype == "DNN"):
-  lang_init = 'syllableDNN.htkdic' 
-else:
-  lang_init = 'syllableGMM.htkdic' 
-  # 'trueword_syllable.htkdic' #'phonemes.htkdic' # Initial word dictionary (in ./lang_m/ folder)
-"""
-
 #dimx = 2           #The number of dimensions of xt (x,y)
 #margin = 10*0.05   #margin value for place area in gird map (0.05m/grid)*margin(grid)=0.05*margin(m)
 approx_log_zero = np.log(10.0**(-300))   #approximated value of log(0)
-

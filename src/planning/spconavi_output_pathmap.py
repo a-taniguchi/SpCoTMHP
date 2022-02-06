@@ -1,6 +1,6 @@
 #coding:utf-8
 #Akira Taniguchi (Ito Shuya) 2022/02/05
-#For Visualization of Posterior emission probability (PathWeightMap) on the grid map
+#For Visualization of Path and Posterior emission probability (PathWeightMap) on the grid map
 import sys
 #from math import pi as PI
 #from math import cos,sin,sqrt,exp,log,fabs,fsum,degrees,radians,atan2
@@ -10,7 +10,7 @@ from matplotlib.colors import LogNorm
 from __init__ import *
 from submodules import *
 ##Command: 
-##python ./weight_visualizer.py alg2wicWSLAG10lln008 8
+##python ./spconavi_output_pathmap.py 3LDK_01 4 T100N6A1S1G4_Path100
 
 
 #Read the map data⇒2-dimension array
@@ -40,6 +40,13 @@ def Array_index_To_Map_coordinates(Index):
     X = np.array( (Index * resolution) + origin )
     return X
 
+def ReadPath(outputname):
+    # 結果をファイル読み込み
+    output = outputname + "_Path.csv"
+    Path = np.loadtxt(output, delimiter=",")
+    print "Read Path: " + output
+    return Path
+
 
 ########################################
 if __name__ == '__main__': 
@@ -50,6 +57,8 @@ if __name__ == '__main__':
 
     #Request the file number of the speech instruction      
     speech_num = sys.argv[2] #0
+
+    path_file =  sys.argv[3]
   
     ##FullPath of folder
     #filename = datafolder + trialname + "/" + str(step) +"/"
@@ -82,7 +91,7 @@ if __name__ == '__main__':
     PathR   = [ np.array([ 0.0, 0.0 ]) for i in range(T_horizon) ]
     i = 0
 	    ##Mu is read from the file
-    for line in open(outputfile+'T100N6A1S1G4_Path100.csv', 'r'):
+    for line in open(outputfile+path_file+'.csv', 'r'): # T100N6A1S1G4_Path100
 		itemList = line[:-1].split(',')
 		#Mu[i] = np.array([ float(itemList[0]) - origin[0] , float(itemList[1]) - origin[1] ]) / resolution
 		Path[i] = np.array([ float(itemList[0]) , float(itemList[1]) ])
@@ -99,7 +108,7 @@ if __name__ == '__main__':
 	    #PathMap[142][124]=1.0    
 	    #print(str(PathWeightMap[142][124]))
 	    #print(str(PathWeightMap[137][119]))      
-	      #PathMap[PathR[T_horizon][1]][PathR[T_horizon][0]] = 1.0
+	    #PathMap[PathR[T_horizon][1]][PathR[T_horizon][0]] = 1.0
     PathWeightMap = PathWeightMap[0:map_width,0:map_length] # X[-T+I[0]:T+I[0],-T+I[1]:T+I[1]]
     PathMap = PathMap[0:map_width,0:map_length] # X[-T+I[0]:T+I[0],-T+I[1]:T+I[1]]
     gridmap = gridmap[0:map_width,0:map_length]  
@@ -108,16 +117,16 @@ if __name__ == '__main__':
     #Add the weights on the map (heatmap)
     plt.imshow(gridmap + (40+1)*(gridmap == -1), origin='lower', cmap='binary', vmin = 0, vmax = 100, interpolation='none') #, vmin = 0.0, vmax = 1.0)
     plt.imshow(PathWeightMap,norm=LogNorm(), origin='lower', cmap='viridis', interpolation='none') #, vmin=wmin, vmax=wmax) #gnuplot, inferno,magma,plasma  #
-	    #extent=[0, PathWeightMap.shape[1], PathWeightMap.shape[0],0 ] ) #, vmin = 0.0, vmax = 1.0) + np.log((np.exp(wmin)+np.exp(wmax))/2.0)
-	    #Path=np.array[0.0,0.0 for c in range(L)]
+    #extent=[0, PathWeightMap.shape[1], PathWeightMap.shape[0],0 ] ) #, vmin = 0.0, vmax = 1.0) + np.log((np.exp(wmin)+np.exp(wmax))/2.0)
+    #Path=np.array[0.0,0.0 for c in range(L)]
 	    
     pp=plt.colorbar (orientation="vertical",shrink=0.8) # Color barの表示 
     pp.set_label("Probability (log scale)", fontname="Arial", fontsize=10) #Color barのラベル
     pp.ax.tick_params(labelsize=8)
     plt.tick_params(axis='x', which='major', labelsize=8)
     plt.tick_params(axis='y', which='major', labelsize=8)
-	    #plt.xlim([380,800])             #x軸の範囲
-	    #plt.ylim([180,510])             #y軸の範囲
+    #plt.xlim([380,800])             #x軸の範囲
+    #plt.ylim([180,510])             #y軸の範囲
     plt.xlabel('X', fontsize=10)
     plt.ylabel('Y', fontsize=10)
     plt.imshow(PathMap, origin='lower', cmap='autumn')

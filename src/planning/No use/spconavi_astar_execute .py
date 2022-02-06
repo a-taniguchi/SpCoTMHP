@@ -33,9 +33,11 @@ if __name__ == '__main__':
 
     #Request the file number of the speech instruction   
     speech_num = sys.argv[5] #0
-    x_s=sys.argv[6]
-    x_s=sys.argv[7]
-    tyukan=sys.argv[8]
+
+    #x_s=sys.argv[6]
+    #x_s=sys.argv[7]
+    #tyukan=sys.argv[8]
+
     if (SAVE_time == 1):
       #Substitution of start time
       start_time = time.time()
@@ -137,14 +139,3 @@ if __name__ == '__main__':
     
     
     print "[END] SpCoNavi."
-
-
-
-
-
-
-
-
-
-
-

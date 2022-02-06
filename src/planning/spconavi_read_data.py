@@ -39,13 +39,13 @@ class ReadingData:
                         W_index = W_index + [itemList[j]]
             i = i + 1
             
-        #####パラメータW, μ, Σ, φ, πを入力する#####
-        Mu    = [ np.array([ 0.0, 0.0 ]) for i in xrange(K) ]  #[ np.array([[ 0.0 ],[ 0.0 ]]) for i in xrange(K) ]      #位置分布の平均(x,y)[K]
-        Sig   = [ np.array([ [0.0, 0.0],[0.0, 0.0] ]) for i in xrange(K) ]      #位置分布の共分散(2×2-dimension)[K]
-        W     = [ [0.0 for j in xrange(len(W_index))] for c in xrange(L) ]  #場所の名前(多項分布: W_index-dimension)[L]
+        #####Parameters W, μ, Σ, φ, π#####
+        Mu    = [ np.array([ 0.0, 0.0 ]) for i in xrange(K) ]               #the position distribution (mean of Gaussian) (x,y)[K]
+        Sig   = [ np.array([ [0.0, 0.0],[0.0, 0.0] ]) for i in xrange(K) ]  #the position distribution (co-variance of Gaussian) (2×2-dimension)[K]
+        W     = [ [0.0 for j in xrange(len(W_index))] for c in xrange(L) ]  #the name of place (multinomial distribution: W_index-dimension)[L]
         #theta = [ [0.0 for j in xrange(DimImg)] for c in xrange(L) ] 
-        Pi    = [ 0.0 for c in xrange(L)]     #場所概念のindexの多項分布(L-dimension)
-        Phi_l = [ [0.0 for i in xrange(K)] for c in xrange(L) ]  #位置分布のindexの多項分布(K-dimension)[L]
+        Pi    = [ 0.0 for c in xrange(L)]                                   #index of spatial concept of multinomial distribution (L-dimension)
+        Phi_l = [ [0.0 for i in xrange(K)] for c in xrange(L) ]             #index of position distribution of multinomial distribution (K-dimension)[L]
         
         i = 0
         ##Mu is read from the file
@@ -57,12 +57,14 @@ class ReadingData:
         
         i = 0
         ##Sig is read from the file
-        for line in open(filename + "/" + trialname + '_S_' + str(iteration) + '_' + str(sample) + '.csv', 'r'):
+        Sig = np.load(filename + "/" + trialname + '_Sig_' + str(iteration) + '_' + str(sample) + '.npy')
+        '''
+        for line in open(filename + "/" + trialname + '_Sig_' + str(iteration) + '_' + str(sample) + '.csv', 'r'):
             itemList = line[:-1].split(',')
             #Sig[i] = np.array([[ float(itemList[0])/ resolution, float(itemList[1]) ], [ float(itemList[2]), float(itemList[3])/ resolution ]]) #/ resolution
-            Sig[i] = np.array([[ float(itemList[0]), float(itemList[1]) ], [ float(itemList[2]), float(itemList[3]) ]]) 
+            Sig[i] = np.array([[ float(itemList[0]), float(itemList[1]) ], [ float(itemList[2]), float(itemList[3])]]) 
             i = i + 1
-        
+         '''
         ##phi is read from the file
         c = 0
         #Read the text file
