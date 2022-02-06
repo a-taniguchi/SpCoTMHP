@@ -1,17 +1,14 @@
 #!/usr/bin/env python
 #coding:utf-8
-import os
 import numpy as np
-import scipy as sp
-from scipy.stats import chi2,multivariate_normal,multinomial
+from scipy.stats import,multivariate_normal,multinomial
 import matplotlib.pyplot as plt
 import collections
+from itertools import izip
 import spconavi_read_data
 import spconavi_save_data
-from scipy.stats import multinomial
 from __init__ import *
 from submodules import *
-from itertools import izip
 
 read_data = spconavi_read_data.ReadingData()
 save_data = spconavi_save_data.SavingData()

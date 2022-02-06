@@ -1,37 +1,26 @@
 #!/usr/bin/env python
 #coding:utf-8
-import os
 import sys
 import time
 from math import log
+import matplotlib.pyplot as plt
+from scipy.stats import multivariate_normal,multinomial
+import collections
 from __init__ import *
 from submodules import *
-import matplotlib.pyplot as plt
-from scipy.stats import chi2,multivariate_normal,multinomial
-import collections
 import spconavi_read_data
-import spconavi_path_calculate
 import spconavi_save_data
+#import spconavi_path_calculate
 
 read_data = spconavi_read_data.ReadingData()
 save_data = spconavi_save_data.SavingData()
-path_calculate = spconavi_path_calculate.PathPlanner()
+#path_calculate = spconavi_path_calculate.PathPlanner()
 
 def PathDistance(Path):
     Distance = len(collections.Counter(Path))
     print("Path Distance is ", Distance)
     return Distance
 
-def Map_coordinates_To_Array_index(X):
-    X = np.array(X)
-    Index = np.round( (X - origin) / resolution ).astype(int) #四捨五入してint型にする
-    return Index
-
-#Python内の2-dimension array のインデックス番号からROSのmap 座標系への変換
-def Array_index_To_Map_coordinates(Index):
-    Index = np.array(Index)
-    X = np.array( (Index * resolution) + origin )
-    return X
 
 def readlike(fname):
     for line in open(fname,'r'):
@@ -46,134 +35,7 @@ def readdis(fname):
     
     return float(itemList[0])   
      #   return 0    
-def right(pos):
-    return (pos[0], pos[1] + 1)
 
-def left(pos):
-    return (pos[0], pos[1] - 1)
-
-def up(pos):
-    return (pos[0] - 1, pos[1])
-
-def down(pos):
-    return (pos[0] + 1, pos[1])
-
-def stay(pos):
-    return (pos[0], pos[1])
-
-def Manhattan_distance(p1, p2):
-    return abs(p1[0] - p2[0]) + abs(p1[1] - p2[1])
-
-#Read the map data⇒2-dimension array に格納
-def ReadMap(outputfile):
-    #outputfolder + trialname + navigation_folder + map.csv
-    gridmap = np.loadtxt(outputfile + "map.csv", delimiter=",")
-    print("Read map: " + outputfile + "map.csv")
-    return gridmap
-
-#Read the cost map data⇒2-dimension array に格納
-def ReadCostMap(outputfile):
-    #outputfolder + trialname + navigation_folder + contmap.csv
-    costmap = np.loadtxt(outputfile + "costmap.csv", delimiter=",")
-    print("Read costmap: " + outputfile + "contmap.csv")
-    return costmap
-    
-def ReadParameters(iteration, sample, filename, trialname):
-    #THETA = [W,W_index,Mu,Sig,Pi,Phi_l,K,L]
-    #r = iteration
-    """
-    i = 0
-    for line in open(filename + 'index' + str(r) + '.csv', 'r'):   ##読み込む
-        itemList = line[:-1].split(',')
-        #print itemList
-        if (i == 0):
-          L = len(itemList) -1
-        elif (i == 1):
-          K = len(itemList) -1
-        i += 1
-    print "L:",L,"K:",K
-    """
-
-    W_index = []
-    i = 0
-    #Read text file
-    for line in open(filename + "/" + trialname + '_w_index_' + str(iteration) + '_' + str(sample) + '.csv', 'r'): 
-        itemList = line[:-1].split(',')
-        if(i == 1):
-            for j in range(len(itemList)):
-              if (itemList[j] != ""):
-                W_index = W_index + [itemList[j]]
-        i = i + 1
-    
-    #####parameter W, μ, Σ, φ, πを入力する#####
-    Mu    = [ np.array([ 0.0, 0.0 ]) for i in range(K) ]  #[ np.array([[ 0.0 ],[ 0.0 ]]) for i in range(K) ]      #the position distribution (Gaussian)の平均(x,y)[K]
-    Sig   = [ np.array([ [0.0, 0.0],[0.0, 0.0] ]) for i in range(K) ]      #the position distribution (Gaussian)の共分散(2×2-dimension)[K]
-    W     = [ [0.0 for j in range(len(W_index))] for c in range(L) ]  #the name of place(multinomial distribution: W_index-dimension)[L]
-    #theta = [ [0.0 for j in range(DimImg)] for c in range(L) ] 
-    Pi    = [ 0.0 for c in range(L)]     #index of spatial conceptのmultinomial distribution(L-dimension)
-    Phi_l = [ [0.0 for i in range(K)] for c in range(L) ]  #index of position distributionのmultinomial distribution(K-dimension)[L]
-      
-    i = 0
-    ##Mu is read from the file
-    for line in open(filename + "/" + trialname + '_Mu_' + str(iteration) + '_' + str(sample) + '.csv', 'r'):
-        itemList = line[:-1].split(',')
-        #Mu[i] = np.array([ float(itemList[0]) - origin[0] , float(itemList[1]) - origin[1] ]) / resolution
-        Mu[i] = np.array([ float(itemList[0]) , float(itemList[1]) ])
-        i = i + 1
-      
-    i = 0
-    ##Sig is read from the file
-    Sig = np.load(filename + "/" + trialname + '_Sig_' + str(iteration) + '_' + str(sample) + '.npy')
-    '''
-    for line in open(filename + "/" + trialname + '_Sig_' + str(iteration) + '_' + str(sample) + '.npy', 'r'):
-        itemList = line[:-1].split(',')
-        #Sig[i] = np.array([[ float(itemList[0])/ resolution, float(itemList[1]) ], [ float(itemList[2]), float(itemList[3])/ resolution ]]) #/ resolution
-        Sig[i] = np.array([[ float(itemList[0]), float(itemList[1]) ], [ float(itemList[2]), float(itemList[3])]]) 
-        i = i + 1
-      '''
-    ##phi is read from the file
-    c = 0
-    #Read text file
-    for line in open(filename + "/" + trialname + '_phi_' + str(iteration) + '_' + str(sample) + '.csv', 'r'):
-        itemList = line[:-1].split(',')
-        for i in range(len(itemList)):
-            if itemList[i] != "":
-              Phi_l[c][i] = float(itemList[i])
-        c = c + 1
-        
-    ##Pi is read from the file
-    for line in open(filename + "/" + trialname + '_pi_' + str(iteration) + '_' + str(sample) + '.csv', 'r'):
-        itemList = line[:-1].split(',')
-        for i in range(len(itemList)):
-          if itemList[i] != '':
-            Pi[i] = float(itemList[i])
-      
-    ##W is read from the file
-    c = 0
-    #Read text file
-    for line in open(filename + "/" + trialname + '_W_' + str(iteration) + '_' + str(sample) + '.csv', 'r'):
-        itemList = line[:-1].split(',')
-        for i in range(len(itemList)):
-            if itemList[i] != '':
-              #print c,i,itemList[i]
-              W[c][i] = float(itemList[i])
-        c = c + 1
-
-    """
-    ##theta is read from the file
-    c = 0
-    #Read text file
-    for line in open(filename + 'theta' + str(r) + '.csv', 'r'):
-        itemList = line[:-1].split(',')
-        for i in range(len(itemList)):
-            if itemList[i] != '':
-              #print c,i,itemList[i]
-              theta[c][i] = float(itemList[i])
-        c = c + 1
-    """
-
-    THETA = [W,W_index,Mu,Sig,Pi,Phi_l,K,L]
-    return THETA
 
 def PostProbMap_nparray_jit(CostMapProb,Mu,Sig,map_length,map_width,it): #,IndexMap):
         x,y = np.meshgrid(np.linspace(-10.0,9.92,map_width),np.linspace(-10.0,9.92,map_length))
@@ -195,7 +57,7 @@ def PostProbMap_nparray_jit(CostMapProb,Mu,Sig,map_length,map_width,it): #,Index
     
     
 if __name__ == '__main__': 
-    print "[START] SpCoNavi."
+    print "[START] SpCoTMHP (Viterbi)."
     #Request a folder name for learned parameters.
     trialname = sys.argv[1]
     #print trialname
@@ -236,9 +98,9 @@ if __name__ == '__main__':
     #Makedir( outputname )
 
     #Read the files of learned parameters  #THETA = [W,W_index,Mu,Sig,Pi,Phi_l,K,L]
-    THETA =ReadParameters(iteration, sample, filename, trialname)
+    THETA = read_data.ReadParameters(iteration, sample, filename, trialname)
     
-    maze = ReadMap(outputfile)
+    maze = read_data.ReadMap(outputfile)
     map_length, map_width = maze.shape
     
     gridmap = maze
@@ -254,7 +116,7 @@ if __name__ == '__main__':
 	#plt.xticks(np.arange(width), np.arange(width))
 	#plt.yticks(np.arange(height), np.arange(height))
     plt.gca().set_aspect('equal')
-    CostMap = ReadCostMap(outputfile)
+    CostMap = read_data.ReadCostMap(outputfile)
     CostMapProb = (100.0 - CostMap)/100
     #St=st_i
     Gl=s_i
@@ -266,8 +128,8 @@ if __name__ == '__main__':
     start=(120,50)		
     outputname = outputfile + "SpCoTMHP_viterbi"+"S"+str(start)+"G"+str(gl)
     
-    action_functions = [right, left, up, down, stay] #, migiue, hidariue, migisita, hidarisita]
-    cost_of_actions  = np.log( np.ones(len(action_functions)) / float(len(action_functions)) ) #[    1/5,    1/5,  1/5,    1/5,    1/5]) #, ,    1,        1,        1,          1]
+    #action_functions = [right, left, up, down, stay] #, migiue, hidariue, migisita, hidarisita]
+    #cost_of_actions  = np.log( np.ones(len(action_functions)) / float(len(action_functions)) ) #[    1/5,    1/5,  1/5,    1/5,    1/5]) #, ,    1,        1,        1,          1]
     W, W_index, Mu, Sig, pi, phi_l, K, L = THETA
     PathWeightMap = PostProbMap_nparray_jit(CostMapProb,Mu,Sig,map_length,map_width,Gl)
     ev     = [ 0.0 for aky in range(K) ]
@@ -314,7 +176,7 @@ if __name__ == '__main__':
     for gc_index in range(J):
 	    goal = goal_candidate[gc_index]
 	    if (maze[goal[0]][goal[1]] != 0):
-		print("[ERROR] goal",maze[goal[0]][goal[1]],"is not 0.")
+	    	print("[ERROR] goal",maze[goal[0]][goal[1]],"is not 0.")
 
 	    ###START A*
 	    open_list = []
