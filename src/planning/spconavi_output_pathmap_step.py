@@ -1,53 +1,22 @@
 #coding:utf-8
-#Akira Taniguchi 2019/01/22-2019/02/05-2019/07/04
+#Akira Taniguchi 2022/02/07
 #For Visualization of Path and Posterior emission probability (PathWeightMap) on the grid map
 import sys
-#from math import pi as PI
-#from math import cos,sin,sqrt,exp,log,fabs,fsum,degrees,radians,atan2
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.colors import LogNorm
 from __init__ import *
 from submodules import *
+import spconavi_read_data
+
+tools     = spconavi_read_data.Tools()
+read_data = spconavi_read_data.ReadingData()
+
 ##Command: 
 #python ./path_weight_visualizer_step_SIGVerse.py trialname init_position_num speech_num  
 #Example: python ./path_weight_visualizer_step_SIGVerse.py 3LDK_01 0 7
 
-
-#Read the map data⇒2-dimension array に格納
-def ReadMap(outputfile):
-    #outputfolder + trialname + navigation_folder + map.csv
-    gridmap = np.loadtxt(outputfile + "map.csv", delimiter=",")
-    print "Read map: " + outputfile + "map.csv"
-    return gridmap
-
-#Load the probability value map used for path calculation
-def ReadProbMap(outputfile):
-    # Read the result file
-    output = outputfile + "N"+str(N_best)+"G"+str(speech_num) + "_PathWeightMap.csv"
-    PathWeightMap = np.loadtxt(output, delimiter=",")
-    print "Read PathWeightMap: " + output
-    return PathWeightMap
-
-#ROSのmap 座標系をPython内の2-dimension array のインデックス番号に対応付ける
-def Map_coordinates_To_Array_index(X):
-    X = np.array(X)
-    Index = np.round( (X - origin) / resolution ).astype(int) #四捨五入してint型にする
-    return Index
-
-#Python内の2-dimension array のインデックス番号からROSのmap 座標系への変換
-def Array_index_To_Map_coordinates(Index):
-    Index = np.array(Index)
-    X = np.array( (Index * resolution) + origin )
-    return X
-
-def ReadPath(outputname,temp):
-    # Read the result file
-    # output = outputname + "_Path" + str(temp) + ".csv" # ビタビアルゴリズム用
-    output = "/root/HSR/catkin_ws/src/spconavi_ros/src/data/3LDK_01/navi/Astar_Approx_expect_N6A1SG7" + "_Path" + str(temp) + ".csv" # A*用
-    Path = np.loadtxt(output, delimiter=",")
-    print "Read Path: " + output
-    return Path
+#output = "/root/HSR/catkin_ws/src/spconavi_ros/src/data/3LDK_01/navi/Astar_Approx_expect_N6A1SG7" + "_Path" + str(temp) + ".csv" # A*用
 
 
 ########################################
@@ -70,7 +39,7 @@ if __name__ == '__main__':
 
     #init_position_num = 0
     X_init = Start_Position[int(init_position_num)]
-    print X_init
+    print(X_init)
 
     conditions = "T"+str(T_horizon)+"N"+str(N_best)+"A"+str(Approx)+"S"+str(init_position_num)+"G"+str(speech_num)
     outputname = outputfile + conditions
@@ -80,15 +49,15 @@ if __name__ == '__main__':
     temp = T_horizon #400
     for temp in range(SAVE_T_temp,T_horizon+SAVE_T_temp,SAVE_T_temp):
       #Read the map file
-      gridmap = ReadMap(outputfile)
+      gridmap = read_data.ReadMap(outputfile)
 
       #Read the PathWeightMap file
-      PathWeightMap = ReadProbMap(outputfile)
+      PathWeightMap = read_data.ReadProbMap(outputfile)
 
       #Read the Path file
-      Path = ReadPath(outputname,temp)
+      Path = read_data.ReadPath(outputname,temp)
       #Makedir( outputfile + "step" )
-      print Path
+      print(Path)
     
       #length and width of the MAP cells
       map_length = len(gridmap)  #len(costmap)
@@ -120,7 +89,7 @@ if __name__ == '__main__':
       #length and width of the MAP cells
       map_length = len(gridmap)  #len(costmap)
       map_width  = len(gridmap[0])  #len(costmap[0])
-      print "MAP[length][width]:",map_length,map_width
+      print("MAP[length][width]:",map_length,map_width)
 
       #Add the weights on the map (heatmap)
       plt.imshow(gridmap + (40+1)*(gridmap == -1), origin='lower', cmap='binary', vmin = 0, vmax = 100, interpolation='none') #, vmin = 0.0, vmax = 1.0)

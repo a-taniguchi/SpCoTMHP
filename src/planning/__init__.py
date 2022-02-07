@@ -2,6 +2,9 @@
 #The file for setting parameters
 #Akira Taniguchi 2022/02/05
 import numpy as np
+import spconavi_read_data
+
+tools = spconavi_read_data.Tools()
 
 ##Command
 #python ./spcotmhp_viterbi_planning.py trialname iteration(1) sample(0) init_position_num speech_num
@@ -84,7 +87,9 @@ Sampling_J = 10
 #Dynamics of state transition (motion model): (Deterministic:0, Probabilistic:1, Approximation:2(Unimplemented))
 #Dynamics = 0
 
-action_functions = [right, left, up, down, stay] #, migiue, hidariue, migisita, hidarisita]
+#tools = Tools()
+#Definition of action (functions in spconavi_read_data)
+action_functions = [tools.right, tools.left, tools.up, tools.down, tools.stay] #, migiue, hidariue, migisita, hidarisita]
 cost_of_actions  = np.log( np.ones(len(action_functions)) / float(len(action_functions)) ) #[    1/5,    1/5,  1/5,    1/5,    1/5]) #, ,    1,        1,        1,          1]
 
 

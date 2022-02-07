@@ -11,18 +11,21 @@ tools = spconavi_read_data.Tools()
 class SavingData:
 
     #Save the path trajectory
-    def SavePath(self, X_init, Path, Path_ROS, outputname):
+    def SavePath(self, X_init, X_goal, Path, Path_ROS, outputname):
         print("PathSave")
-        #if (SAVE_X_init == 1):
+        if (SAVE_X_init == 1):
             # Save the robot initial position to the file (index)
-            #np.savetxt(outputname + "_X_init.csv", X_init, delimiter=",")
+            np.savetxt(outputname + "_X_init.csv", X_init, delimiter=",")
             # Save the robot initial position to the file (ROS)
-            #np.savetxt(outputname + "_X_init_ROS.csv", read_data.Array_index_To_Map_coordinates(X_init), delimiter=",")
+            np.savetxt(outputname + "_X_init_ROS.csv", tools.Array_index_To_Map_coordinates(X_init), delimiter=",")
+            if (X_goal != []):
+                np.savetxt(outputname + "_X_goal.csv", X_goal, delimiter=",")
+                np.savetxt(outputname + "_X_goal_ROS.csv", tools.Array_index_To_Map_coordinates(X_goal), delimiter=",")
 
         # Save the result to the file (index)
-        #np.savetxt(outputname + "_Path.csv", Path, delimiter=",")
+        np.savetxt(outputname + "_Path.csv", Path, delimiter=",")
         # Save the result to the file (ROS)
-        #np.savetxt(outputname + "_Path_ROS.csv", Path_ROS, delimiter=",")
+        np.savetxt(outputname + "_Path_ROS.csv", Path_ROS, delimiter=",")
         print("Save Path: " + outputname + "_Path.csv and _Path_ROS.csv")
 
     #Save the path trajectory
@@ -94,7 +97,7 @@ class SavingData:
         print("Save Transition: " + output_transition)
 
     #Save the log likelihood for each time-step
-    def SaveLogLikelihood(self, LogLikelihood,flag,flag2, outputname):
+    def SaveLogLikelihood(self, LogLikelihood, flag, flag2, outputname):
         # Save the result to the file 
         if (flag2 == 0):
             if   (flag == 0):

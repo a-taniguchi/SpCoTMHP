@@ -2,50 +2,18 @@
 #Akira Taniguchi (Ito Shuya) 2022/02/05
 #For Visualization of Path and Posterior emission probability (PathWeightMap) on the grid map
 import sys
-#from math import pi as PI
-#from math import cos,sin,sqrt,exp,log,fabs,fsum,degrees,radians,atan2
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.colors import LogNorm
 from __init__ import *
 from submodules import *
+import spconavi_read_data
+
+tools     = spconavi_read_data.Tools()
+read_data = spconavi_read_data.ReadingData()
+
 ##Command: 
 ##python ./spconavi_output_pathmap.py 3LDK_01 4 T100N6A1S1G4_Path100
-
-
-#Read the map data⇒2-dimension array
-def ReadMap(outputfile):
-    #outputfolder + trialname + navigation_folder + map.csv
-    gridmap = np.loadtxt(outputfile + "map.csv", delimiter=",")
-    print "Read map: " + outputfile + "map.csv"
-    return gridmap
-
-#Load the probability value map used for path calculation
-def ReadProbMap(outputfile):
-    # Read the result file
-    output = outputfile + "N"+str(N_best)+"G"+str(speech_num) + "_PathWeightMap.csv" #"N6G4_PathWeightMap.csv"
-    PathWeightMap = np.loadtxt(output, delimiter=",")
-    print "Read PathWeightMap: " + output
-    return PathWeightMap
-
-#ROSの地図座標系をPython内の2次元配列のインデックス番号に対応付ける
-def Map_coordinates_To_Array_index(X):
-    X = np.array(X)
-    Index = np.round( (X - origin) / resolution ).astype(int) #四捨五入してint型にする
-    return Index
-
-#Python内の2次元配列のインデックス番号からROSの地図座標系への変換
-def Array_index_To_Map_coordinates(Index):
-    Index = np.array(Index)
-    X = np.array( (Index * resolution) + origin )
-    return X
-
-def ReadPath(outputname):
-    # 結果をファイル読み込み
-    output = outputname + "_Path.csv"
-    Path = np.loadtxt(output, delimiter=",")
-    print "Read Path: " + output
-    return Path
 
 
 ########################################
@@ -57,7 +25,8 @@ if __name__ == '__main__':
 
     #Request the file number of the speech instruction      
     speech_num = sys.argv[2] #0
-
+    
+    #Request the file name of path
     path_file =  sys.argv[3]
   
     ##FullPath of folder
@@ -66,10 +35,10 @@ if __name__ == '__main__':
     outputfile = outputfolder_SIG + trialname + navigation_folder
 
     #Read the map file
-    gridmap = ReadMap(outputfile)
+    gridmap = read_data.ReadMap(outputfile)
 
     #Read the PathWeightMap file
-    PathWeightMap = ReadProbMap(outputfile)
+    PathWeightMap = read_data.ReadProbMap(outputfile, speech_num)
 
     """
 	    y_min = 380 #X_init_index[0] - T_horizon
@@ -84,31 +53,31 @@ if __name__ == '__main__':
 	#length and width of the MAP cells
     map_length = len(PathWeightMap)  #len(costmap)
     map_width  = len(PathWeightMap[0])  #len(costmap[0])
-    print "MAP[length][width]:",map_length,map_width
+    print("MAP[length][width]:",map_length,map_width)
 
     ###v### Add by Ito ###v###
-    Path   = [ np.array([ 0.0, 0.0 ]) for i in range(T_horizon) ]
+    Path    = [ np.array([ 0.0, 0.0 ]) for i in range(T_horizon) ]
     PathR   = [ np.array([ 0.0, 0.0 ]) for i in range(T_horizon) ]
     i = 0
-	    ##Mu is read from the file
+    ##Mu is read from the file
     for line in open(outputfile+path_file+'.csv', 'r'): # T100N6A1S1G4_Path100
-		itemList = line[:-1].split(',')
-		#Mu[i] = np.array([ float(itemList[0]) - origin[0] , float(itemList[1]) - origin[1] ]) / resolution
-		Path[i] = np.array([ float(itemList[0]) , float(itemList[1]) ])
-		#PathR[i]=Map_coordinates_To_Array_index(Path[i])
-		i = i + 1
+        itemList = line[:-1].split(',')
+        #Mu[i] = np.array([ float(itemList[0]) - origin[0] , float(itemList[1]) - origin[1] ]) / resolution
+        Path[i] = np.array([ float(itemList[0]) , float(itemList[1]) ])
+        #PathR[i]=Map_coordinates_To_Array_index(Path[i])
+        i = i + 1
 		
     PathMap = np.array([[np.inf for j in xrange(map_width)] for i in xrange(map_length)])
 	 
     for t in xrange(len(Path)):
-	     for i in xrange(map_length):
-		for j in xrange(map_width):
-		    if (Path[t][0] == i) and (Path[t][1] == j):
-		      PathMap[i][j] = 1.0
-	    #PathMap[142][124]=1.0    
-	    #print(str(PathWeightMap[142][124]))
-	    #print(str(PathWeightMap[137][119]))      
-	    #PathMap[PathR[T_horizon][1]][PathR[T_horizon][0]] = 1.0
+        for i in xrange(map_length):
+            for j in xrange(map_width):
+                if (Path[t][0] == i) and (Path[t][1] == j):
+                  PathMap[i][j] = 1.0
+    #PathMap[142][124]=1.0    
+    #print(str(PathWeightMap[142][124]))
+    #print(str(PathWeightMap[137][119]))      
+    #PathMap[PathR[T_horizon][1]][PathR[T_horizon][0]] = 1.0
     PathWeightMap = PathWeightMap[0:map_width,0:map_length] # X[-T+I[0]:T+I[0],-T+I[1]:T+I[1]]
     PathMap = PathMap[0:map_width,0:map_length] # X[-T+I[0]:T+I[0],-T+I[1]:T+I[1]]
     gridmap = gridmap[0:map_width,0:map_length]  

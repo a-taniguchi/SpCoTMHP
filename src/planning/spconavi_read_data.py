@@ -1,10 +1,13 @@
 #!/usr/bin/env python
 #coding:utf-8
 from scipy.io import mmread
-from __init__ import *
 from scipy.stats import multivariate_normal
+from __init__ import *
+import collections
+
 
 class Tools:
+
     #ROSのmap 座標系をPython内の2-dimension array index 番号に対応付ける
     def Map_coordinates_To_Array_index(self, X):
         X = np.array(X)
@@ -17,6 +20,7 @@ class Tools:
         Index = np.array(Index)
         X = np.array( (Index * resolution) + origin )
         return X
+
 
     # Action types of the robot
     def right(self, pos):
@@ -34,11 +38,36 @@ class Tools:
     def stay(self, pos):
         return (pos[0], pos[1])
 
+
     def Manhattan_distance(self, p1, p2):
         return abs(p1[0] - p2[0]) + abs(p1[1] - p2[1])
 
 
+    #The moving distance of the pathを計算する
+    def PathDistance(self, Path):
+        Distance = len(collections.Counter(Path))
+        print("Path Distance is ", Distance)
+        return Distance
+
+
+
 class ReadingData:
+
+    #Read the path
+    def ReadPath(self, outputname):
+        # 結果をファイル読み込み
+        output = outputname + "_Path.csv"
+        Path = np.loadtxt(output, delimiter=",")
+        print("Read Path: " + output)
+        return Path
+
+    #Read the path per step
+    def ReadPath_step(self, outputname,step):
+        # Read the result file
+        output = outputname + "_Path" + str(step) + ".csv" # ビタビアルゴリズム用
+        Path = np.loadtxt(output, delimiter=",")
+        print("Read Path: " + output)
+        return Path
 
     #Read the map data⇒2-dimension array に格納
     def ReadMap(self, outputfile):
@@ -130,30 +159,6 @@ class ReadingData:
         return THETA
 
 
-    #gridmap and costmap から確率の形のCostMapProbを得ておく
-    def CostMapProb_jit(self, gridmap, costmap):
-        CostMapProb = (100.0 - costmap) / 100.0     #Change the costmap to the probabilistic costmap
-        #gridの数値が0（非占有）のところだけ数値を持つようにマスクする
-        GridMapProb = 1*(gridmap == 0)  #gridmap * (gridmap != 100) * (gridmap != -1)  #gridmap[][]が障害物(100)または未探索(-1)であれば確率0にする
-        return CostMapProb * GridMapProb
-
-    def PostProb_ij(self, Index_temp,Mu,Sig,Phi_l,LookupTable_ProbCt,map_length,map_width,L,K, CostMapProb):
-        if (CostMapProb[Index_temp[1]][Index_temp[0]] != 0.0): 
-            X_temp = self.Array_index_To_Map_coordinates(Index_temp)  #map と縦横の座標系の軸が合っているか要確認
-            #print X_temp,Mu
-            sum_i_GaussMulti = [ np.sum([multivariate_normal.pdf(X_temp, mean=Mu[k], cov=Sig[k]) * Phi_l[c][k] for k in range(K)]) for c in range(L) ] ##########np.array( ) !!! np.arrayにすると, numbaがエラーを吐く
-            PostProb = np.sum( LookupTable_ProbCt * sum_i_GaussMulti ) #sum_c_ProbCtsum_i
-        else:
-            PostProb = 0.0
-        return PostProb
-
-
-    #@jit(parallel=True)  #並列化されていない？1CPUだけ使用される
-    def PostProbMap_nparray_jit(self, CostMapProb,Mu,Sig,Phi_l,LookupTable_ProbCt,map_length,map_width,L,K): #,IndexMap):
-        PostProbMap = np.array([ [ self.PostProb_ij([width, length],Mu,Sig,Phi_l,LookupTable_ProbCt,map_length,map_width,L,K, CostMapProb) for width in range(map_width) ] for length in range(map_length) ])
-        return CostMapProb * PostProbMap
-
-
     def ReadTrellis(self, outputname, temp):
         print ("ReadTrellis")
         # Save the result to the file 
@@ -181,7 +186,7 @@ class ReadingData:
 
 
     #Load the probability value map used for path calculation
-    def ReadProbMap(self, outputfile):
+    def ReadProbMap(self, outputfile, speech_num):
         # Read the result from the file
         output = outputfile + "N"+str(N_best)+"G"+str(speech_num) + "_PathWeightMap.csv"
         PathWeightMap = np.loadtxt(output, delimiter=",")

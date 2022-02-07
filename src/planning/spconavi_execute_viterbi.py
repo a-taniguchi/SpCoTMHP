@@ -3,20 +3,21 @@
 import os
 import sys
 import time
-from math import log
+#from math import log
 from __init__ import *
 from submodules import *
 import spconavi_read_data
 import spconavi_save_data
 import spconavi_path_calculate
 
+tools     = spconavi_read_data.Tools()
 read_data = spconavi_read_data.ReadingData()
 save_data = spconavi_save_data.SavingData()
 path_calculate = spconavi_path_calculate.PathPlanner()
 
 
 if __name__ == '__main__': 
-    print "[START] SpCoNavi."
+    print("[START] SpCoNavi. (Viterbi)")
     #Request a folder name for learned parameters.
     trialname = sys.argv[1]
     #print trialname
@@ -41,9 +42,11 @@ if __name__ == '__main__':
 
     ##FullPath of folder
     filename = outputfolder_SIG + trialname #+ "/" 
-    print filename, iteration, sample
+    print(filename, iteration, sample)
     outputfile = filename + navigation_folder #outputfolder + trialname + navigation_folder
     outputname = outputfile + "T"+str(T_horizon)+"N"+str(N_best)+"A"+str(Approx)+"S"+str(init_position_num)+"G"+str(speech_num)
+    if (T_restart != 0):
+      outputname = outputfile + "T"+str(T_restart)+"N"+str(N_best)+"A"+str(Approx)+"S"+str(init_position_num)+"G"+str(speech_num)
 
     #Makedir( outputfolder + trialname )
     Makedir( outputfile )
@@ -55,7 +58,7 @@ if __name__ == '__main__':
 
 
     if (os.path.isfile(outputfile + "CostMapProb.csv") == False):  #すでにファイルがあれば計算しない
-      print "If you do not have map.csv, please run commands for cost map acquisition procedure in advance."
+      print("If you do not have map.csv, please run commands for cost map acquisition procedure in advance.")
       ##Read the map file
       gridmap = read_data.ReadMap(outputfile)
       ##Read the cost map file
@@ -72,21 +75,21 @@ if __name__ == '__main__':
     ##Read the speech file
     #speech_file = ReadSpeech(int(speech_num))
     BoW = [Goal_Word[int(speech_num)]]
-    if ( "AND" in BoW ):
-      BoW = Example_AND
-    elif ( "OR" in BoW ):
-      BoW = Example_OR
+    #if ( "AND" in BoW ):
+    #  BoW = Example_AND
+    #elif ( "OR" in BoW ):
+    #  BoW = Example_OR
 
-    Otb_B = [int(W_index[i] in BoW) * N_best for i in xrange(len(W_index))]
-    print "BoW:",  Otb_B
+    Otb_B = [int(W_index[i] in BoW) * N_best for i in range(len(W_index))]
+    print("BoW:",  Otb_B)
 
     while (sum(Otb_B) == 0):
       print("[ERROR] BoW is all zero.", W_index)
       word_temp = raw_input("Please word?>")
-      Otb_B = [int(W_index[i] == word_temp) * N_best for i in xrange(len(W_index))]
+      Otb_B = [int(W_index[i] == word_temp) * N_best for i in range(len(W_index))]
       print("BoW (NEW):",  Otb_B)
 
-#########
+    #########
     #Path-Planning
     Path, Path_ROS, PathWeightMap, Path_one = path_calculate.PathPlanner(Otb_B, Start_Position[int(init_position_num)], THETA, CostMapProb, outputfile, speech_num, outputname) #gridmap, costmap)
 
@@ -104,20 +107,15 @@ if __name__ == '__main__':
     #Save the moving distance of the path
     save_data.SavePathDistance(Distance, outputname)
 
-    #Send the path
-    #SendPath(Path)
     #Save the path
-    save_data.SavePath(Start_Position[int(init_position_num)], Path, Path_ROS, outputname)
-
-    #Send the PathWeightMap
-    #SendProbMap(PathWeightMap)
+    save_data.SavePath(Start_Position[int(init_position_num)], [], Path, Path_ROS, outputname)
 
     #Save the PathWeightMap(PathPlanner内部で実行)
-    #####SaveProbMap(PathWeightMap, outputname)
+    #####save_data.SaveProbMap(PathWeightMap, outputname)
     
     #PathWeightMapとPathからlog likelihoodの値を再計算する
     LogLikelihood_step = np.zeros(T_horizon)
-    LogLikelihood_sum = np.zeros(T_horizon)
+    LogLikelihood_sum  = np.zeros(T_horizon)
     
     for t in range(T_horizon):
          #print PathWeightMap.shape, Path[t][0], Path[t][1]
@@ -129,10 +127,10 @@ if __name__ == '__main__':
     
     
     #すべてのステップにおけるlog likelihoodの値を保存
-    save_data.SaveLogLikelihood(LogLikelihood_step,0,0)
+    save_data.SaveLogLikelihood(LogLikelihood_step,0,0,outputname)
     
     #すべてのステップにおける累積報酬（sum log likelihood）の値を保存
-    save_data.SaveLogLikelihood(LogLikelihood_sum,1,0)
+    save_data.SaveLogLikelihood(LogLikelihood_sum,1,0,outputname)
     
     
-    print "[END] SpCoNavi."
+    print("[END] SpCoNavi.")
