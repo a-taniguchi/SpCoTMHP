@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 #coding:utf-8
 import os
+import time
 import numpy as np
 from scipy.stats import multivariate_normal,multinomial
 import collections
@@ -14,8 +15,9 @@ tools     = spconavi_read_data.Tools()
 read_data = spconavi_read_data.ReadingData()
 save_data = spconavi_save_data.SavingData()
 
-ITO = 0 # 伊藤くん改変を適用する（１）
+#ITO = 0 # 伊藤くん改変を適用する（１）
 
+"""
 #v# Ito #v#
 def PostProbMap_nparray_jit_ITO( CostMapProb,Mu,Sig,Phi_l,LookupTable_ProbCt,map_length,map_width,L,K): #,IndexMap):
         x,y = np.meshgrid(np.linspace(-10.0,9.1,map_width),np.linspace(-10.0,9.1,map_length))
@@ -28,6 +30,7 @@ def PostProbMap_nparray_jit_ITO( CostMapProb,Mu,Sig,Phi_l,LookupTable_ProbCt,map
             PostProbMap+=Phi_l[i][4]*multivariate_normal(Mu[i],Sig[i]).pdf(pos)
         return CostMapProb * PostProbMap
 #^# Ito #^#
+"""
 
 class PathPlanner:
 
@@ -40,7 +43,7 @@ class PathPlanner:
 
     def PostProb_ij(self, Index_temp,Mu,Sig,Phi_l,LookupTable_ProbCt,map_length,map_width,L,K, CostMapProb):
         if (CostMapProb[Index_temp[1]][Index_temp[0]] != 0.0): 
-            X_temp = self.Array_index_To_Map_coordinates(Index_temp)  #map と縦横の座標系の軸が合っているか要確認
+            X_temp = tools.Array_index_To_Map_coordinates(Index_temp)  #map と縦横の座標系の軸が合っているか要確認
             #print(X_temp,Mu
             sum_i_GaussMulti = [ np.sum([multivariate_normal.pdf(X_temp, mean=Mu[k], cov=Sig[k]) * Phi_l[c][k] for k in range(K)]) for c in range(L) ] ##########np.array( ) !!! np.arrayにすると, numbaがエラーを吐く
             PostProb = np.sum( LookupTable_ProbCt * sum_i_GaussMulti ) #sum_c_ProbCtsum_i
@@ -78,21 +81,28 @@ class PathPlanner:
 
         print("Please wait for PostProbMap")
         output = outputfile + "N"+str(N_best)+"G"+str(speech_num) + "_PathWeightMap.csv"
-        if ITO == 1:
-            PathWeightMap = PostProbMap_nparray_jit_ITO(CostMapProb,Mu,Sig,Phi_l,LookupTable_ProbCt,map_length,map_width,L,K) #,IndexMap)  # Ito
-        
+        #if ITO == 1:
+        #    PathWeightMap = PostProbMap_nparray_jit_ITO(CostMapProb,Mu,Sig,Phi_l,LookupTable_ProbCt,map_length,map_width,L,K) #,IndexMap)  # Ito
+        #
+        #    #[TEST]計算結果を先に保存
+        #    save_data.SaveProbMap(PathWeightMap, outputfile, speech_num)
+        #else:
+        if (os.path.isfile(output) == False) or (UPDATE_PostProbMap == 1):  #すでにファイルがあれば作成しない
+            #PathWeightMap = PostProbMap_jit(CostMapProb,Mu,Sig,Phi_l,LookupTable_ProbCt,map_length,map_width,L,K) #マルチCPUで高速化できるかも #CostMapProb * PostProbMap #後の処理のために, この時点ではlogにしない
+            start_PWM_time = time.time()
+            PathWeightMap = self.PostProbMap_nparray_jit(CostMapProb,Mu,Sig,Phi_l,LookupTable_ProbCt,map_length,map_width,L,K) #,IndexMap) 
+            end_PWM_time = time.time()
+            if (SAVE_time == 1):
+                time_pp = end_PWM_time - start_PWM_time #end_recog_time
+                fp = open( outputfile + "N"+str(N_best)+"G"+str(speech_num) + "_time_PathWeightMap.txt", 'w')
+                fp.write(str(time_pp)+"\n")
+                fp.close()
+
             #[TEST]計算結果を先に保存
             save_data.SaveProbMap(PathWeightMap, outputfile, speech_num)
         else:
-            if (os.path.isfile(output) == False) or (UPDATE_PostProbMap == 1):  #すでにファイルがあれば作成しない
-              #PathWeightMap = PostProbMap_jit(CostMapProb,Mu,Sig,Phi_l,LookupTable_ProbCt,map_length,map_width,L,K) #マルチCPUで高速化できるかも #CostMapProb * PostProbMap #後の処理のために, この時点ではlogにしない
-              PathWeightMap = self.PostProbMap_nparray_jit(CostMapProb,Mu,Sig,Phi_l,LookupTable_ProbCt,map_length,map_width,L,K) #,IndexMap) 
-                
-              #[TEST]計算結果を先に保存
-              save_data.SaveProbMap(PathWeightMap, outputfile, speech_num)
-            else:
-               PathWeightMap = read_data.ReadProbMap(outputfile, speech_num)
-              #print("already exists:", output
+            PathWeightMap = read_data.ReadProbMap(outputfile, speech_num)
+            #print("already exists:", output)
         print("[Done] PathWeightMap.")
 
         PathWeightMap_origin = PathWeightMap
@@ -154,7 +164,7 @@ class PathPlanner:
             Path_2D_index_original = Path_2D_index + np.array(X_init) - T_horizon
         else:
             Path_2D_index_original = Path_2D_index
-        Path_ROS = read_data.Array_index_To_Map_coordinates(Path_2D_index_original) #ROSのパスの形式にできればなおよい
+        Path_ROS = tools.Array_index_To_Map_coordinates(Path_2D_index_original) #ROSのパスの形式にできればなおよい
 
         #Path = Path_2D_index_original #Path_ROS #必要な方をPathとして返す
         print("Init:", X_init)

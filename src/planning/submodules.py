@@ -1,11 +1,11 @@
 #coding:utf-8
 #This file for general modules (一般性の高い関数はこちらへ集約)
-#Akira Taniguchi 2018/11/26-2018/12/17-2020/04/26-
+#Akira Taniguchi 2018/11/26-2022/02/08
 import os
 import numpy as np
 from math import pi as PI
-from math import cos,sin,sqrt,exp,log,fabs,fsum,degrees,radians,atan2,gamma,lgamma
-#from initSpCoSLAMSIGVerse import *
+from math import log,gamma,lgamma
+#from math import cos,sin,sqrt,exp,log,fabs,fsum,degrees,radians,atan2,gamma,lgamma
 from __init__ import *
 
 def Makedir(dir):
@@ -20,7 +20,7 @@ def fill_param(param, default):   ##パラメータをNone の場合のみデフ
 
 def log2prob(log_prob_array):  #Normalization # log_prob_array: np.array()
   while (True in np.isnan(log_prob_array)):
-    print "[Prob Error (nan)]", log_prob_array
+    print("[Prob Error (nan)]", log_prob_array)
     log_prob_array = np.nan_to_num(log_prob_array, nan=approx_zero)  # 配列中のNaNを他の値に置換 (>= numpy version 1.17)
   max_prob = np.max(log_prob_array)
   log_prob_array = log_prob_array - max_prob
@@ -28,7 +28,7 @@ def log2prob(log_prob_array):  #Normalization # log_prob_array: np.array()
   prob_array = np.exp(log_prob_array)
   prob_array = prob_array / np.sum(prob_array) # prob_array / sum_prob
   if (np.sum(prob_array) == 0.0):
-    print "[Prob Error (sum zero to uniform)]", prob_array
+    print("[Prob Error (sum zero to uniform)]", prob_array)
     prob_array = [ 1.0/float(len(prob_array)) for _ in range(len(prob_array)) ]
   return prob_array
         
@@ -83,8 +83,8 @@ def log_multivariate_t_distribution(x, mu, Sigma, df):
 # 計算された共分散行列のパラメータが正定値性を満たすか簡易チェック
 def Check_VN(VN):
   if (VN[0][0] <= 0 or VN[1][1] <= 0 ):
-    print "ERROR!!!! Posterior parameter VN is negative."
-    print VN
+    print("ERROR!!!! Posterior parameter VN is negative.")
+    print(VN)
     VN = V0
   return VN
 
@@ -97,7 +97,7 @@ def PosteriorParameterGIW(k,nk,step,IT,XT,icitems_k0):
       if IT[s] == icitems_k0 : 
         xk = xk + [ np.array([XT[s].x, XT[s].y]) ]
     m_ML = sum(xk) / float(nk) #fsumではダメ
-    print "K%d n:%d m_ML:%s" % (k,nk,str(m_ML))
+    print("K%d n:%d m_ML:%s" % (k,nk,str(m_ML)))
     
     ##ハイパーパラメータ更新
     kN = k0 + nk
@@ -108,7 +108,7 @@ def PosteriorParameterGIW(k,nk,step,IT,XT,icitems_k0):
     VN = Check_VN(VN)
     
   else:  #データがないとき
-    print "nk["+str(k)+"]="+str(nk)
+    print("nk["+str(k)+"]="+str(nk))
     kN = k0
     mN = m0
     nN = n0
@@ -125,7 +125,7 @@ def PosteriorParameterGIW2(k,nk,step,IT,XT,icitems_k0):
       if IT[s] == icitems_k0 : 
         xk = xk + [ np.array(XT[s]) ]
     m_ML = sum(xk) / float(nk) #fsumではダメ
-    print "K%d n:%d m_ML:%s" % (k,nk,str(m_ML))
+    print("K%d n:%d m_ML:%s" % (k,nk,str(m_ML)))
     
     ##ハイパーパラメータ更新
     kN = k0 + nk

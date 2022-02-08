@@ -1,39 +1,64 @@
 #!/usr/bin/env python
 #coding:utf-8
+
+###########################################################
+# SpCoNavi: Spatial Concept-based Path-Planning Program for SIGVerse
+# Path-Planning Program by Viterbi algorithm 
+# Path Selection: maximum log-likelihood in a path trajectory
+# Akira Taniguchi 2022/02/08
+# Spacial Thanks: Shoichi Hasegawa
+###########################################################
+
+##Command: 
+#python spconavi_viterbi_execute.py trialname mapname iteration sample init_position_num speech_num initial_position_x initial_position_y
+#python spconavi_viterbi_execute.py 3LDK_01 s3LDK_01 1 0 0 7 100 100 
+
 import os
 import sys
 import time
-#from math import log
 from __init__ import *
 from submodules import *
 import spconavi_read_data
 import spconavi_save_data
-import spconavi_path_calculate
+import spconavi_viterbi_path_calculate as spconavi_viterbi_path_calculate
 
 tools     = spconavi_read_data.Tools()
 read_data = spconavi_read_data.ReadingData()
 save_data = spconavi_save_data.SavingData()
-path_calculate = spconavi_path_calculate.PathPlanner()
+path_calculate = spconavi_viterbi_path_calculate.PathPlanner()
 
+#Definition of action (functions in spconavi_read_data)
+action_functions = [tools.right, tools.left, tools.up, tools.down, tools.stay] #, migiue, hidariue, migisita, hidarisita]
+cost_of_actions  = np.log( np.ones(len(action_functions)) / float(len(action_functions)) ) #[    1/5,    1/5,  1/5,    1/5,    1/5]) #, ,    1,        1,        1,          1]
 
+#################################################
 if __name__ == '__main__': 
     print("[START] SpCoNavi. (Viterbi)")
+
     #Request a folder name for learned parameters.
     trialname = sys.argv[1]
-    #print trialname
-    #trialname = raw_input("trialname?(folder) >")
+
+    #map file name is requested
+    mapname = sys.argv[2]
 
     #Request iteration value
-    iteration = sys.argv[2] #1
+    iteration = sys.argv[3] #1
 
     #Request sample value
-    sample = sys.argv[3] #0
+    sample = sys.argv[4] #0
 
     #Request the index number of the robot initial position
-    init_position_num = sys.argv[4] #0
+    init_position_num = sys.argv[5] #0
 
     #Request the file number of the speech instruction   
-    speech_num = sys.argv[5] #0
+    speech_num = sys.argv[6] #0
+
+
+    start_list = [0, 0] #Start_Position[int(init_position_num)]
+    start_list[0] = int(sys.argv[7]) #0
+    start_list[1] = int(sys.argv[8]) #0
+    start = (start_list[0], start_list[1])
+    print("Start:", start)
 
 
     if (SAVE_time == 1):
@@ -44,13 +69,14 @@ if __name__ == '__main__':
     filename = outputfolder_SIG + trialname #+ "/" 
     print(filename, iteration, sample)
     outputfile = filename + navigation_folder #outputfolder + trialname + navigation_folder
-    outputname = outputfile + "T"+str(T_horizon)+"N"+str(N_best)+"A"+str(Approx)+"S"+str(init_position_num)+"G"+str(speech_num)
-    if (T_restart != 0):
-      outputname = outputfile + "T"+str(T_restart)+"N"+str(N_best)+"A"+str(Approx)+"S"+str(init_position_num)+"G"+str(speech_num)
+    outputsubfolder = outputfile + "spconavi_viterbi/"
+    outputname = outputsubfolder + "T"+str(T_horizon)+"N"+str(N_best)+"A"+str(Approx)+"S"+str(start)+"G"+str(speech_num)+"/"
+    #if (T_restart != 0):
+    #  outputname_restart = outputfile + "T"+str(T_restart)+"N"+str(N_best)+"A"+str(Approx)+"S"+str(start)+"G"+str(speech_num)+"/"
 
-    #Makedir( outputfolder + trialname )
     Makedir( outputfile )
-    #Makedir( outputname )
+    Makedir( outputsubfolder )
+    Makedir( outputname )
 
     #Read the files of learned parameters  #THETA = [W,W_index,Mu,Sig,Pi,Phi_l,K,L]
     THETA = read_data.ReadParameters(iteration, sample, filename, trialname)
@@ -65,7 +91,7 @@ if __name__ == '__main__':
       costmap = read_data.ReadCostMap(outputfile)
 
       #Change the costmap to the probabilistic costmap
-      CostMapProb = read_data.CostMapProb_jit(gridmap, costmap)
+      CostMapProb = path_calculate.CostMapProb_jit(gridmap, costmap)
       #Write the probabilistic cost map file
       save_data.SaveCostMapProb(CostMapProb, outputfile)
     else:
@@ -106,9 +132,11 @@ if __name__ == '__main__':
     
     #Save the moving distance of the path
     save_data.SavePathDistance(Distance, outputname)
+    print("Path distance using Viterbi algorithm is "+ str(Distance))
 
     #Save the path
     save_data.SavePath(Start_Position[int(init_position_num)], [], Path, Path_ROS, outputname)
+
 
     #Save the PathWeightMap(PathPlanner内部で実行)
     #####save_data.SaveProbMap(PathWeightMap, outputname)
@@ -133,4 +161,4 @@ if __name__ == '__main__':
     save_data.SaveLogLikelihood(LogLikelihood_sum,1,0,outputname)
     
     
-    print("[END] SpCoNavi.")
+    print("[END] SpCoNavi. (Viterbi)")

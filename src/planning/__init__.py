@@ -2,9 +2,8 @@
 #The file for setting parameters
 #Akira Taniguchi 2022/02/05
 import numpy as np
-import spconavi_read_data
-
-tools = spconavi_read_data.Tools()
+#import spconavi_read_data
+#tools = spconavi_read_data.Tools()
 
 ##Command
 #python ./spcotmhp_viterbi_planning.py trialname iteration(1) sample(0) init_position_num speech_num
@@ -73,7 +72,7 @@ SAVE_X_init  = 1      #Save initial value (Save:1, Not save:0)
 SAVE_T_temp  = 10     #Step interval to save the path temporarily (each SAVE_T_temp value on the way)
 SAVE_Trellis = 0      #Save trellis for Viterbi Path estimation (Save:1, Not save:0) 
 
-UPDATE_PostProbMap = 1 #0 #If the file exists already, calculate PostProbMap: (1) 
+UPDATE_PostProbMap = 0 #0 #If the file exists already, calculate PostProbMap: (1) 
 
 #Select approximated methods (Proposed method (ver. SIGVerse):0) -> run SpCoNavi_Astar_approx.py
 Approx = 0  
@@ -89,8 +88,8 @@ Sampling_J = 10
 
 #tools = Tools()
 #Definition of action (functions in spconavi_read_data)
-action_functions = [tools.right, tools.left, tools.up, tools.down, tools.stay] #, migiue, hidariue, migisita, hidarisita]
-cost_of_actions  = np.log( np.ones(len(action_functions)) / float(len(action_functions)) ) #[    1/5,    1/5,  1/5,    1/5,    1/5]) #, ,    1,        1,        1,          1]
+#action_functions = [tools.right, tools.left, tools.up, tools.down, tools.stay] #, migiue, hidariue, migisita, hidarisita]
+#cost_of_actions  = np.log( np.ones(len(action_functions)) / float(len(action_functions)) ) #[    1/5,    1/5,  1/5,    1/5,    1/5]) #, ,    1,        1,        1,          1]
 
 
 cmd_vel = 1  #Movement amount of robot (ROS: cmd_vel [m/s], [rad/s]) [default:1 (int)]

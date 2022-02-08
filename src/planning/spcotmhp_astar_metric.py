@@ -1,16 +1,16 @@
 #coding:utf-8
 
 ###########################################################
-# SpCoNavi: Spatial Concept-based Path-Planning Program for SIGVerse
+# SpCoTMHPi: Spatial Concept-based Path-Planning Program for SIGVerse
 # Path-Planning Program by A star algorithm (ver. approximate inference)
-# Path Selection: expected log-likelihood per pixel in a path trajectory
-# Akira Taniguchi 2019/06/24-2019/07/02-2019/09/20-2019/10/26-
+# Path Selection: minimum cost (- log-likelihood) in a path trajectory
+# Akira Taniguchi 2022/02/07
 # Spacial Thanks: Ryo Ozaki, Shuya Ito
 ###########################################################
 
 ##Command: 
-#python spconavi_astar_path_calculate.py trialname mapname iteration sample init_position_num speech_num initial_position_x initial_position_y
-#python spconavi_astar_path_calculate.py 3LDK_01 s1DK_01 1 0 0 7 100 100 
+#python spcotmhp_astar_metric.py trialname mapname iteration sample init_position_num speech_num initial_position_x initial_position_y
+#python spcotmhp_astar_metric.py 3LDK_01 s1DK_01 1 0 0 7 100 100 
 
 import sys
 import time
@@ -22,7 +22,6 @@ from scipy.stats import multivariate_normal,multinomial
 #from math import cos,sin,sqrt,exp,log,fabs,fsum,degrees,radians,atan2
 import matplotlib.pyplot as plt
 #import collections
-#import spconavi_path_calculate
 import spconavi_read_data
 import spconavi_save_data
 from __init__ import *
@@ -31,9 +30,8 @@ from submodules import *
 tools     = spconavi_read_data.Tools()
 read_data = spconavi_read_data.ReadingData()
 save_data = spconavi_save_data.SavingData()
-#path_calculate = spconavi_path_calculate.PathPlanner()
 
-
+"""
 #GaussMap make (no use) #Ito
 def PostProb_ij(Index_temp,Mu,Sig,map_length,map_width, CostMapProb,it):
         if (CostMapProb[Index_temp[1]][Index_temp[0]] != 0.0): 
@@ -44,6 +42,7 @@ def PostProb_ij(Index_temp,Mu,Sig,map_length,map_width, CostMapProb,it):
         else:
             PostProb = 0.0
         return PostProb
+"""
 
 #GaussMap make (use) #Ito
 def PostProbMap_nparray_jit(CostMapProb,Mu,Sig,map_length,map_width,it): #,IndexMap):
@@ -190,28 +189,30 @@ def a_star(start, goal, maze, action_functions, cost_of_actions, PathWeightMap):
 
 
 #################################################
-print("[START] SpCoTMHP by A star algorithm.")
+print("[START] SpCoTMHP. (A star metric path)")
 
 #map dataの入った部屋環境folder name（学習済みparameter folder name） is requested
+#Request a folder name for learned parameters.
 trialname = sys.argv[1]
 
 #map file name is requested
 mapname = sys.argv[2]
 
-#iteration is requested
+#Request iteration value
 iteration = sys.argv[3] #1
 
-#sample is requested
+#Request sample value
 sample = sys.argv[4] #0
 
-#robot initial positionの候補番号 is requested
+#Request the index number of the robot initial position
 init_position_num = sys.argv[5] #0
 
-#the file number for speech instruction is requested   
+#Request the file number of the speech instruction 
 speech_num = sys.argv[6] #0
 
+
 if (SAVE_time == 1):
-    #開始時刻を保持
+    #Substitution of start time
     start_time = time.time()
 
 start_list = [0, 0] #Start_Position[int(init_position_num)]#(83,39) #(92,126) #(126,92) #(1, 1)
@@ -222,6 +223,7 @@ print("Start:", start)
 #goal  = (95,41) #(97,55) #(55,97) #(height-2, width-2)
 Like_save=[ [0.0 for atem in range(K)] for aky in range(K) ]
 Distance_save=[ [0.0 for atem in range(K)] for aky in range(K) ]
+
 ##FullPath of folder
 filename = outputfolder_SIG + trialname #+ "/" 
 print(filename, iteration, sample)
@@ -244,10 +246,10 @@ THETA = read_data.ReadParameters(iteration, sample, filename, trialname)
 W, W_index, Mu, Sig, pi, phi_l, K, L = THETA
 #W_index = THETA[1]
 
-#Ito
+#Ito# 遷移確率の低いエッジは計算しないようにするために擬似的にpsi_setting.csvを読み込む
+#Ito# psiそのものの確率値ではないことに注意
 psi     = [ [0.0 for atem in range(K)] for aky in range(K) ]
 c=0
-#i=0
 for line in open(filename + "/" + trialname + '_psi_'  + 'setting.csv', 'r'):
         itemList = line[:-1].split(',')
         for i in range(len(itemList)):
@@ -352,8 +354,7 @@ for st_i in range(K):
     Path = Path_candidate[expect_gc_index]
     goal = goal_candidate[expect_gc_index]
     print("Goal:", goal)
-    #LogLikelihood_step
-    #LogLikelihood_sum
+    
 
     if (SAVE_time == 1):
         #PP終了時刻を保持
@@ -370,9 +371,9 @@ for st_i in range(K):
     #The moving distance of the path
     Distance = tools.PathDistance(Path)
     Distance_save[st_i][gl_i]=Distance
-    #Save the moving distance of the path
-    #SavePathDistance(Distance)
 
+    #Save the moving distance of the path
+    save_data.SavePathDistance(Distance, outputname)
     print("Path distance using A* algorithm is "+ str(Distance))
 
     #計算上パスのx,yが逆になっているので直す
@@ -408,10 +409,10 @@ for st_i in range(K):
 
 
     #すべてのステップにおけるlog likelihoodの値を保存
-    SaveLogLikelihood(outputname, LogLikelihood_step,0,0)
+    save_data.SaveLogLikelihood(outputname, LogLikelihood_step,0,0)
 
     #すべてのステップにおける累積報酬（sum log likelihood）の値を保存
-    SaveLogLikelihood(outputname, LogLikelihood_sum,1,0)
+    save_data.SaveLogLikelihood(outputname, LogLikelihood_sum,1,0)
     '''
 
     
@@ -426,8 +427,8 @@ for st_i in range(K):
   else:
     Distance_save[st_i][gl_i]=0
     Like_save[st_i][gl_i]=0
-      #print(str(st_i)+"_"+str(gl_i))         
+      #print(str(st_i)+"_"+str(gl_i))       
+  
 outputname=outputfile+"Astar_SpCoTMHP_"
 np.savetxt(outputname+"distance.csv",Distance_save,delimiter=",")
-#np.savetxt(outputname+"psi.csv",psi,delimiter=",")
 np.savetxt(outputname+"cost.csv",Like_save,delimiter=",")

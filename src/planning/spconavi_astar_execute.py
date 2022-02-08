@@ -9,29 +9,27 @@
 ###########################################################
 
 ##Command: 
-#python3 spconavi_astar_path_calculate.py trialname mapname iteration sample init_position_num speech_num initial_position_x initial_position_y
-#python3 spconavi_astar_path_calculate.py 3LDK_01 s1DK_01 1 0 0 7 100 100 
+#python3 spconavi_astar_execute.py trialname mapname iteration sample init_position_num speech_num initial_position_x initial_position_y
+#python3 spconavi_astar_execute.py 3LDK_01 s3LDK_01 1 0 0 7 100 100 
 
 import sys
 import time
 import numpy as np
-#import scipy as sp
-#from numpy.linalg import inv, cholesky
 from scipy.stats import multivariate_normal,multinomial
-#from math import pi as PI
-#from math import cos,sin,sqrt,exp,log,fabs,fsum,degrees,radians,atan2
 import matplotlib.pyplot as plt
-import collections
 from __init__ import *
-#import spconavi_path_calculate #Ito
-#from submodules import *
+from submodules import *
 import spconavi_read_data
 import spconavi_save_data
 
 tools     = spconavi_read_data.Tools()
 read_data = spconavi_read_data.ReadingData()
 save_data = spconavi_save_data.SavingData()
-#path_calculate = spconavi_path_calculate.PathPlanner() #Ito
+
+
+#Definition of action (functions in spconavi_read_data)
+action_functions = [tools.right, tools.left, tools.up, tools.down, tools.stay] #, migiue, hidariue, migisita, hidarisita]
+cost_of_actions  = np.log( np.ones(len(action_functions)) / float(len(action_functions)) ) #[    1/5,    1/5,  1/5,    1/5,    1/5]) #, ,    1,        1,        1,          1]
 
 
 ###↓### Sampling of goal candidates ############################################
@@ -178,24 +176,29 @@ init_position_num = sys.argv[5] #0
 #the file number for speech instruction is requested   
 speech_num = sys.argv[6] #0
 
-if (SAVE_time == 1):
-    #開始時刻を保持
-    start_time = time.time()
 
-start_list = [0, 0] #Start_Position[int(init_position_num)]#(83,39) #(92,126) #(126,92) #(1, 1)
+start_list = [0, 0] #Start_Position[int(init_position_num)]
 start_list[0] = int(sys.argv[7]) #0
 start_list[1] = int(sys.argv[8]) #0
 start = (start_list[0], start_list[1])
 print("Start:", start)
-#goal  = (95,41) #(97,55) #(55,97) #(height-2, width-2)
+
+
+if (SAVE_time == 1):
+    #開始時刻を保持
+    start_time = time.time()
 
 ##FullPath of folder
 filename = outputfolder_SIG + trialname #+ "/" 
 print(filename, iteration, sample)
 outputfile = filename + navigation_folder #outputfolder + trialname + navigation_folder
-#outputname = outputfile + "Astar_SpCo_"+"N"+str(N_best)+"A"+str(Approx)+"S"+str(init_position_num)+"G"+str(speech_num)
-outputname = outputfile + "Astar_Approx_min_"+"N"+str(N_best)+"A"+str(Approx)+"S"+str(start)+"G"+str(speech_num)
+outputsubfolder = outputfile + "spconavi_astar_min/"
+outputname = outputsubfolder + "J"+str(Sampling_J)+"N"+str(N_best)+"A"+str(Approx)+"S"+str(start)+"G"+str(speech_num)+"/"
 #"T"+str(T_horizon)+"N"+str(N_best)+"A"+str(Approx)+"S"+str(init_position_num)+"G"+str(speech_num)
+
+Makedir( outputfile )
+Makedir( outputsubfolder )
+Makedir( outputname )
 
 maze = read_data.ReadMap(outputfile)
 height, width = maze.shape
@@ -242,7 +245,7 @@ plt.gca().set_aspect('equal')
 
 ###goalの候補を複数個用意する
 goal_candidate = Sampling_goal(Otb_B, THETA) #(0,0)
-J = len(goal_candidate)
+J = Sampling_J #len(goal_candidate)
 if(J != THETA[6]):
     print("[WARNING] J is not K",J,K)
 p_cost_candidate = [0.0 for j in range(J)]
@@ -280,14 +283,13 @@ Distance = tools.PathDistance(Path)
 
 #Save the moving distance of the path
 save_data.SavePathDistance(Distance, outputname)
-
 print("Path distance using A* algorithm is "+ str(Distance))
 
 #計算上パスのx,yが逆になっているので直す
 Path_inv = [[Path[t][1], Path[t][0]] for t in range(len(Path))]
 Path_inv.reverse()
 Path_ROS = Path_inv #使わないので暫定的な措置
-#パスを保存
+#Save the path
 save_data.SavePath(start, [goal[1], goal[0]], Path_inv, Path_ROS, outputname)
 
 
@@ -328,3 +330,4 @@ plt.savefig(outputname + '_Path.png', dpi=300)#, transparent=True
 plt.savefig(outputname + '_Path.pdf', dpi=300)#, transparent=True
 plt.clf()
 
+print("[END] SpCoNavi. (A star)")

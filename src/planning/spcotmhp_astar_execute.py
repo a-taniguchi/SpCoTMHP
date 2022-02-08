@@ -19,7 +19,7 @@ save_data = spconavi_save_data.SavingData()
 #path_calculate = spconavi_path_calculate.PathPlanner()
 
 #GaussMap make (same to the function in spcotmhp_astar_path_calculate) #Ito
-def PostProbMap_nparray_jit(CostMapProb,Mu,Sig,map_length,map_width,it): #,IndexMap):
+def PostProbMap_nparray_jit_Ito(CostMapProb,Mu,Sig,map_length,map_width,it): #,IndexMap):
         x,y = np.meshgrid(np.linspace(-10.0,9.92,map_width),np.linspace(-10.0,9.92,map_length))
         pos = np.dstack((x,y))    
         #PostProbMap = np.array([ [ PostProb_ij([width, length],Mu,Sig,map_length,map_width, CostMapProb,it) for width in xrange(map_width) ] for length in xrange(map_length) ])
@@ -131,6 +131,8 @@ def a_star(start, goal, maze, action_functions, cost_of_actions, PathWeightMap):
     return Path, p_cost
 ### A star algorithm (by Ryo Ozaki) ############################################
 
+
+
     
 if __name__ == '__main__': 
     print("[START] SpCoTMHP. (A star)")
@@ -206,12 +208,12 @@ if __name__ == '__main__':
         Hf="N"
 
     
-    outputname = outputfile + "astar_result/" + "Astar_SpCoTMHP_"+"S"+str(start)+"H"+str(Hf)+"_G"+str(gl)
+    outputname = outputfile + "astar_result/Astar_SpCoTMHP_"+"S"+str(start)+"H"+str(Hf)+"_G"+str(gl)
     
     #action_functions = [right, left, up, down, stay] #, migiue, hidariue, migisita, hidarisita]
     #cost_of_actions  = np.log( np.ones(len(action_functions)) / float(len(action_functions)) ) #[    1/5,    1/5,  1/5,    1/5,    1/5]) #, ,    1,        1,        1,          1]
     W, W_index, Mu, Sig, pi, phi_l, K, L = THETA
-    PathWeightMap = PostProbMap_nparray_jit(CostMapProb,Mu,Sig,map_length,map_width,Gl)
+    PathWeightMap = PostProbMap_nparray_jit_Ito(CostMapProb,Mu,Sig,map_length,map_width,Gl)
     cos     = [ [0.0 for atem in range(K)] for aky in range(K) ]
     dis     = [ [0.0 for atem in range(K)] for aky in range(K) ]
     ev     = [ 0.0 for aky in range(K) ]
@@ -293,13 +295,7 @@ if __name__ == '__main__':
     #LogLikelihood_step
     #LogLikelihood_sum
 
-    if (SAVE_time == 1):
-        #PP終了時刻を保持
-        end_pp_time = time.time()
-        time_pp = end_pp_time - start_time #end_recog_time
-        fp = open( outputname + "_time_pp.txt", 'w')
-        fp.write(str(time_pp)+"\n")
-        fp.close()
+
         
     #for i in range(len(Path)):
     #  plt.plot(Path[i][0], Path[i][1], "s", color="tab:red", markersize=1)
@@ -431,16 +427,25 @@ if __name__ == '__main__':
                 i=node[k][1]
 
     
-        print("[END] SpCoNavi.")
+        print("[END] SpCoTMHP.")
         print(root)
     #print(Path_ROS)
+
+
+    if (SAVE_time == 1):
+        #PP終了時刻を保持
+        end_pp_time = time.time()
+        time_pp = end_pp_time - start_time #end_recog_time
+        fp = open( outputname + "_time_pp.txt", 'w')
+        fp.write(str(time_pp)+"\n")
+        fp.close()
 
     """
     for v in range(len(root)-1):
         path=[[0,0]for k in range(int(dis[root[v]][root[v+1]]))]
         print(dis[root[v]][root[v+1]])
         i=0
-        for line in open(filename + "/navi/astar_node/Astar_SpCoTMHP_S" + str(root[v]) + '_G' + str(root[v+1]) +  '_Path_ROS.csv', 'r'):
+        for line in open(outputfile + "/astar_node/Astar_SpCoTMHP_S" + str(root[v]) + '_G' + str(root[v+1]) +  '_Path_ROS.csv', 'r'):
            itemList = line[:-1].split(',')
            path[i] = np.array([ float(itemList[0]) , float(itemList[1]) ])
            #path[i][0]=int(po[0])
@@ -450,21 +455,13 @@ if __name__ == '__main__':
         Path_ROS=path+Path_ROS 
     """
 
+    dism = tools.PathDistance(Path_ROS) #len(Path_ROS)
+    disp=[dism]
+
     for i in range(len(Path_ROS)):
       plt.plot(Path_ROS[i][1], Path_ROS[i][0], "s", color="tab:red", markersize=1)
     np.savetxt(outputname + "_fin_Path_ROS.csv", Path_ROS, delimiter=",")
     plt.savefig(outputname + '_Path.pdf', dpi=300)#, transparent=True
-    dism=len(Path_ROS)
-    sd=[dism]
-    np.savetxt(outputname + "_fin_Distance.csv", sd, delimiter=",")
+    np.savetxt(outputname + "_fin_Distance.csv", disp, delimiter=",")
     plt.clf()
      
-
-
-
-
-
-
-
-
-

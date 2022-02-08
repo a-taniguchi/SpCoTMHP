@@ -77,6 +77,12 @@ class SavingData:
         np.savetxt( output, PathWeightMap, delimiter=",")
         print("Save PathWeightMap: " + output)
 
+    def SaveProbMap_TMHP(self, PathWeightMap, outputfile, s_n ,g_n):
+            # Save the result to the file 
+            output = outputfile + "SpCoTMHP_S"+str(s_n)+"G"+str(g_n) + "_PathWeightMap.csv"
+            np.savetxt( output, PathWeightMap, delimiter=",")
+            print("Save PathWeightMap: " + output)
+
     def SaveTransition(self, Transition, outputfile):
         # Save the result to the file 
         output_transition = outputfile + "T"+str(T_horizon) + "_Transition_log.csv"

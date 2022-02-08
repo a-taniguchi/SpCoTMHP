@@ -50,7 +50,6 @@ class Tools:
         return Distance
 
 
-
 class ReadingData:
 
     #Read the path
@@ -85,6 +84,12 @@ class ReadingData:
         return costmap
 
 
+    #Read the psi parameters of learned spatial concepts (for SpCoTMHP)
+    def ReadPsi(self, iteration, sample, filename, trialname):
+        #psi     = [ [0.0 for atem in range(K)] for aky in range(K) ]
+        psi = np.load(filename + "/" + trialname + '_psi_' + str(iteration) + '_' + str(sample) + '.npy')
+        return psi
+
     #Read the parameters of learned spatial concepts
     def ReadParameters(self, iteration, sample, filename, trialname):
         #THETA = [W,W_index,Mu,Sig,Pi,Phi_l,K,L]
@@ -117,7 +122,7 @@ class ReadingData:
             Mu[i] = np.array([ float(itemList[0]) , float(itemList[1]) ])
             i = i + 1
         
-        i = 0
+        #i = 0
         ##Sig is read from the file
         Sig = np.load(filename + "/" + trialname + '_Sig_' + str(iteration) + '_' + str(sample) + '.npy')
         '''
