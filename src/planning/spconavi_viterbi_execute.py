@@ -48,16 +48,16 @@ if __name__ == '__main__':
     sample = sys.argv[4] #0
 
     #Request the index number of the robot initial position
-    init_position_num = sys.argv[5] #0
+    #init_position_num = sys.argv[5] #0
 
     #Request the file number of the speech instruction   
     speech_num = sys.argv[6] #0
 
 
-    start_list = [0, 0] #Start_Position[int(init_position_num)]
-    start_list[0] = int(sys.argv[7]) #0
-    start_list[1] = int(sys.argv[8]) #0
-    start = (start_list[0], start_list[1])
+    start = [0, 0] #Start_Position[int(init_position_num)]
+    start[0] = int(sys.argv[7]) #0
+    start[1] = int(sys.argv[8]) #0
+    #start = [start_list[0], start_list[1]]
     print("Start:", start)
 
 
@@ -117,7 +117,7 @@ if __name__ == '__main__':
 
     #########
     #Path-Planning
-    Path, Path_ROS, PathWeightMap, Path_one = path_calculate.PathPlanner(Otb_B, Start_Position[int(init_position_num)], THETA, CostMapProb, outputfile, speech_num, outputname) #gridmap, costmap)
+    Path, Path_ROS, PathWeightMap, Path_one = path_calculate.PathPlanner(Otb_B, start, THETA, CostMapProb, outputfile, speech_num, outputname) #gridmap, costmap)
 
     if (SAVE_time == 1):
       #PP終了時刻を保持
@@ -135,7 +135,7 @@ if __name__ == '__main__':
     print("Path distance using Viterbi algorithm is "+ str(Distance))
 
     #Save the path
-    save_data.SavePath(Start_Position[int(init_position_num)], [], Path, Path_ROS, outputname)
+    save_data.SavePath(start, [], Path, Path_ROS, outputname)
 
 
     #Save the PathWeightMap(PathPlanner内部で実行)

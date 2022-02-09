@@ -7,12 +7,12 @@ from math import log
 from __init__ import *
 from submodules import *
 import spconavi_read_data
-import spconavi_path_calculate
+import planning.spconavi_viterbi_path_calculate as spconavi_viterbi_path_calculate
 import spconavi_save_data
 
 read_data = spconavi_read_data.ReadingData()
 save_data = spconavi_save_data.SavingData()
-path_calculate = spconavi_path_calculate.PathPlanner()
+path_calculate = spconavi_viterbi_path_calculate.PathPlanner()
 
 
 if __name__ == '__main__': 

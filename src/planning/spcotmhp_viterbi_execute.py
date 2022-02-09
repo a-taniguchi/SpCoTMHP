@@ -5,7 +5,7 @@ import time
 #from math import log
 from scipy.stats import multivariate_normal,multinomial
 import matplotlib.pyplot as plt
-import collections
+#import collections
 #import spconavi_path_calculate
 import spconavi_read_data
 import spconavi_save_data
@@ -17,19 +17,28 @@ read_data = spconavi_read_data.ReadingData()
 save_data = spconavi_save_data.SavingData()
 #path_calculate = spconavi_path_calculate.PathPlanner()
 
-def readlike(fname):
+#Definition of action (functions in spconavi_read_data)
+action_functions = [tools.right, tools.left, tools.up, tools.down, tools.stay] #, migiue, hidariue, migisita, hidarisita]
+cost_of_actions  = np.log( np.ones(len(action_functions)) / float(len(action_functions)) ) #[    1/5,    1/5,  1/5,    1/5,    1/5]) #, ,    1,        1,        1,          1]
+
+
+
+def ReadLikelihood(i,j,outputfile):
+    fname=outputfile +"/SpCoTMHP_S"+str(i)+"G"+str(j)+"_Log_likelihood_sum.csv"
     for line in open(fname,'r'):
       itemList = line[:-1].split(',')
     
     return float(itemList[0])
-    #else:
+ 
 
-def readdis(fname):
+def ReadDistance(i,j,outputfile):
+    fname=outputfile +"/SpCoTMHP_S"+str(root[i])+"G"+str(root[i+1])+"_Distance.csv"
     for line in open(fname,'r'):
       itemList = line[:-1].split(',')
     
     return float(itemList[0])   
-     #   return 0    
+
+
 
 
 #GaussMap make (same to the function in spcotmhp_astar_path_calculate) #Ito
@@ -148,6 +157,31 @@ def a_star(start, goal, maze, action_functions, cost_of_actions, PathWeightMap):
 
 
     
+def ReadDistanceMtrx(outputfile):
+    dis  = [ [0.0 for atem in range(K)] for aky in range(K) ]
+    c=0
+    for line in open(outputfile +    'Viterbi_SpCoTMHP_distance.csv', 'r'):
+        itemList = line[:-1].split(',')
+        for i in range(len(itemList)):
+            if itemList[i] != "":
+              dis[c][i] = float(itemList[i])
+        c = c + 1
+    return dis
+
+
+def ReadLikeliMtrx(outputfile):
+    cost  = [ [0.0 for atem in range(K)] for aky in range(K) ]
+    c=0
+    for line in open(outputfile + 'Astar_SpCoTMHP_likelihood.csv', 'r'):
+        itemList = line[:-1].split(',')
+        for i in range(len(itemList)):
+            if itemList[i] != "":
+              cost[c][i] = float(itemList[i])
+        c = c + 1
+    return cost
+        
+        
+
 if __name__ == '__main__': 
     print("[START] SpCoTMHP (Viterbi).")
     #Request a folder name for learned parameters.
@@ -172,10 +206,18 @@ if __name__ == '__main__':
     t_i=0
     #x_s=
     #y_s=
-    s_i=1
+    s_i=1 #スタート位置近くの位置分布index
     gl=3
     start=(120,50)
-       
+
+    #St=st_i
+    Gl=s_i
+    if tyukan==1:
+        Hf=t_i
+    else:
+        Hf="N"
+         
+         
     if (SAVE_time == 1):
       #Substitution of start time
       start_time = time.time()
@@ -184,18 +226,19 @@ if __name__ == '__main__':
     filename = outputfolder_SIG + trialname #+ "/" 
     print(filename, iteration, sample)
     outputfile = filename + navigation_folder #outputfolder + trialname + navigation_folder
-    outputname = outputfile + "T"+str(T_horizon)+"N"+str(N_best)+"A"+str(Approx)+"S"+str(init_position_num)+"G"+str(speech_num)
-
+    outputsubfolder = outputfile + "viterbi_node/"
+    outputname = outputfile + "viterbi_result/Viterbi_SpCoTMHP_"+"T"+str(T_topo)+"S"+str(start)+"H"+str(Hf)+"G"+str(gl)
+    
     #Makedir( outputfolder + trialname )
     Makedir( outputfile )
-    #Makedir( outputname )
+    Makedir( outputname )
 
     #Read the files of learned parameters  #THETA = [W,W_index,Mu,Sig,Pi,Phi_l,K,L]
-    THETA = read_data.ReadParameters(iteration, sample, filename, trialname)
-    maze  = read_data.ReadMap(outputfile)
-    map_length, map_width = maze.shape
+    THETA   = read_data.ReadParameters(iteration, sample, filename, trialname)
+    gridmap = read_data.ReadMap(outputfile)
+    map_length, map_width = gridmap.shape
     
-    gridmap = maze
+    #gridmap = maze
     plt.imshow(gridmap + (40+1)*(gridmap == -1), origin='lower', cmap='binary', vmin = 0, vmax = 100, interpolation='none') #, vmin = 0.0, vmax = 1.0)
          
     plt.xticks(rotation=90)
@@ -210,49 +253,43 @@ if __name__ == '__main__':
     plt.gca().set_aspect('equal')
     CostMap = read_data.ReadCostMap(outputfile)
     CostMapProb = (100.0 - CostMap)/100
-    #St=st_i
-    Gl=s_i
-    if tyukan==1:
-        Hf=t_i
-    else:
-        Hf="N"
+
+
         
-        
-    outputname = outputfile + "viterbi_result/SpCoTMHP_viterbi"+"S"+str(start)+"G"+str(gl)
-    
-    #action_functions = [right, left, up, down, stay] #, migiue, hidariue, migisita, hidarisita]
-    #cost_of_actions  = np.log( np.ones(len(action_functions)) / float(len(action_functions)) ) #[    1/5,    1/5,  1/5,    1/5,    1/5]) #, ,    1,        1,        1,          1]
     W, W_index, Mu, Sig, pi, phi_l, K, L = THETA
     PathWeightMap = PostProbMap_nparray_jit_Ito(CostMapProb,Mu,Sig,map_length,map_width,Gl)
-    ev     = [ 0.0 for aky in range(K) ]
-    c=0
-    #i=0
-    dissum=0
-    #Read text file
-    psi=[ [0.0 for i in range(K)] for c in range(K) ]
+    ev   = [ 0.0 for aky in range(K) ]
+    dis  = ReadDistanceMtrx(outputfile)      
+    lk   = ReadLikeliMtrx(outputfile)    
+
+
+    #Read CoonectMatricx (psi_setting.csv) file
+    CoonectMatricx=[ [0.0 for i in range(K)] for c in range(K) ]
     c = 0
     for line in open(filename + "/" + trialname + '_psi_setting.csv', 'r'):
         itemList = line[:-1].split(',')
         for i in range(len(itemList)):
             if itemList[i] != "":
-              psi[c][i] = float(itemList[i])
+              CoonectMatricx[c][i] = float(itemList[i])
         c = c + 1
-    lk=[ [0.0 for i in range(K)] for c in range(K) ]
-    ndl=[0.454,0.314,0.218,0.372,0.706,0.700,0.748,0.333,0.348,0.591,0.583,]
-    for i in range(K):
-      for j in range(K):
-        if i==j:
-         lk[i][j]=float(ndl[i])*100.0*float(phi_l[j][gl])
-        elif psi[i][j]==1:
-         fname=outputfile +"SpCoTMHP_S"+str(i)+"G"+str(j)+"_Log_likelihood_sum.csv"
-         lk[i][j]= float(readlike(fname))*phi_l[j][gl]
-        else:
-         lk[i][j]=0
+
+    #lk=[ [0.0 for i in range(K)] for c in range(K) ]
+    #ndl=[0.454,0.314,0.218,0.372,0.706,0.700,0.748,0.333,0.348,0.591,0.583,]
+    #for i in range(K):
+    #  for j in range(K):
+    #    if i==j:
+    #     lk[i][j]=float(ndl[i])*100.0*float(phi_l[j][gl])
+    #    elif CoonectMatricx[i][j]==1:
+    #     #fname=outputfile +"SpCoTMHP_S"+str(i)+"G"+str(j)+"_Log_likelihood_sum.csv"
+    #     lk[i][j]= float(ReadLikelihood(i,j,outputfile))*phi_l[j][gl]
+    #    else:
+    #     lk[i][j]=0
         
         
     #ss=Map_coordinates_To_Array_index(Mu[S_i])
     #start=(150,130)
 
+    ###近くの位置分布のindexのガウスの平均をゴールとしたA*を実行
     gg=tools.Map_coordinates_To_Array_index(Mu[s_i])
     #print(gg[0])
     goal_candidate=[[gg[1],gg[0]]]
@@ -262,38 +299,18 @@ if __name__ == '__main__':
     #if(J != THETA[6]):
     # print("[WARNING] J is not K",J,K)
     p_cost_candidate = [0.0 for j in range(J)]
-    Path_candidate = [[0.0] for j in range(J)]
+    Path_candidate   = [[0.0] for j in range(J)]
     print(goal_candidate)
 
     ###goal候補ごとにA*を実行
     for gc_index in range(J):
         goal = goal_candidate[gc_index]
-        Path, p_cost = a_star(start, goal, maze, action_functions, cost_of_actions, PathWeightMap)    
+        Path, p_cost = a_star(start, goal, gridmap, action_functions, cost_of_actions, PathWeightMap)    
         
         first_cost = p_cost / float(len(Path))
         p_cost_candidate[gc_index] = p_cost / float(len(Path))
         Path_candidate[gc_index] = Path    
 
-        """
-        #PathWeightMapとPathからlog likelihoodの値を再計算する
-        LogLikelihood_step = np.zeros(T_horizon)
-        LogLikelihood_sum = np.zeros(T_horizon)
-
-        for i in range(T_horizon):
-        if (i < len(Path)):
-            t = i
-        else:
-            t = len(Path) -1
-        #print PathWeightMap.shape, Path[t][0], Path[t][1]
-        LogLikelihood_step[i] = np.log(PathWeightMap[ Path_inv[t][0] ][ Path_inv[t][1] ])
-        if (t == 0):
-            LogLikelihood_sum[i] = LogLikelihood_step[i]
-        elif (t >= 1):
-            LogLikelihood_sum[i] = LogLikelihood_sum[i-1] + LogLikelihood_step[i]
-        
-        LogLikelihood_step_candidate[gc_index] = LogLikelihood_step
-        LogLikelihood_sum_candidate[gc_index] = LogLikelihood_sum
-        """
 
     ### select the goal of expected cost
     expect_gc_index = np.argmin(p_cost_candidate)
@@ -330,7 +347,7 @@ if __name__ == '__main__':
         
         
     #print(lk)    
-    Step =10
+    Step = T_topo #10
     lkt=[ [0.0 for i in range(K)] for k in range(Step)]#sum likewood
     rt=[ [-1 for i in range(K)] for k in range(Step)]#oya node save
     node =[0 for i in range(K) ] #
@@ -384,11 +401,11 @@ if __name__ == '__main__':
         fp.close()    
         
     dis=[0.0 for i in range(Step)]
-    
+    dissum=0
     for i in range(Step-1):
       if root[i]!=root[i+1]:
-        fname=outputfile +"/viterbi_node/SpCoTMHP_S"+str(root[i])+"G"+str(root[i+1])+"_Distance.csv"
-        dis[i]=readdis(fname)
+        #fname=outputfile +"/viterbi_node/SpCoTMHP_S"+str(root[i])+"G"+str(root[i+1])+"_Distance.csv"
+        dis[i]=ReadDistance(root[i],root[j],outputfile)
         dissum+=dis[i]  
     #print(dissum)
     print(dis)

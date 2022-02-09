@@ -13,27 +13,6 @@ tools     = spconavi_read_data.Tools()
 read_data = spconavi_read_data.ReadingData()
 save_data = spconavi_save_data.SavingData()
 
-#v# Ito #v#
-def PostProbMap_nparray_jit_ITO(CostMapProb,Mu,Sig,map_length,map_width,it): #,IndexMap):
-        x,y = np.meshgrid(np.linspace(-10.0,9.1,map_width),np.linspace(-10.0,9.1,map_length))
-        pos = np.dstack((x,y))    
-        #PostProbMap = np.array([ [ PostProb_ij([width, length],Mu,Sig,map_length,map_width, CostMapProb,it) for width in xrange(map_width) ] for length in xrange(map_length) ])
-        PostProb=multivariate_normal(Mu[it],Sig[it]).pdf(pos)
-        glp=tools.Map_coordinates_To_Array_index(Mu[it])
-        mmm=0.0
-        mx=0
-        my=0
-        for i in range(map_length):
-          for j in range(map_width):
-           if mmm < float(PostProb[i][j]):
-            mmm=float(PostProb[i][j])
-            mx=j
-            my=i
-        print(str(mx),str(my))    
-        
-        return CostMapProb * PostProb
-#^# Ito #^#
-
 
 class PathPlanner:
 
@@ -44,8 +23,31 @@ class PathPlanner:
         GridMapProb = 1*(gridmap == 0)  #gridmap * (gridmap != 100) * (gridmap != -1)  #gridmap[][]が障害物(100)または未探索(-1)であれば確率0にする
         return CostMapProb * GridMapProb
 
-    #Global path estimation by dynamic programming (calculation of SpCoNavi)
-    def PathPlanner(self, S_Nbest, X_init, THETA, CostMapProb, outputfile, speech_num, outputname,gl_i,s_n): #gridmap, costmap):
+
+    #v# Ito #v#
+    def PostProbMap_nparray_jit_ITO(self, CostMapProb,Mu,Sig,map_length,map_width,it): #,IndexMap):
+        x,y = np.meshgrid(np.linspace(-10.0,9.1,map_width),np.linspace(-10.0,9.1,map_length))
+        pos = np.dstack((x,y))    
+        #PostProbMap = np.array([ [ PostProb_ij([width, length],Mu,Sig,map_length,map_width, CostMapProb,it) for width in xrange(map_width) ] for length in xrange(map_length) ])
+        PostProb=multivariate_normal(Mu[it],Sig[it]).pdf(pos)
+        glp=tools.Map_coordinates_To_Array_index(Mu[it])
+        mmm=0.0
+        mx=0
+        my=0
+        for i in range(map_length):
+            for j in range(map_width):
+                if mmm < float(PostProb[i][j]):
+                    mmm=float(PostProb[i][j])
+                    mx=j
+                    my=i
+                print(str(mx),str(my))    
+            
+        return CostMapProb * PostProb
+    #^# Ito #^#
+
+
+    #Global path estimation by dynamic programming (calculation of SpCoTMHP)
+    def ViterbiPathPlanner(self, X_init, THETA, CostMapProb, outputfile, outputname, gl_i, s_n): #gridmap, costmap):
         print("[RUN] PathPlanner")
         #THETAを展開
         W, W_index, Mu, Sig, Pi, Phi_l, K, L = THETA
@@ -67,10 +69,10 @@ class PathPlanner:
 
 
         print("Please wait for PostProbMap")
-        output = outputfile + "N"+str(N_best)+"G"+str(speech_num) + "_PathWeightMap.csv"
+        #output = outputfile + "N"+str(N_best)+"G"+str(speech_num) + "_PathWeightMap.csv"
         #if (os.path.isfile(output) == False) or (UPDATE_PostProbMap == 1):  #すでにファイルがあれば作成しない
             #PathWeightMap = PostProbMap_jit(CostMapProb,Mu,Sig,Phi_l,LookupTable_ProbCt,map_length,map_width,L,K) #マルチCPUで高速化できるかも #CostMapProb * PostProbMap #後の処理のために, この時点ではlogにしない
-        PathWeightMap = PostProbMap_nparray_jit_ITO(CostMapProb,Mu,Sig,map_length,map_width,gl_i) #,IndexMap) 
+        PathWeightMap = self.PostProbMap_nparray_jit_ITO(CostMapProb,Mu,Sig,map_length,map_width,gl_i) #,IndexMap) 
         
         #[TEST]計算結果を先に保存
         save_data.SaveProbMap_TMHP(PathWeightMap, outputfile, s_n,gl_i)
@@ -133,7 +135,7 @@ class PathPlanner:
         print("MoveIndex_list")
 
         #Viterbi Algorithmを実行
-        Path_one,Step = self.ViterbiPath(X_init_index_one, np.log(PathWeight_one_NOzero), state_num,IndexMap_one_NOzero,MoveIndex_list, outputname, X_init, Bug_removal_savior,THETA,gl_i,tre) #, Transition_one_NOzero)
+        Path_one = self.ViterbiPath(X_init_index_one, np.log(PathWeight_one_NOzero), state_num,IndexMap_one_NOzero,MoveIndex_list, outputname, X_init, Bug_removal_savior) #, Transition_one_NOzero)
 
         #one-dimension array index を2-dimension array index へ⇒ROSの座標系にする
         Path_2D_index = np.array([ IndexMap_one_NOzero[Path_one[i]] for i in xrange(len(Path_one)) ])
@@ -141,13 +143,13 @@ class PathPlanner:
             Path_2D_index_original = Path_2D_index + np.array(X_init) - T_horizon
         else:
             Path_2D_index_original = Path_2D_index
-        Path_ROS = read_data.Array_index_To_Map_coordinates(Path_2D_index_original) #ROSのパスの形式にできればなおよい
-        np.savetxt(outputname+"_Path.csv",Path_2D_index_original,delimiter=",")
+        Path_ROS = tools.Array_index_To_Map_coordinates(Path_2D_index_original) #ROSのパスの形式にできればなおよい
+        #np.savetxt(outputname+"_Path.csv",Path_2D_index_original,delimiter=",")
         #Path = Path_2D_index_original #Path_ROS #必要な方をPathとして返す
         #np.savetxt(outputfile+"SpCoTMHP_S"+str(s_n)+"_G"+str(gl_i)+"_Path.csv",)
         print("Init:", X_init)
         print("Path:\n", Path_2D_index_original)
-        return Path_2D_index_original, Path_ROS, PathWeightMap_origin, Path_one,Step #, LogLikelihood_step, LogLikelihood_sum
+        return Path_2D_index_original, Path_ROS, PathWeightMap_origin, Path_one #, LogLikelihood_step, LogLikelihood_sum
         
 
     
@@ -210,14 +212,14 @@ class PathPlanner:
     #    return [random.random() for j in xrange(n)]
 
     #ViterbiPathを計算してPath(軌道)を返す
-    def ViterbiPath(self, X_init, PathWeight, state_num,IndexMap_one_NOzero,MoveIndex_list, outputname, X_init_original, Bug_removal_savior,THETA,gl_i,tre): #, Transition):
+    def ViterbiPath(self, X_init, PathWeight, state_num,IndexMap_one_NOzero,MoveIndex_list, outputname, X_init_original, Bug_removal_savior): #, Transition):
         #Path = [[0,0] for t in xrange(T_horizon)]  #各tにおけるセル番号[x,y]
         print("Start Viterbi Algorithm")
 
-        gx=X_init_original[1]
-        gy=X_init_original[0]
-        _, _, Mu, Sig, _, _, _, _ = THETA
-        gl=tools.Map_coordinates_To_Array_index(Mu[gl_i])
+        #gx=X_init_original[1]
+        #gy=X_init_original[0]
+        #_, _, Mu, Sig, _, _, _, _ = THETA
+        #gl=tools.Map_coordinates_To_Array_index(Mu[gl_i])
 
         INDEX = 1 #COST, INDEX = range(2)  #0,1
         INITIAL = (approx_log_zero, X_init)  # (cost, index) #indexに初期値のone-dimension array インデックスを入れる
@@ -233,13 +235,14 @@ class PathPlanner:
         #Transition = np.array([approx_log_zero for j in xrange(state_num)]) #参照渡しになってしまう
         Transition = np.array([float('-inf') for j in xrange(state_num)]) #参照渡しになってしまう
 
-        if tre ==1:
-          gljy=gl[1]-gy+T_horizon
-          gljx=gl[0]-gx+T_horizon
-        else:
-          gljy=gl[1]
-          gljx=gl[0]  
-        print("jy"+str(gljy)+"jx"+str(gljx))
+        ### Ito
+        #if tre ==1:
+        #  gljy=gl[1]-gy+T_horizon
+        #  gljx=gl[0]-gx+T_horizon
+        #else:
+        #  gljy=gl[1]
+        #  gljx=gl[0]  
+        #print("jy"+str(gljy)+"jx"+str(gljx))
 
         temp = 1
         #Forward
@@ -279,28 +282,14 @@ class PathPlanner:
                         path_one = [x[path_one[0]][INDEX]] + path_one
                         #print("x", len(x), x)
                     path_one = path_one[1:len(path_one)] #初期位置と処理上追加した最後の遷移を除く             
-
-                    jug=np.array(IndexMap_one_NOzero[int(path_one[len(path_one)-1])])
-                    print("Jug_y"+str(jug[0])+",x"+str(jug[1]))
-                    print("gy"+str(gljy)+"gx"+str(gljx))
-                    
-                #print(str(gl))            
-                    #if int(jug[0])==int(gljy) and int(jug[1])==int(gljx) :
-                     
-                  #fin=1
-                  #print("finn") 
-                    #print("t_path"+str(path_one[i]))
-                    #Disbb=0
-                    
-                      
                         
-                    #save_data.SavePathTemp(X_init_original, path_one, i+1, outputname, IndexMap_one_NOzero, Bug_removal_savior)
+                    save_data.SavePathTemp(X_init_original, path_one, i+1, outputname, IndexMap_one_NOzero, Bug_removal_savior)
                 
                     ##log likelihood 
                     #PathWeight (log)とpath_oneからlog likelihoodの値を再計算する
                     LogLikelihood_step = np.zeros(i+1)
                     LogLikelihood_sum = np.zeros(i+1)
-                    Step=i+1  #### Ito #### 定義されてない？ 
+                    
                     for t in range(i+1):
                         LogLikelihood_step[t] = PathWeight[ path_one[t] ]
                         if (t == 0):
@@ -308,15 +297,14 @@ class PathPlanner:
                         elif (t >= 1):
                             LogLikelihood_sum[t] = LogLikelihood_sum[t-1] + LogLikelihood_step[t]
                     
-                     
-                    #save_data.SaveLogLikelihood(LogLikelihood_step,0,i+1, outputname)
-                    #save_data.SaveLogLikelihood(LogLikelihood_sum,1,i+1, outputname)
+                    save_data.SaveLogLikelihood(LogLikelihood_step,0,i+1, outputname)
+                    save_data.SaveLogLikelihood(LogLikelihood_sum,1,i+1, outputname)
 
                     #The moving distance of the path
                     Distance = self.PathDistance(path_one)
                     
                     #Save the moving distance of the path
-                    #save_data.SavePathDistance_temp(Distance, i+1, outputname)
+                    save_data.SavePathDistance_temp(Distance, i+1, outputname)
 
                     if (SAVE_Trellis == 1):
                         save_data.SaveTrellis(trellis, outputname, i+1)
@@ -340,7 +328,7 @@ class PathPlanner:
             #print("x", len(x), x)
         path = path[1:len(path)-1] #初期位置と処理上追加した最後の遷移を除く
         print('Maximum prob path:', path)
-        return path,Step
+        return path
 
 
     #The moving distance of the pathを計算する

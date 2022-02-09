@@ -171,7 +171,7 @@ iteration = sys.argv[3] #1
 sample = sys.argv[4] #0
 
 #robot initial positionの候補番号 is requested
-init_position_num = sys.argv[5] #0
+#init_position_num = sys.argv[5] #0
 
 #the file number for speech instruction is requested   
 speech_num = sys.argv[6] #0
@@ -181,6 +181,7 @@ start_list = [0, 0] #Start_Position[int(init_position_num)]
 start_list[0] = int(sys.argv[7]) #0
 start_list[1] = int(sys.argv[8]) #0
 start = (start_list[0], start_list[1])
+start_inv = [start[1],start[0]]
 print("Start:", start)
 
 
@@ -254,7 +255,7 @@ Path_candidate = [[0.0] for j in range(J)]
 ###goal候補ごとにA*を実行
 for gc_index in range(J):
     goal = goal_candidate[gc_index]
-    Path, p_cost = a_star(start, goal, maze, action_functions, cost_of_actions, PathWeightMap)    
+    Path, p_cost = a_star(start_inv, goal, maze, action_functions, cost_of_actions, PathWeightMap)    
     p_cost_candidate[gc_index] = p_cost #/ float(len(Path))
     Path_candidate[gc_index] = Path
 
@@ -290,7 +291,7 @@ Path_inv = [[Path[t][1], Path[t][0]] for t in range(len(Path))]
 Path_inv.reverse()
 Path_ROS = Path_inv #使わないので暫定的な措置
 #Save the path
-save_data.SavePath(start, [goal[1], goal[0]], Path_inv, Path_ROS, outputname)
+save_data.SavePath(start_inv, [goal[1], goal[0]], Path_inv, Path_ROS, outputname)
 
 
 #Read the emission probability file 

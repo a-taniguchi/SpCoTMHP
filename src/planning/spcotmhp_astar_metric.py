@@ -9,27 +9,30 @@
 ###########################################################
 
 ##Command: 
-#python spcotmhp_astar_metric.py trialname mapname iteration sample init_position_num speech_num initial_position_x initial_position_y
-#python spcotmhp_astar_metric.py 3LDK_01 s1DK_01 1 0 0 7 100 100 
+#python3 spcotmhp_astar_metric.py trialname mapname iteration sample init_position_num speech_num initial_position_x initial_position_y
+#python3 spcotmhp_astar_metric.py 3LDK_01 s1DK_01 1 0 0 7 100 100 
 
 import sys
 import time
 import numpy as np
 import scipy as sp
-#from numpy.linalg import inv, cholesky
 from scipy.stats import multivariate_normal,multinomial
-#from math import pi as PI
-#from math import cos,sin,sqrt,exp,log,fabs,fsum,degrees,radians,atan2
 import matplotlib.pyplot as plt
-#import collections
 import spconavi_read_data
 import spconavi_save_data
+#import spconavi_viterbi_path_calculate as spconavi_viterbi_path_calculate
 from __init__ import *
 from submodules import *
 
 tools     = spconavi_read_data.Tools()
 read_data = spconavi_read_data.ReadingData()
 save_data = spconavi_save_data.SavingData()
+#path_calculate = spconavi_viterbi_path_calculate.PathPlanner()
+
+#Definition of action (functions in spconavi_read_data)
+action_functions = [tools.right, tools.left, tools.up, tools.down, tools.stay] #, migiue, hidariue, migisita, hidarisita]
+cost_of_actions  = np.log( np.ones(len(action_functions)) / float(len(action_functions)) ) #[    1/5,    1/5,  1/5,    1/5,    1/5]) #, ,    1,        1,        1,          1]
+
 
 """
 #GaussMap make (no use) #Ito
@@ -205,41 +208,34 @@ iteration = sys.argv[3] #1
 sample = sys.argv[4] #0
 
 #Request the index number of the robot initial position
-init_position_num = sys.argv[5] #0
+#init_position_num = sys.argv[5] #0
 
 #Request the file number of the speech instruction 
-speech_num = sys.argv[6] #0
+#speech_num = sys.argv[6] #0
 
 
-if (SAVE_time == 1):
-    #Substitution of start time
-    start_time = time.time()
-
-start_list = [0, 0] #Start_Position[int(init_position_num)]#(83,39) #(92,126) #(126,92) #(1, 1)
-start_list[0] = int(sys.argv[7]) #0
-start_list[1] = int(sys.argv[8]) #0
-start = (start_list[0], start_list[1])
-print("Start:", start)
+#start_list = [0, 0] #Start_Position[int(init_position_num)]#(83,39) #(92,126) #(126,92) #(1, 1)
+#start_list[0] = int(sys.argv[7]) #0
+#start_list[1] = int(sys.argv[8]) #0
+#start = (start_list[0], start_list[1])
+#print("Start:", start)
 #goal  = (95,41) #(97,55) #(55,97) #(height-2, width-2)
-Like_save=[ [0.0 for atem in range(K)] for aky in range(K) ]
-Distance_save=[ [0.0 for atem in range(K)] for aky in range(K) ]
+
+# For saveing the metric path
+Like_save     = [ [0.0 for atem in range(K)] for aky in range(K) ]
+Distance_save = [ [0.0 for atem in range(K)] for aky in range(K) ]
+
 
 ##FullPath of folder
 filename = outputfolder_SIG + trialname #+ "/" 
 print(filename, iteration, sample)
-outputfile = filename + navigation_folder + "astar_node/" #outputfolder + trialname + navigation_folder #Ito
-Makedir( outputfile )
-#outputname = outputfile + "Astar_SpCo_"+"N"+str(N_best)+"A"+str(Approx)+"S"+str(init_position_num)+"G"+str(speech_num)
-#outputname = outputfile + "Astar_Approx_expect_"+"N"+str(N_best)+"A"+str(Approx)+"S"+str(start)+"G"+str(speech_num)
-
+outputfile = filename + navigation_folder #+ "astar_node/" #outputfolder + trialname + navigation_folder #Ito
+outputsubfolder = outputfile + "astar_node/"
 #"T"+str(T_horizon)+"N"+str(N_best)+"A"+str(Approx)+"S"+str(init_position_num)+"G"+str(speech_num)
 
+Makedir( outputfile )
+Makedir( outputsubfolder )
 
-maze = read_data.ReadMap(outputfile)
-map_length, map_width = maze.shape
-
-#action_functions = [right, left, up, down, stay] #, migiue, hidariue, migisita, hidarisita]
-#cost_of_actions  = np.log( np.ones(len(action_functions)) / float(len(action_functions)) ) #[    1/5,    1/5,  1/5,    1/5,    1/5]) #, ,    1,        1,        1,          1]
 
 #Read the files of learned parameters  #THETA = [W,W_index,Mu,Sig,Pi,Phi_l,K,L]
 THETA = read_data.ReadParameters(iteration, sample, filename, trialname)
@@ -256,33 +252,42 @@ for line in open(filename + "/" + trialname + '_psi_'  + 'setting.csv', 'r'):
             if itemList[i] != "":
               psi[c][i] = float(itemList[i])
         c = c + 1
-#psi=np.load(filename + "/" + trialname + '_psi_' +'setting.csv')
+
+
+
+##Read the map file
+gridmap = read_data.ReadMap(outputfile)
+map_length, map_width = gridmap.shape
+#GridMapProb = 1*(gridmap == 0)
+
+##Read the cost map file
+#CostMap = read_data.ReadCostMap(outputfile)
+#CostMapProb_tmp = (100.0 - CostMap)/100
+#CostMapProb = CostMapProb_tmp * GridMapProb
+
+#Read the probabilistic cost map file
+CostMapProb = read_data.ReadCostMapProb(outputfile)
+
 
 #####Estimate the goal point by spatial concept
 #Otb_B = [int(W_index[i] == Goal_Word[int(speech_num)]) * N_best for i in range(len(W_index))]
 #print("BoW:", Otb_B)
 
-#Path-Planning
-#Path, Path_ROS, PathWeightMap, Path_one = PathPlanner(Otb_B, Start_Position[int(init_position_num)], THETA, CostMapProb) #gridmap, costmap)
 
-#Read the emission probability file 
-CostMap = read_data.ReadCostMap(outputfile)
-CostMapProb = (100.0 - CostMap)/100
-#path_calculate.PathPlanner(path_calculate, N_best, 1, THETA, CostMapProb, outputfile, speech_num, outputname)
 
 for st_i in range(K):
  for gl_i in range(K):
-  if st_i==gl_i:
+  if st_i == gl_i:
        Distance_save[st_i][gl_i]=0
        Like_save[st_i][gl_i]=0
-  elif psi[st_i][gl_i]==1:
+  elif psi[st_i][gl_i] == 1:
     St=st_i
     Gl=gl_i
-    outputname = outputfile + "Astar_SpCoTMHP_"+"S"+str(St)+"_G"+str(Gl)
+
+    outputname = outputsubfolder + "Astar_SpCoTMHP_"+"S"+str(St)+"_G"+str(Gl)
     PathWeightMap = PostProbMap_nparray_jit(CostMapProb,Mu,Sig,map_length,map_width,Gl)
+
     #####描画
-    #plt.imshow(maze, cmap="binary")
-    gridmap = maze
     plt.imshow(gridmap + (40+1)*(gridmap == -1), origin='lower', cmap='binary', vmin = 0, vmax = 100, interpolation='none') #, vmin = 0.0, vmax = 1.0)
          
     plt.xticks(rotation=90)
@@ -299,34 +304,44 @@ for st_i in range(K):
     # スタートとゴールをプロットする
     #plt.plot(start[1], start[0], "D", color="tab:blue", markersize=1)
     #plt.plot(goal[1], goal[0], "D", color="tab:pink", markersize=1)
-
     #plt.show()
+
 
     ###goalの候補を複数個用意する
     #goal_candidate = Sampling_goal(Otb_B, THETA) #(0,0)
-    ss=tools.Map_coordinates_To_Array_index(Mu[St])
-    start=(ss[1],ss[0])
 
+    # スタート：ガウス平均
+    ss=tools.Map_coordinates_To_Array_index(Mu[St])
+    start=(ss[1],ss[0]) #スタート位置を指定
+
+    # ゴール：ガウス平均
     gg=tools.Map_coordinates_To_Array_index(Mu[Gl])
-    print(gg[0])
-    goal_candidate=[[gg[1],gg[0]]]
-    #goal_candidate=[[55,135],[89,103]]
-    #J = len(goal_candidate)
-    J=1
+    #print(gg[0])
+
+    goal_candidate = [[gg[1],gg[0]]]
+
+    #J = Sampling_J #len(goal_candidate)
     #if(J != THETA[6]):
-       # print("[WARNING] J is not K",J,K)
+    # print("[WARNING] J is not K",J,K)
+    J=1
     p_cost_candidate = [0.0 for j in range(J)]
-    Path_candidate = [[0.0] for j in range(J)]
-    print(goal_candidate)
+    Path_candidate   = [[0.0] for j in range(J)]
+    Like_candidate   = [0.0 for j in range(J)]
+    #print(goal_candidate)
+
+    if (SAVE_time == 1):
+        #Substitution of start time
+        start_time = time.time()
 
     ###goal候補ごとにA*を実行
     for gc_index in range(J):
         goal = goal_candidate[gc_index]
-        Path, p_cost = a_star(start, goal, maze, action_functions, cost_of_actions, PathWeightMap)    
+        Path, p_cost = a_star(start, goal, gridmap, action_functions, cost_of_actions, PathWeightMap)    
 
-        Like_save[st_i][gl_i]=p_cost
+        Like_candidate[gc_index] = p_cost
+
         p_cost_candidate[gc_index] = p_cost / float(len(Path))
-        Path_candidate[gc_index] = Path    
+        Path_candidate[gc_index]   = Path    
 
         """
         #PathWeightMapとPathからlog likelihoodの値を再計算する
@@ -359,7 +374,7 @@ for st_i in range(K):
     if (SAVE_time == 1):
         #PP終了時刻を保持
         end_pp_time = time.time()
-        time_pp = end_pp_time - start_time #end_recog_time
+        time_pp = end_pp_time - start_time 
         fp = open( outputname + "_time_pp.txt", 'w')
         fp.write(str(time_pp)+"\n")
         fp.close()
@@ -370,7 +385,8 @@ for st_i in range(K):
 
     #The moving distance of the path
     Distance = tools.PathDistance(Path)
-    Distance_save[st_i][gl_i]=Distance
+    Distance_save[st_i][gl_i] = Distance
+    Like_save[st_i][gl_i]=Like_candidate[expect_gc_index] # 実際は尤度ではなくA*のコスト値
 
     #Save the moving distance of the path
     save_data.SavePathDistance(Distance, outputname)
@@ -380,20 +396,20 @@ for st_i in range(K):
     Path_inv = [[Path[t][1], Path[t][0]] for t in range(len(Path))]
     Path_inv.reverse()
     Path_ROS = Path_inv #使わないので暫定的な措置
-    #パスを保存
+
+    #Save the path
     save_data.SavePath(start, [goal[1], goal[0]], Path_inv, Path_ROS, outputname)
 
 
     #Read the emission probability file 
     #PathWeightMap = ReadProbMap(outputfile)
 
+
+    '''
     #Save the log-likelihood of the path
     #PathWeightMapとPathからlog likelihoodの値を再計算する
-    
-    
-    '''
     LogLikelihood_step = np.zeros(T_horizon)
-    LogLikelihood_sum = np.zeros(T_horizon)
+    LogLikelihood_sum  = np.zeros(T_horizon)
 
     for i in range(T_horizon):
         if (i < len(Path)):
@@ -419,16 +435,16 @@ for st_i in range(K):
     #plt.show()
     #plt.plot(PathWeightMap)
     #Save path trajectory in the map as a color image
-    #output = outputfile + "N"+str(N_best)+"G"+str(speech_num)
-    #plt.savefig(outputname + '_Path.png', dpi=300)#, transparent=True
-    #plt.savefig(outputfile + "step/" + conditions + '_Path_Weight' +  str(temp).zfill(3) + '.png', dpi=300)#, transparent=True
+    plt.savefig(outputname + '_Path.png', dpi=300)#, transparent=True
     plt.savefig(outputname + '_Path.pdf', dpi=300)#, transparent=True
     plt.clf()
   else:
     Distance_save[st_i][gl_i]=0
     Like_save[st_i][gl_i]=0
-      #print(str(st_i)+"_"+str(gl_i))       
-  
+    #print(str(st_i)+"_"+str(gl_i))       
+
+print("[END] SpCoTMHP. (A star metric path)")
+
 outputname=outputfile+"Astar_SpCoTMHP_"
 np.savetxt(outputname+"distance.csv",Distance_save,delimiter=",")
 np.savetxt(outputname+"cost.csv",Like_save,delimiter=",")

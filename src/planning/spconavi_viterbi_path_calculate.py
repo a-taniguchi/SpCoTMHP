@@ -172,6 +172,7 @@ class PathPlanner:
         return Path_2D_index_original, Path_ROS, PathWeightMap_origin, Path_one #, LogLikelihood_step, LogLikelihood_sum
 
     
+    
     #移動位置の候補: 現在の位置(2-dimension array index )の近傍8セル+現在位置1セル
     def MovePosition_2D(self, Xt): 
         if (NANAME == 1):

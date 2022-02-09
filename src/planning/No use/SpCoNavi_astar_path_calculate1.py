@@ -24,14 +24,14 @@ from math import pi as PI
 from math import cos,sin,sqrt,exp,log,fabs,fsum,degrees,radians,atan2
 import matplotlib.pyplot as plt
 import collections
-import spconavi_path_calculate
+import planning.spconavi_viterbi_path_calculate as spconavi_viterbi_path_calculate
 import spconavi_read_data
 import spconavi_save_data
 from __init__ import *
 #from submodules import *
 read_data = spconavi_read_data.ReadingData()
 save_data = spconavi_save_data.SavingData()
-path_calculate = spconavi_path_calculate.PathPlanner()
+path_calculate = spconavi_viterbi_path_calculate.PathPlanner()
 
 def right(pos):
     return (pos[0], pos[1] + 1)

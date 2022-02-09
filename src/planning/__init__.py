@@ -1,9 +1,7 @@
 #coding:utf-8
 #The file for setting parameters
-#Akira Taniguchi 2022/02/05
+#Akira Taniguchi 2022/02/05-
 import numpy as np
-#import spconavi_read_data
-#tools = spconavi_read_data.Tools()
 
 ##Command
 #python ./spcotmhp_viterbi_planning.py trialname iteration(1) sample(0) init_position_num speech_num
@@ -26,7 +24,7 @@ outputfolder_SIG = "../../SIGVerse/data/"
 
 # Note: Don't be tupple! Only list! [*,*]  #(y,x). not (x,y). (Same as coordinates in Astar_*.py) 
 Start_Position = [[100,100],[150,130],[120,60],[60,90],[90,120],[75,75],[90,50],[90,60],[110,80],[130,95]] 
-Goal_Word      = ["玄関","リビング","ダイニング","キッチン","風呂","洗面所","トイレ","寝室", "物置き", "廊下"]
+Goal_Word      = ["玄関","リビング","ダイニング","キッチン","風呂","洗面所","トイレ","寝室", "物置き", "廊下", "東", "南", "広場"]
 #0:玄関, 1:リビング, 2:ダイニング, 3:キッチン, 4:風呂, 5:洗面所, 6:トイレ, 7:寝室, 8:物置き, 9:廊下
 
 #Same values as /learning/__init.py__
@@ -58,18 +56,26 @@ costmap_folder = navigation_folder  #"/costmap/"
 
 #################### Parameters ####################
 T_horizon  = 100             #Planning horizon #may be over 150~200. depends on memory and computational limits
+
+T_topo     = 10              #Planning horizon for SpCoTMHP
+D_metric   = T_horizon       #Planning horizon for SpCoTMHP
+
 N_best     = word_increment  #N of N-best (N<=10)
 #step       = 50             #The end number of time-step in SpCoSLAM (the number of training data)
+
+# SpCoNavi_Astar_approx.py: The number of goal position candidates
+Sampling_J = 1
 
 #Initial position (position candidates)
 X_candidates = Start_Position  #Index coordinates on 2 dimension list
 
 #When starting from the mid-flow (value of t to read trellis, from the beginning: 0)
+# SpCoTMHPでは未実装
 T_restart = 0         #If T_horizon changes, it can not be used at present because the number of states changes in the dimension reduction process. If you do not save trellis, you run from the beginning.
 
 SAVE_time    = 1      #Save computational time (Save:1, Not save:0)
 SAVE_X_init  = 1      #Save initial value (Save:1, Not save:0) 
-SAVE_T_temp  = 10     #Step interval to save the path temporarily (each SAVE_T_temp value on the way)
+SAVE_T_temp  = 50     #Step interval to save the path temporarily (each SAVE_T_temp value on the way)
 SAVE_Trellis = 0      #Save trellis for Viterbi Path estimation (Save:1, Not save:0) 
 
 UPDATE_PostProbMap = 0 #0 #If the file exists already, calculate PostProbMap: (1) 
@@ -80,16 +86,10 @@ if (NANAME != 1):
   Approx = 1
 #Separated N-best approximation version is another program (SpCoNavi0.1s.py)
 
-# SpCoNavi_Astar_approx.py: The number of goal position candidates
-Sampling_J = 10
+
 
 #Dynamics of state transition (motion model): (Deterministic:0, Probabilistic:1, Approximation:2(Unimplemented))
 #Dynamics = 0
-
-#tools = Tools()
-#Definition of action (functions in spconavi_read_data)
-#action_functions = [tools.right, tools.left, tools.up, tools.down, tools.stay] #, migiue, hidariue, migisita, hidarisita]
-#cost_of_actions  = np.log( np.ones(len(action_functions)) / float(len(action_functions)) ) #[    1/5,    1/5,  1/5,    1/5,    1/5]) #, ,    1,        1,        1,          1]
 
 
 cmd_vel = 1  #Movement amount of robot (ROS: cmd_vel [m/s], [rad/s]) [default:1 (int)]
