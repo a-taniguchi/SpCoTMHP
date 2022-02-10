@@ -163,172 +163,14 @@ def ReadCostMtrx(outputfile):
     return cost
         
         
-
-if __name__ == '__main__': 
-    print("[START] SpCoTMHP. (A star)")
-    #Request a folder name for learned parameters.
-    trialname = sys.argv[1]
-    #print trialname
-    #trialname = raw_input("trialname?(folder) >")
-
-    #Request iteration value
-    iteration = sys.argv[2] #1
-
-    #Request sample value
-    sample = sys.argv[3] #0
-
-    #Request the index number of the robot initial position
-    init_position_num = sys.argv[4] #0
-
-    #Request the file number of the speech instruction   
-    speech_num = sys.argv[5] #0
-    
-    
-    tyukan=0
-    t_i=0
-    #x_s=
-    #y_s=
-    s_i=1 #スタート位置近くの位置分布index
-    gl=3
-    start=(120,50)
-
-    if tyukan==1:
-       glf=t_i
-    else :
-       glf=gl
-
-    #St=st_i
-    Gl=s_i
-    if tyukan==1:
-        Hf=t_i
-    else:
-        Hf="N"
-
-
-    if (SAVE_time == 1):
-      #Substitution of start time
-      start_time = time.time()
-
-    ##FullPath of folder
-    filename = outputfolder_SIG + trialname #+ "/" 
-    print(filename, iteration, sample)
-    outputfile = filename + navigation_folder #outputfolder + trialname + navigation_folder
-    outputsubfolder = outputfile + "astar_node/"
-    outputname = outputfile + "astar_result/Astar_SpCoTMHP_"+"T"+str(T_topo)+"S"+str(start)+"H"+str(Hf)+"G"+str(gl)
-    
-    #Makedir( outputfolder + trialname )
-    Makedir( outputfile )
-    Makedir( outputname )
-
-    #Read the files of learned parameters  #THETA = [W,W_index,Mu,Sig,Pi,Phi_l,K,L]
-    THETA   = read_data.ReadParameters(iteration, sample, filename, trialname)
-    gridmap = read_data.ReadMap(outputfile)
-    map_length, map_width = gridmap.shape
-    
-    #gridmap = maze
-    plt.imshow(gridmap + (40+1)*(gridmap == -1), origin='lower', cmap='binary', vmin = 0, vmax = 100, interpolation='none') #, vmin = 0.0, vmax = 1.0)
-
-    plt.xticks(rotation=90)
-    plt.tick_params(axis='x', which='major', labelsize=8)
-    plt.tick_params(axis='y', which='major', labelsize=8)
-    #plt.xlim([380,800])             #x軸の範囲
-    #plt.ylim([180,510])             #y軸の範囲
-    plt.xlabel('X', fontsize=10)
-    plt.ylabel('Y', fontsize=10)
-    #plt.xticks(np.arange(width), np.arange(width))
-    #plt.yticks(np.arange(height), np.arange(height))
-    plt.gca().set_aspect('equal')
-    CostMap = read_data.ReadCostMap(outputfile)
-    CostMapProb = (100.0 - CostMap)/100
-
- 
- 
-    W, W_index, Mu, Sig, pi, phi_l, K, L = THETA
-    PathWeightMap = PostProbMap_nparray_jit_Ito(CostMapProb,Mu,Sig,map_length,map_width,Gl)
+# おそらく最適探索（Dijkstra）が実装されている
+def Search_ITO(glf, st, cost): # goal index, start index, cost
     ev   = [ 0.0 for aky in range(K) ]
     node = [ [0,-2] for aky in range(K) ]
-    node[s_i]=[1,-1]
-    dis  = ReadDistanceMtrx(outputfile)      
-    cost = ReadCostMtrx(outputfile)    
-    
+    node[st]=[1,-1]
 
-    #Read CoonectMatricx (psi_setting.csv) file
-    CoonectMatricx=[ [0.0 for i in range(K)] for c in range(K) ]
-    c = 0
-    for line in open(filename + "/" + trialname + '_psi_setting.csv', 'r'):
-        itemList = line[:-1].split(',')
-        for i in range(len(itemList)):
-            if itemList[i] != "":
-              CoonectMatricx[c][i] = float(itemList[i])
-        c = c + 1
-
-    #          cost[c][i]=cost[c][i]/(phi_l[c][glf]*100.0)
-    #          if dis[c][i] != 0:
-    #             cost[c][i]=cost[c][i]/float(dis[c][i])
-  
-        
-        
-        
-        
-    #ss=Map_coordinates_To_Array_index(Mu[S_i])
-    #start=(150,130)
-
-    ###近くの位置分布のindexのガウスの平均をゴールとしたA*を実行
-    gg=tools.Map_coordinates_To_Array_index(Mu[s_i])
-    #print(gg[0])
-    goal_candidate=[[gg[1],gg[0]]]
-    #goal_candidate=[[55,135],[89,103]]
-    #J = len(goal_candidate)
-    J=1
-    #if(J != THETA[6]):
-    # print("[WARNING] J is not K",J,K)
-    p_cost_candidate = [0.0 for j in range(J)]
-    Path_candidate   = [[0.0] for j in range(J)]
-    print(goal_candidate)
-
-    ###goal候補ごとにA*を実行
-    for gc_index in range(J):
-        goal = goal_candidate[gc_index]
-        Path, p_cost = a_star(start, goal, gridmap, action_functions, cost_of_actions, PathWeightMap)    
-
-        first_cost = p_cost / float(len(Path))
-        p_cost_candidate[gc_index] = p_cost / float(len(Path))
-        Path_candidate[gc_index] = Path    
-
-
-    ### select the goal of expected cost
-    expect_gc_index = np.argmin(p_cost_candidate)
-    Path = Path_candidate[expect_gc_index]
-    goal = goal_candidate[expect_gc_index]
-    print("Goal:", goal)
-    #LogLikelihood_step
-    #LogLikelihood_sum
-
-
-        
-    #for i in range(len(Path)):
-    #  plt.plot(Path[i][0], Path[i][1], "s", color="tab:red", markersize=1)
-
-
-    #The moving distance of the path
-    Distance = tools.PathDistance(Path)
-    #Distance_save[st_i][gl_i]=Distance
-    #Save the moving distance of the path
-    #SavePathDistance(Distance)
-
-    print("Path distance using A* algorithm is "+ str(Distance))
-
-    #計算上パスのx,yが逆になっているので直す
-    Path_inv = [[Path[t][1], Path[t][0]] for t in range(len(Path))]
-    Path_inv.reverse()
-    Path_ROS = Path_inv #使わないので暫定的な措置
-    #パスを保存
-    #SavePath(start, [goal[1], goal[0]], Path_inv, Path_ROS, outputname)
-    
-      
     fin=0
     while fin != 1:
-     
       for i in range(K):
         if node[i][0]==2:
             for k in range(K):  
@@ -364,21 +206,225 @@ if __name__ == '__main__':
          if i==k:
            root.insert(0,k)
            i=node[k][1]
+    return root
+
+
+# おそらく動的計画法（Viterbi）が実装されている
+def Search_ITO_2(s_i, lk, Step): # start index, likelihoods, T_topo
+    lkt=[ [0.0 for i in range(K)] for k in range(Step)]#sum likewood
+    rt=[ [-1 for i in range(K)] for k in range(Step)]#oya node save
+    node =[0 for i in range(K) ] #
+    node[s_i]=1
+    ndc=[0 for i in range(K) ]#
+    root=[0 for i in range(Step) ]
+    mxs=-1#
+    mxg=-1
+    mx=0
+    #print(lk)
+    #print(node)
+
+    for t in range(Step):
+      for i in range(K):
+        if t==0:
+          if node[i]==1:
+            for j in range(K):
+              if lk[i][j]>0:
+                 lkt[t][j]=lk[i][j]
+                 rt[t][j]=i
+                 ndc[j]=1
+        else:
+          if node[i]==1:
+            for j in range(K):
+              if lk[i][j]>0:
+                if lkt[t][j]<lkt[t-1][i]+lk[i][j]:
+                  lkt[t][j]=lkt[t-1][i]+lk[i][j]
+                  rt[t][j]=i
+                  ndc[j]=1
       
+      for f in range(K):
+         if ndc[f]==1 and node[f]==0:
+           node[f]=1
+           
+    #print(rt)        
+    for i in range(K):
+        if mx<lkt[Step-1][i]:
+          mx=lkt[Step-1][i]
+          mxg=i
+    print(mxg)                  
+    for i in range(Step):   
+        root[Step-i-1]=rt[Step-i-1][mxg]
+        mxg=rt[Step-i-1][mxg]
+    return root
+
+
+
+if __name__ == '__main__': 
+    print("[START] SpCoTMHP. (A star)")
+    #Request a folder name for learned parameters.
+    trialname = sys.argv[1]
+    #print trialname
+    #trialname = raw_input("trialname?(folder) >")
+
+    #Request iteration value
+    iteration = sys.argv[2] #1
+
+    #Request sample value
+    sample = sys.argv[3] #0
+
+    #Request the index number of the robot initial position
+    init_position_num = sys.argv[4] #0
+
+    #Request the file number of the speech instruction   
+    speech_num = sys.argv[5] #0
     
-    #print "[END] SpCoNavi."
+    ### hard cording ###
+    tyukan=0
+    t_i=0 #中間地点の位置分布index
+    #x_s=
+    #y_s=
+    s_i=1 #スタート位置近くの位置分布index
+    gl=3  #ゴールの位置分布index
+    start=(120,50)
+    ### hard cording ###
+
+
+    if tyukan==1:
+        glf=t_i #暫定ゴールを中間地点に設定
+        Hf=t_i  #中間
+    else :
+        glf=gl  #ゴールを指定した最終ゴールに設定
+        Hf="N"  #中間なしの場合
+
+
+    if (SAVE_time == 1):
+      #Substitution of start time
+      start_time = time.time()
+
+    ##FullPath of folder
+    filename = outputfolder_SIG + trialname #+ "/" 
+    print(filename, iteration, sample)
+    outputfile = filename + navigation_folder #outputfolder + trialname + navigation_folder
+    outputsubfolder = outputfile + "astar_node/"
+    outputname = outputfile + "astar_result/Astar_SpCoTMHP_"+"T"+str(T_topo)+"S"+str(start)+"H"+str(Hf)+"G"+str(gl)
+    
+    #Makedir( outputfolder + trialname )
+    #Makedir( outputfile )
+    Makedir( outputfile + "astar_result/" )
+
+    #Read the files of learned parameters  #THETA = [W,W_index,Mu,Sig,Pi,Phi_l,K,L]
+    THETA   = read_data.ReadParameters(iteration, sample, filename, trialname)
+    gridmap = read_data.ReadMap(outputfile)
+    map_length, map_width = gridmap.shape
+    
+    #gridmap = maze
+    plt.imshow(gridmap + (40+1)*(gridmap == -1), origin='lower', cmap='binary', vmin = 0, vmax = 100, interpolation='none') #, vmin = 0.0, vmax = 1.0)
+
+    plt.xticks(rotation=90)
+    plt.tick_params(axis='x', which='major', labelsize=8)
+    plt.tick_params(axis='y', which='major', labelsize=8)
+    #plt.xlim([380,800])             #x軸の範囲
+    #plt.ylim([180,510])             #y軸の範囲
+    plt.xlabel('X', fontsize=10)
+    plt.ylabel('Y', fontsize=10)
+    #plt.xticks(np.arange(width), np.arange(width))
+    #plt.yticks(np.arange(height), np.arange(height))
+    plt.gca().set_aspect('equal')
+    CostMap = read_data.ReadCostMap(outputfile)
+    CostMapProb = (100.0 - CostMap)/100
+
+ 
+ 
+    W, W_index, Mu, Sig, pi, phi_l, K, L = THETA
+
+    dis  = ReadDistanceMtrx(outputfile)      
+    cost = ReadCostMtrx(outputfile)    
+
+
+    #Read CoonectMatricx (psi_setting.csv) file
+    CoonectMatricx=[ [0.0 for i in range(K)] for c in range(K) ]
+    c = 0
+    for line in open(filename + "/" + trialname + '_psi_setting.csv', 'r'):
+        itemList = line[:-1].split(',')
+        for i in range(len(itemList)):
+            if itemList[i] != "":
+              CoonectMatricx[c][i] = float(itemList[i])
+        c = c + 1
+
+    #          cost[c][i]=cost[c][i]/(phi_l[c][glf]*100.0)
+    #          if dis[c][i] != 0:
+    #             cost[c][i]=cost[c][i]/float(dis[c][i])
+  
+        
+        
+        
+        
+    #ss=Map_coordinates_To_Array_index(Mu[S_i])
+    #start=(150,130)
+
+    ###v###近くの位置分布のindexのガウスの平均をゴールとしたA*を実行###v###
+    PathWeightMap = PostProbMap_nparray_jit_Ito(CostMapProb,Mu,Sig,map_length,map_width,s_i)
+
+    gg=tools.Map_coordinates_To_Array_index(Mu[s_i])
+    #print(gg[0])
+    goal_candidate=[[gg[1],gg[0]]]
+    #goal_candidate=[[55,135],[89,103]]
+    #J = len(goal_candidate)
+    J=1
+    #if(J != THETA[6]):
+    # print("[WARNING] J is not K",J,K)
+    p_cost_candidate = [0.0 for j in range(J)]
+    Path_candidate   = [[0.0] for j in range(J)]
+    print(goal_candidate)
+
+    ###goal候補ごとにA*を実行
+    for gc_index in range(J):
+        goal = goal_candidate[gc_index]
+        Path, p_cost = a_star(start, goal, gridmap, action_functions, cost_of_actions, PathWeightMap)    
+
+        first_cost = p_cost / float(len(Path))
+        p_cost_candidate[gc_index] = p_cost / float(len(Path))
+        Path_candidate[gc_index] = Path    
+
+
+    ### select the goal of expected cost
+    expect_gc_index = np.argmin(p_cost_candidate)
+    Path = Path_candidate[expect_gc_index]
+    goal = goal_candidate[expect_gc_index]
+    print("Goal:", goal)
+
+
+    #The moving distance of the path
+    Distance = tools.PathDistance(Path)
+
+    print("Path distance using A* algorithm is "+ str(Distance))
+
+    #計算上パスのx,yが逆になっているので直す
+    Path_inv = [[Path[t][1], Path[t][0]] for t in range(len(Path))]
+    Path_inv.reverse()
+    Path_ROS = Path_inv #使わないので暫定的な措置
+    #パスを保存
+    #SavePath(start, [goal[1], goal[0]], Path_inv, Path_ROS, outputname)
+    ###^###近くの位置分布のindexのガウスの平均をゴールとしたA*を実行###^###
+
+
+    root = Search_ITO(glf, s_i, cost)
     print(root)
+
+
     for i in range(K):
       for k in range(K):  
         cost[i][k]=phi_l[i][glf]*cost[i][k]/phi_l[i][gl]
+
     #Path_ROS=[]
     #path=[]
-    po=[0,0]
+    #po=[0,0]
+
+    ## パスを読み込み、つなげる
     for v in range(len(root)-1):
         path=[[0,0]for k in range(int(dis[root[v]][root[v+1]]))]
         print(dis[root[v]][root[v+1]])
         i=0
-        for line in open(outputfile + "astar_result/" + "/Astar_SpCoTMHP_S" + str(root[v]) + '_G' + str(root[v+1]) +  '_Path_ROS.csv', 'r'):
+        for line in open(outputfile + "/astar_result/" + "/Astar_SpCoTMHP_S" + str(root[v]) + '_G' + str(root[v+1]) +  '_Path_ROS.csv', 'r'):
            itemList = line[:-1].split(',')
            path[i] = np.array([ float(itemList[0]) , float(itemList[1]) ])
            #path[i][0]=int(po[0])
@@ -389,55 +435,28 @@ if __name__ == '__main__':
          
 
 
-    
-    ev     = [ 0.0 for aky in range(K) ]
-    node = [ [0,-2] for aky in range(K) ]
-    node[glf]=[1,-1]
-    glf=gl
-    fin=0
-    
+    ####v#### tyukan ####v####
     if tyukan==1 :
-        while fin != 1:
-         
-          for i in range(K):
-            if node[i][0]==2:
-               for k in range(K):  
-                 if cost[i][k]>0:
-                   if node[k][0]==0:
-                    node[k][0]=1
-                    node[k][1]=i
-                    ev[k]=ev[i]+cost[i][k]
-                   elif node[k][0]==1:
-                     if ev[k]>ev[i]+cost[i][k]:
-                        ev[k]=ev[i]+cost[i][k]
-                        node[k][1]=i
-               node[i][0]=3
-               break
-            
-          minm=100000000000000000    
-          minm_i=-1   
-          for i in range(K):
-            if node[i][0]==1:
-              if minm > ev[i]:
-                minm=ev[i]  
-                minm_i=i
-          if minm_i == glf:            
-             fin=1
-             print("fin")
-          else:
-           node[minm_i][0]=2
-        
-        i=glf
-        root=[]      
-        while i != -1 :
-           for k in range(K):
-              if i==k:
-                root.insert(0,k)
-                i=node[k][1]
-
+        #glf=gl
     
-        print("[END] SpCoTMHP.")
+        root = Search_ITO(gl, glf, cost)
+        print("[END] SpCoTMHP. (with mid-waypoint)")
         print(root)
+
+        ## パスを読み込み、つなげる
+        for v in range(len(root)-1):
+            path=[[0,0]for k in range(int(dis[root[v]][root[v+1]]))]
+            print(dis[root[v]][root[v+1]])
+            i=0
+            for line in open(outputsubfolder + "Astar_SpCoTMHP_S" + str(root[v]) + '_G' + str(root[v+1]) +  '_Path_ROS.csv', 'r'):
+                itemList = line[:-1].split(',')
+                path[i] = np.array([ float(itemList[0]) , float(itemList[1]) ])
+                #path[i][0]=int(po[0])
+                #path[i][1]=int(po[1])
+                i = i + 1
+                #print(i)
+            Path_ROS=path+Path_ROS 
+    ####^#### tyukan ####^#### 
     #print(Path_ROS)
 
 
@@ -449,28 +468,12 @@ if __name__ == '__main__':
         fp.write(str(time_pp)+"\n")
         fp.close()
 
-    """
-    for v in range(len(root)-1):
-        path=[[0,0]for k in range(int(dis[root[v]][root[v+1]]))]
-        print(dis[root[v]][root[v+1]])
-        i=0
-        for line in open(outputfile + "/astar_node/Astar_SpCoTMHP_S" + str(root[v]) + '_G' + str(root[v+1]) +  '_Path_ROS.csv', 'r'):
-           itemList = line[:-1].split(',')
-           path[i] = np.array([ float(itemList[0]) , float(itemList[1]) ])
-           #path[i][0]=int(po[0])
-           #path[i][1]=int(po[1])
-           i = i + 1
-           #print(i)
-        Path_ROS=path+Path_ROS 
-    """
-
-    dism = tools.PathDistance(Path_ROS) #len(Path_ROS)
-    disp=[dism]
+    disp=[tools.PathDistance(Path_ROS)] #len(Path_ROS)
 
     for i in range(len(Path_ROS)):
       plt.plot(Path_ROS[i][1], Path_ROS[i][0], "s", color="tab:red", markersize=1)
-    np.savetxt(outputname + "_fin_Path_ROS.csv", Path_ROS, delimiter=",")
     plt.savefig(outputname + '_Path.pdf', dpi=300)#, transparent=True
+    np.savetxt(outputname + "_fin_Path_ROS.csv", Path_ROS, delimiter=",")
     np.savetxt(outputname + "_fin_Distance.csv", disp, delimiter=",")
     plt.clf()
      
