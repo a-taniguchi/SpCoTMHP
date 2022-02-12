@@ -14,8 +14,8 @@ from __init__ import *
 from submodules import *
 
 ##Command: 
-#python3 spcotmhp_astar_execute_d.py trialname iteration sample init_position_num speech_num initial_position_x initial_position_y waypoint_word
-#python3 spcotmhp_astar_execute_d.py 3LDK_01 1 0 -1 7 100 100 -1 
+#python3 spcotmhp_astar_execute_d2.py trialname iteration sample init_position_num speech_num initial_position_x initial_position_y waypoint_word
+#python3 spcotmhp_astar_execute_d2.py 3LDK_01 1 0 -1 7 100 100 -1 
 
 tools     = spconavi_read_data.Tools()
 read_data = spconavi_read_data.ReadingData()
@@ -27,7 +27,7 @@ action_functions = [tools.right, tools.left, tools.up, tools.down, tools.stay] #
 cost_of_actions  = np.log( np.ones(len(action_functions)) / float(len(action_functions)) ) #[    1/5,    1/5,  1/5,    1/5,    1/5]) #, ,    1,        1,        1,          1]
 
 
-#GaussMap make (use) #Ito
+#GaussMap make (same to the function in spcotmhp_astar_path_calculate) #Ito
 def PostProbMap_Gauss(CostMapProb,Mu,Sig,map_length,map_width,it): #,IndexMap):
         x,y = np.meshgrid(np.linspace(-10.0,9.92,map_width),np.linspace(-10.0,9.92,map_length))
         pos = np.dstack((x,y))    
@@ -35,18 +35,6 @@ def PostProbMap_Gauss(CostMapProb,Mu,Sig,map_length,map_width,it): #,IndexMap):
         PostProb=multivariate_normal(Mu[it],Sig[it]).pdf(pos)
 
         return CostMapProb * PostProb
-
-
-#GaussMap make (use) #Ito->Akira
-def PostProbMap_NormalizedGauss(CostMapProb,Mu,Sig,map_length,map_width,it): #,IndexMap):
-        x,y = np.meshgrid(np.linspace(-10.0,9.92,map_width),np.linspace(-10.0,9.92,map_length))
-        pos = np.dstack((x,y))    
-        #PostProbMap = np.array([ [ PostProb_ij([width, length],Mu,Sig,map_length,map_width, CostMapProb,it) for width in xrange(map_width) ] for length in xrange(map_length) ])
-        bunbo = np.sum([ multivariate_normal(Mu[k],Sig[k]).pdf(pos) for k in range(len(Mu)) ], 0)
-        PostProb = multivariate_normal(Mu[it],Sig[it]).pdf(pos) / bunbo
-
-        return CostMapProb * PostProb
-        
     
 ###↓### Sampling of goal candidates ############################################
 def EstimateGoal(Otb_B, THETA):
@@ -378,7 +366,7 @@ if __name__ == '__main__':
     print(filename, iteration, sample)
     outputfile      = filename + navigation_folder #outputfolder + trialname + navigation_folder
     outputsubfolder = outputfile + "astar_node_gauss/"
-    outputname_d = outputfile + "astar_result_d_gauss/"
+    outputname_d = outputfile + "astar_result_d2_gauss/"
 
     Makedir( outputname_d )
 
@@ -423,7 +411,7 @@ if __name__ == '__main__':
     outputname      = outputname_d + "Astar_SpCoTMHP_"+"T"+str(T_topo)+"S"+str(start)+"H"+str(waypoint_word)+"G"+str(speech_num)
 
     dis  = ReadDistanceMtrx(outputfile)      
-    cost = ReadCostMtrx(outputfile)    
+    cost = dis #ReadCostMtrx(outputfile)    
 
 
     #Read CoonectMatricx (psi_setting.csv) file
@@ -449,7 +437,7 @@ if __name__ == '__main__':
     #start=(150,130)
 
     ###v###近くの位置分布のindexのガウスの平均をゴールとしたA*を実行###v###
-    PathWeightMap = PostProbMap_nparray_jit_Ito(CostMapProb,Mu,Sig,map_length,map_width,near_node)
+    PathWeightMap = PostProbMap_Gauss(CostMapProb,Mu,Sig,map_length,map_width,near_node)
 
     gg=tools.Map_coordinates_To_Array_index(Mu[near_node])
     #print(gg[0])

@@ -27,7 +27,7 @@ action_functions = [tools.right, tools.left, tools.up, tools.down, tools.stay] #
 cost_of_actions  = np.log( np.ones(len(action_functions)) / float(len(action_functions)) ) #[    1/5,    1/5,  1/5,    1/5,    1/5]) #, ,    1,        1,        1,          1]
 
 
-#GaussMap make (use) #Ito
+#GaussMap make (same to the function in spcotmhp_astar_path_calculate) #Ito
 def PostProbMap_Gauss(CostMapProb,Mu,Sig,map_length,map_width,it): #,IndexMap):
         x,y = np.meshgrid(np.linspace(-10.0,9.92,map_width),np.linspace(-10.0,9.92,map_length))
         pos = np.dstack((x,y))    
@@ -35,18 +35,6 @@ def PostProbMap_Gauss(CostMapProb,Mu,Sig,map_length,map_width,it): #,IndexMap):
         PostProb=multivariate_normal(Mu[it],Sig[it]).pdf(pos)
 
         return CostMapProb * PostProb
-
-
-#GaussMap make (use) #Ito->Akira
-def PostProbMap_NormalizedGauss(CostMapProb,Mu,Sig,map_length,map_width,it): #,IndexMap):
-        x,y = np.meshgrid(np.linspace(-10.0,9.92,map_width),np.linspace(-10.0,9.92,map_length))
-        pos = np.dstack((x,y))    
-        #PostProbMap = np.array([ [ PostProb_ij([width, length],Mu,Sig,map_length,map_width, CostMapProb,it) for width in xrange(map_width) ] for length in xrange(map_length) ])
-        bunbo = np.sum([ multivariate_normal(Mu[k],Sig[k]).pdf(pos) for k in range(len(Mu)) ], 0)
-        PostProb = multivariate_normal(Mu[it],Sig[it]).pdf(pos) / bunbo
-
-        return CostMapProb * PostProb
-        
     
 ###↓### Sampling of goal candidates ############################################
 def EstimateGoal(Otb_B, THETA):
@@ -449,7 +437,7 @@ if __name__ == '__main__':
     #start=(150,130)
 
     ###v###近くの位置分布のindexのガウスの平均をゴールとしたA*を実行###v###
-    PathWeightMap = PostProbMap_nparray_jit_Ito(CostMapProb,Mu,Sig,map_length,map_width,near_node)
+    PathWeightMap = PostProbMap_Gauss(CostMapProb,Mu,Sig,map_length,map_width,near_node)
 
     gg=tools.Map_coordinates_To_Array_index(Mu[near_node])
     #print(gg[0])

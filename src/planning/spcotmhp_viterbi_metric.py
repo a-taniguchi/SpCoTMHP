@@ -10,13 +10,13 @@
 ###########################################################
 
 ##Command: 
-#python spcotmhp_viterbi_metric.py trialname mapname iteration sample init_position_num speech_num initial_position_x initial_position_y
-#python spcotmhp_viterbi_metric.py 3LDK_01 s1DK_01 1 0 0 7 100 100 
+#python spcotmhp_viterbi_metric.py trialname mapname iteration sample type_gauss
+#python spcotmhp_viterbi_metric.py 3LDK_01 s3LDK_01 1 0 n
 
 import os
 import sys
 import time
-from math import log
+#from math import log
 #import matplotlib.pyplot as plt
 import spconavi_read_data
 import spconavi_save_data
@@ -47,6 +47,9 @@ iteration = sys.argv[3] #1
 #Request sample value
 sample = sys.argv[4] #0
 
+#重みはガウスか正規化ガウスか
+type_gauss  = sys.argv[5] # g: gauss, ng: normalized gauss
+
 #Request the index number of the robot initial position
 #init_position_num = sys.argv[5] #0
 
@@ -64,7 +67,10 @@ Distance_save = [ [0.0 for atem in range(K)] for aky in range(K) ]
 filename = outputfolder_SIG + trialname #+ "/" 
 print(filename, iteration, sample)
 outputfile = filename + navigation_folder #+ "viterbi_node/"  #outputfolder + trialname + navigation_folder
-outputsubfolder = outputfile + "viterbi_node/"
+if (type_gauss == "g"):
+    outputsubfolder = outputfile + "viterbi_node_gauss/"
+else:
+    outputsubfolder = outputfile + "viterbi_node/"
 #outputname = outputfile + "SpCoTMHP"+"S"+str(start)+"G"+str(speech_num)
 
 Makedir( outputfile )
@@ -102,26 +108,6 @@ else:
     #Read the probabilistic cost map file
     CostMapProb = read_data.ReadCostMapProb(outputfile)
 
-##Read the speech file
-#speech_file = ReadSpeech(int(speech_num))
-#BoW = [Goal_Word[int(speech_num)]]
-#if ( "AND" in BoW ):
-#  BoW = Example_AND
-#elif ( "OR" in BoW ):
-#  BoW = Example_OR
-
-#Otb_B = [int(W_index[i] in BoW) * N_best for i in xrange(len(W_index))]
-#print("BoW:",  Otb_B)
-
-#while (sum(Otb_B) == 0):
-#  print("[ERROR] BoW is all zero.", W_index)
-#  word_temp = raw_input("Please word?>")
-#  Otb_B = [int(W_index[i] == word_temp) * N_best for i in xrange(len(W_index))]
-#  print("BoW (NEW):",  Otb_B)
-
-    
-#s_n=0 # start node index
-#g_n=0 # goal node index
 
 for st_i in range(K):
  for gl_i in range(K):
@@ -147,7 +133,7 @@ for st_i in range(K):
 
       #########
       #Path-Planning
-      Path, Path_ROS, PathWeightMap, Path_one = path_calculate.ViterbiPathPlanner(start, THETA, CostMapProb, outputfile, outputname,Gl,St) #gridmap, costmap)
+      Path, Path_ROS, PathWeightMap, Path_one = path_calculate.ViterbiPathPlanner(start, THETA, CostMapProb, outputfile, outputname,Gl,St, type_gauss) #gridmap, costmap)
 
       if (SAVE_time == 1):
           #PP終了時刻を保持
@@ -168,9 +154,12 @@ for st_i in range(K):
       #Save the path
       save_data.SavePath(start, [], Path, Path_ROS, outputname)
 
+
       #Save the PathWeightMap(PathPlanner内部で実行)
       #####save_data.SaveProbMap(PathWeightMap, outputname)
 
+
+      #Save the log-likelihood of the path
       #PathWeightMapとPathからlog likelihoodの値を再計算する
       LogLikelihood_step = np.zeros(T_horizon)
       LogLikelihood_sum  = np.zeros(T_horizon)
@@ -178,10 +167,7 @@ for st_i in range(K):
       for t in range(T_horizon):
           #print PathWeightMap.shape, Path[t][0], Path[t][1]
           LogLikelihood_step[t] = np.log(PathWeightMap[ Path[t][0] ][ Path[t][1] ])
-          #if (t < Step):
-          #  LogLikelihood_step[t] = np.log(PathWeightMap[ Path[t][0] ][ Path[t][1] ])
-          #else: 
-          #  LogLikelihood_step[t] = np.log(PathWeightMap[ Path[Step-1][0] ][ Path[Step-1][1] ])
+
           if (t == 0):
               LogLikelihood_sum[t] = LogLikelihood_step[t]
           elif (t >= 1):
@@ -201,7 +187,10 @@ for st_i in range(K):
 
 print("[END] SpCoTMHP. (Viterbi metric path)")
 
+if (type_gauss == "g"):
+    outputsubfolder = outputfile + "Viterbi_SpCoTMHP_gauss_"
+else:
+    outputsubfolder = outputfile + "Viterbi_SpCoTMHP_"
 
-outputname=outputfile+"Viterbi_SpCoTMHP_"
 np.savetxt(outputname+"distance.csv",Distance_save,delimiter=",")
 np.savetxt(outputname+"likelihood.csv",Like_save,delimiter=",")

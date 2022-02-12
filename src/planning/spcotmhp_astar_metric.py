@@ -9,13 +9,13 @@
 ###########################################################
 
 ##Command: 
-#python3 spcotmhp_astar_metric.py trialname mapname iteration sample init_position_num speech_num initial_position_x initial_position_y
-#python3 spcotmhp_astar_metric.py 3LDK_01 s1DK_01 1 0 0 7 100 100 
+#python3 spcotmhp_astar_metric.py trialname mapname iteration sample type_gauss
+#python3 spcotmhp_astar_metric.py 3LDK_01 s3LDK_01 1 0 n
 
 import sys
 import time
 import numpy as np
-import scipy as sp
+#import scipy as sp
 from scipy.stats import multivariate_normal,multinomial
 import matplotlib.pyplot as plt
 import spconavi_read_data
@@ -48,23 +48,25 @@ def PostProb_ij(Index_temp,Mu,Sig,map_length,map_width, CostMapProb,it):
 """
 
 #GaussMap make (use) #Ito
-def PostProbMap_nparray_jit(CostMapProb,Mu,Sig,map_length,map_width,it): #,IndexMap):
+def PostProbMap_Gauss(CostMapProb,Mu,Sig,map_length,map_width,it): #,IndexMap):
         x,y = np.meshgrid(np.linspace(-10.0,9.92,map_width),np.linspace(-10.0,9.92,map_length))
         pos = np.dstack((x,y))    
         #PostProbMap = np.array([ [ PostProb_ij([width, length],Mu,Sig,map_length,map_width, CostMapProb,it) for width in xrange(map_width) ] for length in xrange(map_length) ])
         PostProb=multivariate_normal(Mu[it],Sig[it]).pdf(pos)
-        '''
-        mmm=CostMapProb * PostProb
-        fig = plt.figure()
-        ax = fig.add_subplot(111,aspect='equal')
-        ax.contourf(x,y,mmm)
-        ax.set_xlim(-10,9.92)
-        ax.set_ylim(-10,9.92)
-        ax.set_xlabel('x')
-        ax.set_ylabel('y')
-        plt.show()
-        '''
+
         return CostMapProb * PostProb
+
+
+#GaussMap make (use) #Ito->Akira
+def PostProbMap_NormalizedGauss(CostMapProb,Mu,Sig,map_length,map_width,it): #,IndexMap):
+        x,y = np.meshgrid(np.linspace(-10.0,9.92,map_width),np.linspace(-10.0,9.92,map_length))
+        pos = np.dstack((x,y))    
+        #PostProbMap = np.array([ [ PostProb_ij([width, length],Mu,Sig,map_length,map_width, CostMapProb,it) for width in xrange(map_width) ] for length in xrange(map_length) ])
+        bunbo = np.sum([ multivariate_normal(Mu[k],Sig[k]).pdf(pos) for k in range(len(Mu)) ], 0)
+        PostProb = multivariate_normal(Mu[it],Sig[it]).pdf(pos) / bunbo
+
+        return CostMapProb * PostProb
+
 
 
 ###↓### Sampling of goal candidates ############################################
@@ -207,6 +209,9 @@ iteration = sys.argv[3] #1
 #Request sample value
 sample = sys.argv[4] #0
 
+#重みはガウスか正規化ガウスか
+type_gauss  = sys.argv[5] # g: gauss, ng: normalized gauss
+
 #Request the index number of the robot initial position
 #init_position_num = sys.argv[5] #0
 
@@ -214,12 +219,6 @@ sample = sys.argv[4] #0
 #speech_num = sys.argv[6] #0
 
 
-#start_list = [0, 0] #Start_Position[int(init_position_num)]#(83,39) #(92,126) #(126,92) #(1, 1)
-#start_list[0] = int(sys.argv[7]) #0
-#start_list[1] = int(sys.argv[8]) #0
-#start = (start_list[0], start_list[1])
-#print("Start:", start)
-#goal  = (95,41) #(97,55) #(55,97) #(height-2, width-2)
 
 # For saveing the metric path
 Like_save     = [ [0.0 for atem in range(K)] for aky in range(K) ]
@@ -230,7 +229,10 @@ Distance_save = [ [0.0 for atem in range(K)] for aky in range(K) ]
 filename = outputfolder_SIG + trialname #+ "/" 
 print(filename, iteration, sample)
 outputfile = filename + navigation_folder #+ "astar_node/" #outputfolder + trialname + navigation_folder #Ito
-outputsubfolder = outputfile + "astar_node/"
+if (type_gauss == "g"):
+    outputsubfolder = outputfile + "astar_node_gauss/"
+else:
+    outputsubfolder = outputfile + "astar_node/"
 #"T"+str(T_horizon)+"N"+str(N_best)+"A"+str(Approx)+"S"+str(init_position_num)+"G"+str(speech_num)
 
 Makedir( outputfile )
@@ -269,12 +271,6 @@ map_length, map_width = gridmap.shape
 CostMapProb = read_data.ReadCostMapProb(outputfile)
 
 
-#####Estimate the goal point by spatial concept
-#Otb_B = [int(W_index[i] == Goal_Word[int(speech_num)]) * N_best for i in range(len(W_index))]
-#print("BoW:", Otb_B)
-
-
-
 for st_i in range(K):
  for gl_i in range(K):
   if st_i == gl_i:
@@ -285,7 +281,12 @@ for st_i in range(K):
     Gl=gl_i
 
     outputname = outputsubfolder + "Astar_SpCoTMHP_"+"S"+str(St)+"_G"+str(Gl)
-    PathWeightMap = PostProbMap_nparray_jit(CostMapProb,Mu,Sig,map_length,map_width,Gl)
+    if (type_gauss == "g"):
+       PathWeightMap = PostProbMap_Gauss(CostMapProb,Mu,Sig,map_length,map_width,Gl)
+    else:
+       PathWeightMap = PostProbMap_NormalizedGauss(CostMapProb,Mu,Sig,map_length,map_width,Gl)
+    
+    
 
     #####描画
     plt.imshow(gridmap + (40+1)*(gridmap == -1), origin='lower', cmap='binary', vmin = 0, vmax = 100, interpolation='none') #, vmin = 0.0, vmax = 1.0)
@@ -343,26 +344,6 @@ for st_i in range(K):
         p_cost_candidate[gc_index] = p_cost / float(len(Path))
         Path_candidate[gc_index]   = Path    
 
-        """
-        #PathWeightMapとPathからlog likelihoodの値を再計算する
-        LogLikelihood_step = np.zeros(T_horizon)
-        LogLikelihood_sum = np.zeros(T_horizon)
-
-        for i in range(T_horizon):
-        if (i < len(Path)):
-            t = i
-        else:
-            t = len(Path) -1
-        #print PathWeightMap.shape, Path[t][0], Path[t][1]
-        LogLikelihood_step[i] = np.log(PathWeightMap[ Path_inv[t][0] ][ Path_inv[t][1] ])
-        if (t == 0):
-            LogLikelihood_sum[i] = LogLikelihood_step[i]
-        elif (t >= 1):
-            LogLikelihood_sum[i] = LogLikelihood_sum[i-1] + LogLikelihood_step[i]
-        
-        LogLikelihood_step_candidate[gc_index] = LogLikelihood_step
-        LogLikelihood_sum_candidate[gc_index] = LogLikelihood_sum
-        """
 
     ### select the goal of expected cost
     expect_gc_index = np.argmin(p_cost_candidate)
@@ -405,7 +386,7 @@ for st_i in range(K):
     #PathWeightMap = ReadProbMap(outputfile)
 
 
-    '''
+    
     #Save the log-likelihood of the path
     #PathWeightMapとPathからlog likelihoodの値を再計算する
     LogLikelihood_step = np.zeros(T_horizon)
@@ -413,38 +394,41 @@ for st_i in range(K):
 
     for i in range(T_horizon):
         if (i < len(Path)):
-        t = i
+            t = i
         else:
-        t = len(Path) -1
+            t = len(Path) -1
+
         #print PathWeightMap.shape, Path[t][0], Path[t][1]
         LogLikelihood_step[i] = np.log(PathWeightMap[ Path_inv[t][0] ][ Path_inv[t][1] ])
+
         if (t == 0):
-        LogLikelihood_sum[i] = LogLikelihood_step[i]
+            LogLikelihood_sum[i] = LogLikelihood_step[i]
         elif (t >= 1):
-        LogLikelihood_sum[i] = LogLikelihood_sum[i-1] + LogLikelihood_step[i]
+            LogLikelihood_sum[i] = LogLikelihood_sum[i-1] + LogLikelihood_step[i]
 
 
     #すべてのステップにおけるlog likelihoodの値を保存
-    save_data.SaveLogLikelihood(outputname, LogLikelihood_step,0,0)
+    save_data.SaveLogLikelihood(LogLikelihood_step,0,0,outputname)
 
     #すべてのステップにおける累積報酬（sum log likelihood）の値を保存
-    save_data.SaveLogLikelihood(outputname, LogLikelihood_sum,1,0)
-    '''
-
+    save_data.SaveLogLikelihood(LogLikelihood_sum,1,0,outputname)
     
-    #plt.show()
-    #plt.plot(PathWeightMap)
+
+
     #Save path trajectory in the map as a color image
     plt.savefig(outputname + '_Path.png', dpi=300)#, transparent=True
     plt.savefig(outputname + '_Path.pdf', dpi=300)#, transparent=True
     plt.clf()
   else:
     Distance_save[st_i][gl_i]=0
-    Like_save[st_i][gl_i]=0
-    #print(str(st_i)+"_"+str(gl_i))       
+    Like_save[st_i][gl_i]=0 
 
 print("[END] SpCoTMHP. (A star metric path)")
 
-outputname=outputfile+"Astar_SpCoTMHP_"
+if (type_gauss == "g"):
+    outputsubfolder = outputfile + "Astar_SpCoTMHP_gauss_"
+else:
+    outputsubfolder = outputfile + "Astar_SpCoTMHP_"
+
 np.savetxt(outputname+"distance.csv",Distance_save,delimiter=",")
 np.savetxt(outputname+"cost.csv",Like_save,delimiter=",")

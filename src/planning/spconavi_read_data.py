@@ -142,12 +142,12 @@ class ReadingData:
                     Phi_l[c][i] = float(itemList[i])
             c = c + 1
             
+        i=0
         ##Pi is read from the file
         for line in open(filename + "/" + trialname + '_pi_' + str(iteration) + '_' + str(sample) + '.csv', 'r'):
-            itemList = line[:-1].split(',')
-            for i in range(len(itemList)):
-                if itemList[i] != '':
-                    Pi[i] = float(itemList[i])
+            Pi[i] = float(line[:-1])
+            i = i + 1
+
         
         ##W is read from the file
         c = 0
@@ -194,6 +194,14 @@ class ReadingData:
     def ReadProbMap(self, outputfile, speech_num):
         # Read the result from the file
         output = outputfile + "N"+str(N_best)+"G"+str(speech_num) + "_PathWeightMap.csv"
+        PathWeightMap = np.loadtxt(output, delimiter=",")
+        print("Read PathWeightMap: " + output)
+        return PathWeightMap
+
+    #Load the probability value map used for path calculation
+    def ReadProbMap_TMHP(self, outputfile, st, gl):
+        # Read the result from the file
+        output = outputfile + "SpCoTMHP_S"+str(st)+"G"+str(gl) + "_PathWeightMap.csv"
         PathWeightMap = np.loadtxt(output, delimiter=",")
         print("Read PathWeightMap: " + output)
         return PathWeightMap

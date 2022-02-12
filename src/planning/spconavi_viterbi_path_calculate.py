@@ -15,7 +15,7 @@ tools     = spconavi_read_data.Tools()
 read_data = spconavi_read_data.ReadingData()
 save_data = spconavi_save_data.SavingData()
 
-#ITO = 0 # 伊藤くん改変を適用する（１）
+#ITO = 0 # 伊藤くん改変を適用する（1）
 
 """
 #v# Ito #v#
@@ -172,7 +172,7 @@ class PathPlanner:
         return Path_2D_index_original, Path_ROS, PathWeightMap_origin, Path_one #, LogLikelihood_step, LogLikelihood_sum
 
     
-    
+
     #移動位置の候補: 現在の位置(2-dimension array index )の近傍8セル+現在位置1セル
     def MovePosition_2D(self, Xt): 
         if (NANAME == 1):

@@ -162,7 +162,7 @@ print("[START] SpCoNavi by A star approx. algorithm.")
 trialname = sys.argv[1]
 
 #map file name is requested
-mapname = sys.argv[2]
+#mapname = sys.argv[2]
 
 #iteration is requested
 iteration = sys.argv[3] #1
@@ -201,8 +201,8 @@ Makedir( outputfile )
 Makedir( outputsubfolder )
 Makedir( outputname )
 
-maze = read_data.ReadMap(outputfile)
-height, width = maze.shape
+gridmap = read_data.ReadMap(outputfile)
+height, width = gridmap.shape
 
 #Read the files of learned parameters  #THETA = [W,W_index,Mu,Sig,Pi,Phi_l,K,L]
 THETA = read_data.ReadParameters(iteration, sample, filename, trialname)
@@ -223,8 +223,6 @@ PathWeightMap = read_data.ReadProbMap(outputfile, speech_num)
 
 
 #####描画
-#plt.imshow(maze, cmap="binary")
-gridmap = maze
 plt.imshow(gridmap + (40+1)*(gridmap == -1), origin='lower', cmap='binary', vmin = 0, vmax = 100, interpolation='none') #, vmin = 0.0, vmax = 1.0)
      
 plt.xticks(rotation=90)
@@ -255,7 +253,7 @@ Path_candidate = [[0.0] for j in range(J)]
 ###goal候補ごとにA*を実行
 for gc_index in range(J):
     goal = goal_candidate[gc_index]
-    Path, p_cost = a_star(start_inv, goal, maze, action_functions, cost_of_actions, PathWeightMap)    
+    Path, p_cost = a_star(start_inv, goal, gridmap, action_functions, cost_of_actions, PathWeightMap)    
     p_cost_candidate[gc_index] = p_cost #/ float(len(Path))
     Path_candidate[gc_index] = Path
 

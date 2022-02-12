@@ -24,30 +24,29 @@ class PathPlanner:
         return CostMapProb * GridMapProb
 
 
-    #v# Ito #v#
-    def PostProbMap_nparray_jit_ITO(self, CostMapProb,Mu,Sig,map_length,map_width,it): #,IndexMap):
-        x,y = np.meshgrid(np.linspace(-10.0,9.1,map_width),np.linspace(-10.0,9.1,map_length))
-        pos = np.dstack((x,y))    
-        #PostProbMap = np.array([ [ PostProb_ij([width, length],Mu,Sig,map_length,map_width, CostMapProb,it) for width in xrange(map_width) ] for length in xrange(map_length) ])
-        PostProb=multivariate_normal(Mu[it],Sig[it]).pdf(pos)
-        glp=tools.Map_coordinates_To_Array_index(Mu[it])
-        mmm=0.0
-        mx=0
-        my=0
-        for i in range(map_length):
-            for j in range(map_width):
-                if mmm < float(PostProb[i][j]):
-                    mmm=float(PostProb[i][j])
-                    mx=j
-                    my=i
-                print(str(mx),str(my))    
-            
-        return CostMapProb * PostProb
-    #^# Ito #^#
+    #GaussMap make (use) #Ito
+    def PostProbMap_Gauss(CostMapProb,Mu,Sig,map_length,map_width,it): #,IndexMap):
+            x,y = np.meshgrid(np.linspace(-10.0,9.92,map_width),np.linspace(-10.0,9.92,map_length))
+            pos = np.dstack((x,y))    
+            #PostProbMap = np.array([ [ PostProb_ij([width, length],Mu,Sig,map_length,map_width, CostMapProb,it) for width in xrange(map_width) ] for length in xrange(map_length) ])
+            PostProb=multivariate_normal(Mu[it],Sig[it]).pdf(pos)
+
+            return CostMapProb * PostProb
+
+
+    #GaussMap make (use) #Ito->Akira
+    def PostProbMap_NormalizedGauss(CostMapProb,Mu,Sig,map_length,map_width,it): #,IndexMap):
+            x,y = np.meshgrid(np.linspace(-10.0,9.92,map_width),np.linspace(-10.0,9.92,map_length))
+            pos = np.dstack((x,y))    
+            #PostProbMap = np.array([ [ PostProb_ij([width, length],Mu,Sig,map_length,map_width, CostMapProb,it) for width in xrange(map_width) ] for length in xrange(map_length) ])
+            bunbo = np.sum([ multivariate_normal(Mu[k],Sig[k]).pdf(pos) for k in range(len(Mu)) ], 0)
+            PostProb = multivariate_normal(Mu[it],Sig[it]).pdf(pos) / bunbo
+
+            return CostMapProb * PostProb
 
 
     #Global path estimation by dynamic programming (calculation of SpCoTMHP)
-    def ViterbiPathPlanner(self, X_init, THETA, CostMapProb, outputfile, outputname, gl_i, s_n): #gridmap, costmap):
+    def ViterbiPathPlanner(self, X_init, THETA, CostMapProb, outputfile, outputname, gl_i, s_n, type_gauss): #gridmap, costmap):
         print("[RUN] PathPlanner")
         #THETAを展開
         W, W_index, Mu, Sig, Pi, Phi_l, K, L = THETA
@@ -72,7 +71,10 @@ class PathPlanner:
         #output = outputfile + "N"+str(N_best)+"G"+str(speech_num) + "_PathWeightMap.csv"
         #if (os.path.isfile(output) == False) or (UPDATE_PostProbMap == 1):  #すでにファイルがあれば作成しない
             #PathWeightMap = PostProbMap_jit(CostMapProb,Mu,Sig,Phi_l,LookupTable_ProbCt,map_length,map_width,L,K) #マルチCPUで高速化できるかも #CostMapProb * PostProbMap #後の処理のために, この時点ではlogにしない
-        PathWeightMap = self.PostProbMap_nparray_jit_ITO(CostMapProb,Mu,Sig,map_length,map_width,gl_i) #,IndexMap) 
+        if (type_gauss == "g"):
+            PathWeightMap = self.PostProbMap_Gauss(CostMapProb,Mu,Sig,map_length,map_width,gl_i)
+        else:
+            PathWeightMap = self.PostProbMap_NormalizedGauss(CostMapProb,Mu,Sig,map_length,map_width,gl_i)
         
         #[TEST]計算結果を先に保存
         save_data.SaveProbMap_TMHP(PathWeightMap, outputfile, s_n,gl_i)

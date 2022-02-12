@@ -55,7 +55,7 @@ costmap_folder = navigation_folder  #"/costmap/"
 
 
 #################### Parameters ####################
-T_horizon  = 100             #Planning horizon #may be over 150~200. depends on memory and computational limits
+T_horizon  = 200             #Planning horizon #may be over 150~200. depends on memory and computational limits
 
 T_topo     = 10              #Planning horizon for SpCoTMHP
 D_metric   = T_horizon       #Planning horizon for SpCoTMHP
