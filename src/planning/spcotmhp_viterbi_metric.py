@@ -84,13 +84,13 @@ W, W_index, Mu, Sig, Pi, Phi_l, K, L = THETA
 
 #Ito# 遷移確率の低いエッジは計算しないようにするために擬似的にpsi_setting.csvを読み込む
 #Ito# psiそのものの確率値ではないことに注意
-psi     = [ [0.0 for atem in range(K)] for aky in range(K) ]
+CoonectMatricx     = [ [0.0 for atem in range(K)] for aky in range(K) ]
 c=0
 for line in open(filename + "/" + trialname + '_psi_'  + 'setting.csv', 'r'):
     itemList = line[:-1].split(',')
     for i in range(len(itemList)):
         if itemList[i] != "":
-          psi[c][i] = float(itemList[i])
+          CoonectMatricx[c][i] = float(itemList[i])
     c = c + 1 
 
 if (os.path.isfile(outputfile + "CostMapProb.csv") == False):  #すでにファイルがあれば計算しない
@@ -114,7 +114,7 @@ for st_i in range(K):
   if st_i == gl_i:
       Distance_save[st_i][gl_i]=0
       Like_save[st_i][gl_i]=0
-  elif psi[st_i][gl_i] == 1:
+  elif CoonectMatricx[st_i][gl_i] == 1:
       St=st_i
       Gl=gl_i
 

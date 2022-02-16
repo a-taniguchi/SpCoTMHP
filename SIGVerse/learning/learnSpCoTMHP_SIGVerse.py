@@ -347,8 +347,9 @@ def Gibbs_Sampling(iteration):
         itemList = Ignore_SP_Tags(itemList)
         
         #Otb[sample] = Otb[sample] + [itemList]
-        Otb = Otb + [itemList]
-        N = N + 1  #count
+        if (itemList != "" and itemList != "\n" and itemList != "," and itemList != " "):
+          Otb = Otb + [itemList]
+          N = N + 1  #count
         
         #for j in xrange(len(itemList)):
         #    print "%s " % (str(itemList[j])),

@@ -187,20 +187,19 @@ class PathPlanner:
     def update(self, cost, trans, emiss):
         COST = 0 #COST, INDEX = range(2)  #0,1
         arr = [c[COST]+t for c, t in zip(cost, trans)]
-        max_arr = max(arr)
-        #print(max_arr + emiss, arr.index(max_arr))
-        return max_arr + emiss, arr.index(max_arr)
+        min_arr = min(arr)
+        #print(min_arr + emiss, arr.index(min_arr))
+        return min_arr + emiss, arr.index(min_arr)
 
 
     def update_lite(self, cost, n, emiss, state_num,IndexMap_one_NOzero,MoveIndex_list,Transition):
-        #Transition = np.array([approx_log_zero for j in xrange(state_num)]) #emissのindex番号に応じて, これをつくる処理を入れる
+        #Transition = np.array([just_zero for j in xrange(state_num)]) #emissのindex番号に応じて, これをつくる処理を入れる
         for i in xrange(len(Transition)):
-            Transition[i] = approx_log_zero #float('-inf')でも計算結果に変わりはない模様
+            Transition[i] = 10.0*100 #float('-inf')でも計算結果に変わりはない模様
 
         #今, 想定している位置1セルと隣接する8セルのみの遷移を考えるようにすればよい
         #Index_2D = IndexMap_one_NOzero[n] #.tolist()
-        #print(MoveIndex_list, IndexMap_one_NOzero[n])
-        MoveIndex_list_n = MoveIndex_list + IndexMap_one_NOzero[n] #Index_2D #絶対座標系にする ###ここが新しくエラーになった（ターミナルにCtrl+Cした？）
+        MoveIndex_list_n = MoveIndex_list + IndexMap_one_NOzero[n] #Index_2D #絶対座標系にする
         MoveIndex_list_n_list = MoveIndex_list_n.tolist()
         #print(MoveIndex_list_n_list)
 
@@ -214,7 +213,7 @@ class PathPlanner:
         
         #計算上おかしい場合はエラー表示を出す．
         if (count_t == 0): #遷移確率がすべて0．移動できないということを意味する．
-            print("[ERROR] All transition is approx_log_zero.")
+            print("[ERROR] All transition is just_zero.")
         #elif (count_t == 1): #遷移確率がひとつだけある．移動可能な座標が一択．（このWARNINGが出ても問題ない場合がある？）
         #    print("[WARNING] One transition can move only.")
         #elif (count_t != 5):
@@ -222,11 +221,11 @@ class PathPlanner:
         
         #trans = Transition #np.array(Transition)
         arr = cost + Transition #trans
-        #max_arr = np.max(arr)
-        max_arr_index = np.argmax(arr)
-        #return max_arr + emiss, np.where(arr == max_arr)[0][0] #np.argmax(arr)#arr.index(max_arr)
-        #print(0.0 in Transition, max_arr_index)
-        return arr[max_arr_index] + emiss, max_arr_index
+        #min_arr = np.min(arr)
+        min_arr_index = np.argmin(arr)
+        #return min_arr + emiss, np.where(arr == min_arr)[0][0] #np.argmin(arr)#arr.index(min_arr)
+        #print(0.0 in Transition, min_arr_index)
+        return arr[min_arr_index] + emiss, min_arr_index
 
    
 
@@ -241,13 +240,13 @@ class PathPlanner:
         #print("Initial:",X_init)
 
         cost = [INITIAL for i in xrange(len(PathWeight))] 
-        cost[X_init] = (10.0**10, X_init) #初期位置は一意に与えられる(確率log(1.0))
+        #cost[X_init] = (10.0, X_init) #初期位置は一意に与えられる(確率log(1.0))
         trellis = []
 
-        e = PathWeight #emission(nstates[i])
+        e = -1.0 * PathWeight #emission(nstates[i])
         m = [i for i in xrange(len(PathWeight))] #Transition #transition(nstates[i-1], nstates[i]) #一つ前から現在への遷移
         
-        Transition = np.array([approx_log_zero for _ in xrange(state_num)]) #参照渡しになってしまう
+        Transition = np.array([just_zero for _ in xrange(state_num)]) #参照渡しになってしまう
 
 
         temp = 1
@@ -262,7 +261,7 @@ class PathPlanner:
                 cost = trellis[-1]
             if (i+1 >= T_restart):
                 cost_np = np.array([cost[c][COST] for c in xrange(len(cost))])
-                #Transition = np.array([approx_log_zero for j in xrange(state_num)]) #参照渡しになってしまう
+                #Transition = np.array([just_zero for j in xrange(state_num)]) #参照渡しになってしまう
 
                 #cost = [update_lite(cost_np, t, e[t], state_num,IndexMap_one_NOzero,MoveIndex_list) for t in xrange(len(e))]
                 cost = [self.update_lite(cost_np, t, f, state_num,IndexMap_one_NOzero,MoveIndex_list,Transition) for t, f in izip(m, e)] #izipの方がメモリ効率は良いが, zipとしても処理速度は変わらない
@@ -275,8 +274,8 @@ class PathPlanner:
                 if (SAVE_T_temp == temp):
                     #Backward temp
                     last = [trellis[-1][j][0] for j in xrange(len(trellis[-1]))]
-                    path_one = [ np.argmax(last) ] #[last.index(max(last))] #最終的にいらないが計算上必要⇒最後のノードの最大値インデックスを保持する形でもできるはず
-                    #print("last",last,"max",path)
+                    path_one = [ np.argmin(last) ] #[last.index(min(last))] #最終的にいらないが計算上必要⇒最後のノードの最大値インデックスを保持する形でもできるはず
+                    #print("last",last,"min",path)
 
                     for stepx in reversed(trellis):
                         path_one = [stepx[path_one[0]][INDEX]] + path_one
@@ -290,7 +289,7 @@ class PathPlanner:
 
                         #Backward temp
                         last = [trellis[-1*re][j][0] for j in xrange(len(trellis[-1*re]))]
-                        path_one = [ np.argmax(last) ] 
+                        path_one = [ np.argmin(last) ] 
 
                         for x in reversed(trellis[0:-1*re]):
                             path_one = [ x[path_one[0]][INDEX] ] + path_one
@@ -344,8 +343,8 @@ class PathPlanner:
         #Backward
         print("Backward")
         #last = [trellis[-1][i][0] for i in xrange(len(trellis[-1]))]
-        path = [0]  #[last.index(max(last))] #最終的にいらないが計算上必要⇒最後のノードの最大値インデックスを保持する形でもできるはず
-        #print("last",last,"max",path)
+        path = [0]  #[last.index(min(last))] #最終的にいらないが計算上必要⇒最後のノードの最大値インデックスを保持する形でもできるはず
+        #print("last",last,"min",path)
 
         for x in reversed(trellis):
             path = [x[path[0]][INDEX]] + path

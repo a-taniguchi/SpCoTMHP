@@ -78,7 +78,7 @@ SAVE_X_init  = 1      #Save initial value (Save:1, Not save:0)
 SAVE_T_temp  = 50     #Step interval to save the path temporarily (each SAVE_T_temp value on the way)
 SAVE_Trellis = 0      #Save trellis for Viterbi Path estimation (Save:1, Not save:0) 
 
-UPDATE_PostProbMap = 0 #0 #If the file exists already, calculate PostProbMap: (1) 
+UPDATE_PostProbMap = 1 #0 #If the file exists already, calculate PostProbMap: (1) 
 
 #Select approximated methods (Proposed method (ver. SIGVerse):0) -> run SpCoNavi_Astar_approx.py
 Approx = 0  
@@ -117,4 +117,5 @@ origin     = np.array([-10.000000, -10.000000]) #np.array([x,y]) #np.array([-30.
 
 #dimx = 2           #The number of dimensions of xt (x,y)
 #margin = 10*0.05   #margin value for place area in gird map (0.05m/grid)*margin(grid)=0.05*margin(m)
-approx_log_zero = np.log(10.0**(-300))   #approximated value of log(0)
+approx_log_zero = float('-inf')  #np.log(10.0**(-100)) #  float('-inf') #approximated value of log(0)
+just_zero = 0.0

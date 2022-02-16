@@ -13,8 +13,8 @@ tools     = spconavi_read_data.Tools()
 read_data = spconavi_read_data.ReadingData()
 
 ##Command: 
-#python ./path_weight_visualizer_step_SIGVerse.py trialname init_position_num speech_num  
-#Example: python ./path_weight_visualizer_step_SIGVerse.py 3LDK_01 0 7
+#python ./spconavi_output_pathmap_step.py trialname init_position_num speech_num initial_position_x initial_position_y
+#Example: python ./spconavi_output_pathmap_step.py 3LDK_01 0 7 100 100
 
 #output = "/root/HSR/catkin_ws/src/spconavi_ros/src/data/3LDK_01/navi/Astar_Approx_expect_N6A1SG7" + "_Path" + str(temp) + ".csv" # A*用
 
@@ -32,17 +32,26 @@ if __name__ == '__main__':
     #Request the file number of the speech instruction   
     speech_num = sys.argv[3] #0
   
-    ##FullPath of folder
-    #filename = datafolder + trialname + "/" + str(step) +"/"
-    #print filename #, particle_num
-    outputfile = outputfolder_SIG + trialname + navigation_folder
+    start = [int(sys.argv[4]), int(sys.argv[5])] #Start_Position[int(init_position_num)]
+    #start[0] = int(sys.argv[4]) #0
+    #start[1] = int(sys.argv[5]) #0
+    #start = [start_list[0], start_list[1]]
+    print("Start:", start)
+
 
     #init_position_num = 0
-    X_init = Start_Position[int(init_position_num)]
+    X_init = start #Start_Position[int(init_position_num)]
     print(X_init)
 
-    conditions = "T"+str(T_horizon)+"N"+str(N_best)+"A"+str(Approx)+"S"+str(init_position_num)+"G"+str(speech_num)
-    outputname = outputfile + conditions
+    ##FullPath of folder
+    filename = outputfolder_SIG + trialname #+ "/" 
+    #print(filename, iteration, sample)
+    outputfile = filename + navigation_folder #outputfolder + trialname + navigation_folder
+    outputsubfolder = outputfile + "spconavi_viterbi/"
+    #outputname = outputsubfolder + "T"+str(T_horizon)+"N"+str(N_best)+"A"+str(Approx)+"S"+str(start)+"G"+str(speech_num)+"/"  
+
+    conditions = "T"+str(T_horizon)+"N"+str(N_best)+"A"+str(Approx)+"S"+str(start)+"G"+str(speech_num)+"/"  
+    outputname = outputsubfolder + conditions
     
     Makedir(outputfile + "step")
 
@@ -52,12 +61,12 @@ if __name__ == '__main__':
       gridmap = read_data.ReadMap(outputfile)
 
       #Read the PathWeightMap file
-      PathWeightMap = read_data.ReadProbMap(outputfile)
+      PathWeightMap = read_data.ReadProbMap(outputfile,speech_num)
 
       #Read the Path file
-      Path = read_data.ReadPath(outputname,temp)
+      Path = read_data.ReadPath_step(outputname,temp)
       #Makedir( outputfile + "step" )
-      print(Path)
+      #print(Path)
     
       #length and width of the MAP cells
       map_length = len(gridmap)  #len(costmap)
@@ -68,7 +77,7 @@ if __name__ == '__main__':
       
       for i in xrange(map_length):
         for j in xrange(map_width):
-            if (X_init[0] == i) and (X_init[1] == j):
+            if (X_init[1] == i) and (X_init[0] == j):
               PathMap[i][j] = 1.0
             for t in xrange(len(Path)):
               if ( Path[t][0] == i ) and ( Path[t][1] == j ): ################バグがないならこっちを使う
@@ -89,7 +98,7 @@ if __name__ == '__main__':
       #length and width of the MAP cells
       map_length = len(gridmap)  #len(costmap)
       map_width  = len(gridmap[0])  #len(costmap[0])
-      print("MAP[length][width]:",map_length,map_width)
+      #print("MAP[length][width]:",map_length,map_width)
 
       #Add the weights on the map (heatmap)
       plt.imshow(gridmap + (40+1)*(gridmap == -1), origin='lower', cmap='binary', vmin = 0, vmax = 100, interpolation='none') #, vmin = 0.0, vmax = 1.0)
@@ -106,12 +115,15 @@ if __name__ == '__main__':
       plt.xlabel('X', fontsize=10)
       plt.ylabel('Y', fontsize=10)
 
+      plt.savefig(outputname + '_Weight' +  str(temp).zfill(3) + '.png', dpi=300)#, transparent=True
+      plt.savefig(outputname + '_Weight' +  str(temp).zfill(3) + '.pdf', dpi=300, transparent=True)#, transparent=True
+
       plt.imshow(PathMap, origin='lower', cmap='autumn', interpolation='none') #, vmin=wmin, vmax=wmax) #gnuplot, inferno,magma,plasma  #
 
 
       #Save path trajectory and the emission probability in the map as a color image
-      plt.savefig(outputfile + "step/" + conditions + '_Path_Weight' +  str(temp).zfill(3) + '.png', dpi=300)#, transparent=True
-      plt.savefig(outputfile + "step/" + conditions + '_Path_Weight' +  str(temp).zfill(3) + '.pdf', dpi=300, transparent=True)#, transparent=True
+      plt.savefig(outputname + '_Path_Weight' +  str(temp).zfill(3) + '.png', dpi=300)#, transparent=True
+      plt.savefig(outputname + '_Path_Weight' +  str(temp).zfill(3) + '.pdf', dpi=300, transparent=True)#, transparent=True
       plt.clf()
 
     #plt.show()

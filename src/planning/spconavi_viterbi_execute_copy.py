@@ -20,7 +20,7 @@ from __init__ import *
 from submodules import *
 import spconavi_read_data
 import spconavi_save_data
-import spconavi_viterbi_path_calculate as spconavi_viterbi_path_calculate
+import spconavi_viterbi_path_calculate_copy as spconavi_viterbi_path_calculate
 
 tools     = spconavi_read_data.Tools()
 read_data = spconavi_read_data.ReadingData()

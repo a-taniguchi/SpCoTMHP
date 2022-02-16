@@ -201,6 +201,9 @@ def Ignore_SP_Tags(itemList):
 
   for j in xrange(len(itemList)):
     itemList[j] = itemList[j].replace("\r", "")  
+    
+  for j in xrange(len(itemList)):
+    itemList[j] = itemList[j].replace("\n", "") 
 
   for _ in xrange(5):
     if ("" in itemList):

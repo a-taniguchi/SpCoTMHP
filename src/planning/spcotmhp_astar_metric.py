@@ -290,7 +290,6 @@ for st_i in range(K):
 
     #####描画
     plt.imshow(gridmap + (40+1)*(gridmap == -1), origin='lower', cmap='binary', vmin = 0, vmax = 100, interpolation='none') #, vmin = 0.0, vmax = 1.0)
-         
     plt.xticks(rotation=90)
     plt.tick_params(axis='x', which='major', labelsize=8)
     plt.tick_params(axis='y', which='major', labelsize=8)
@@ -386,7 +385,6 @@ for st_i in range(K):
     #PathWeightMap = ReadProbMap(outputfile)
 
 
-    
     #Save the log-likelihood of the path
     #PathWeightMapとPathからlog likelihoodの値を再計算する
     LogLikelihood_step = np.zeros(T_horizon)
