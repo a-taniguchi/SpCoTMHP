@@ -5,7 +5,7 @@
 # SpCoA++の要領で複数回施行している場合は、相互情報量最大の候補を選択
 # Akira Taniguchi 2020/05/16 - 2020/05/18
 # This code is based on em_spcoae_map_srv.py
-# [command] $ python SpCoVisualizer_albert-b.py <trialname>
+# [command] $ python3 SpCoVisualizer_albert-b.py <trialname>
 
 import sys
 import numpy as np
@@ -50,8 +50,8 @@ print(map_image.size)
 
 
 # MIが最大のsampleの番号を得る
-MI_List   = [[0.0 for i in xrange(sample_num)] for j in xrange(ITERATION)]
-MAX_Samp  = [0 for j in xrange(ITERATION)]
+MI_List   = [[0.0 for i in range(sample_num)] for j in range(ITERATION)]
+MAX_Samp  = [0 for j in range(ITERATION)]
 
 #./data/trialname/trialname_sougo_MI_iteration.csvを読み込み
 for line in open(outputfolder + trialname + '/' + trialname + '_sougo_MI_' + str(iteration+1) + '.csv', 'r'):
@@ -82,7 +82,7 @@ It = np.loadtxt( file_trialname + '_It_'+ iteration_sample + '.csv', dtype=int )
 fig  = plt.figure()
 ax   = fig.add_subplot(1,1,1)
 el_c = np.sqrt(ss.chi2.ppf(el_prob, 2))
-for k in xrange(K):
+for k in range(K):
     #データ点が割り当てられていない位置分布は描画しない
     if list(It).count(k) == 0:
         continue
@@ -98,7 +98,7 @@ for k in xrange(K):
         #el2                  = Ellipse(xy=Mu_origin[k],width=1.0,height=1.0,color=COLOR[k])  # matplotlib.patches.Ellipse
         #ax.add_patch(el2)
 
-        txt = ax.text(Mu_origin[k][0]+4, Mu_origin[k][1]+4, str(k), size = 7, color = "midnightblue", zorder=3)
+        txt = ax.text(Mu_origin[k][0]+4, Mu_origin[k][1]+4, str(k), size = 14, color = "midnightblue", zorder=3)
         txt.set_path_effects([path_effects.Stroke(linewidth=2, foreground='white', alpha=0.8),
                               path_effects.Normal()])
     except:
@@ -119,8 +119,8 @@ for k1 in range(K):
         if (psi_sym[k1][k2] > ignore_value) and (k1 != k2) and (psi_sym[k1][k2] != 1.0):
           if ( (k2,k1) not in edge_list ):
               edge_list += [(k1,k2)]
-              print k1,k2,psi_sym[k1][k2]
-print edge_list
+              print(k1,k2,psi_sym[k1][k2])
+print(edge_list)
 
 
 # 地図描画

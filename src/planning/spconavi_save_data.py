@@ -79,7 +79,7 @@ class SavingData:
 
     def SaveProbMap_TMHP(self, PathWeightMap, outputfile, s_n ,g_n):
             # Save the result to the file 
-            output = outputfile + "SpCoTMHP_S"+str(s_n)+"G"+str(g_n) + "_PathWeightMap.csv"
+            output = outputfile + "Astar_SpCoTMHP_S"+str(s_n)+"G"+str(g_n) + "_PathWeightMap.csv"
             np.savetxt( output, PathWeightMap, delimiter=",")
             print("Save PathWeightMap: " + output)
 

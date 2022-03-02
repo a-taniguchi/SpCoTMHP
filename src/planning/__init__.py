@@ -17,15 +17,18 @@ elif (example == 2):
   example_folder = "example2/"
 
 ##### NEW #####
-inputfolder_SIG  = "../../SIGVerse/data/"
+inputfolder_SIG  = "../../SIGVerse/dataset/similar/3LDK/"
 outputfolder_SIG = "../../SIGVerse/data/"
-#inputfolder_SIG  = "/mnt/hgfs/D/Dropbox/SpCoNavi/CoRL/dataset/similar/3LDK/" 
-#outputfolder_SIG = "/mnt/hgfs/D/Dropbox/SpCoNavi/CoRL/data/" + example_folder  
+
+inputfolder_albert  = "../../albert-b/dataset/TMHP/"
+outputfolder_albert = "../../albert-b/data/"
 
 # Note: Don't be tupple! Only list! [*,*]  #(y,x). not (x,y). (Same as coordinates in Astar_*.py) 
 Start_Position = [[100,100],[150,130],[120,60],[60,90],[90,120],[75,75],[90,50],[90,60],[110,80],[130,95]] 
 Goal_Word      = ["玄関","リビング","ダイニング","キッチン","風呂","洗面所","トイレ","寝室", "物置き", "廊下", "東", "南", "広場"]
 #0:玄関, 1:リビング, 2:ダイニング, 3:キッチン, 4:風呂, 5:洗面所, 6:トイレ, 7:寝室, 8:物置き, 9:廊下
+
+Goal_Word_albert = ["きょうゆうせき","きゅうけいじょ","ろぼっとおきば","ろうか","いきどまり","みいてぃんぐすぺいす","きょういんけんきゅうしつ","ぷりんたあべや","だいどころ","がくせいさぎょうば","しろいたな"]
 
 #Same values as /learning/__init.py__
 L = 11                   #The number of spatial concepts
@@ -37,9 +40,12 @@ word_increment = 6 #10     #Increment number of word observation data (BoWs)
 
 #################### Folder PATH ####################
 #Setting of PATH for a folder of learned spatial concept parameters
-datafolder    = "/mnt/hgfs/D/Dropbox/SpCoSLAM/data/" 
+#datafolder    = "/mnt/hgfs/D/Dropbox/SpCoSLAM/data/" 
 #Setting of PATH for output folder
-outputfolder  = "/mnt/hgfs/D/Dropbox/SpCoSLAM/data/"  
+#outputfolder  = "/mnt/hgfs/D/Dropbox/SpCoSLAM/data/"  
+
+# Word data folder path
+word_folder = "/name/per_100/word"
 
 #File folder of speech data
 #speech_folder    = "/home/akira/Dropbox/Julius/directory/SpCoSLAM/*.wav"    #Teaching speech data folder
@@ -53,6 +59,8 @@ navigation_folder = "/tmhp/"  #outputfolder + trialname + / + navigation_folder 
 #Cost map folder
 costmap_folder = navigation_folder  #"/costmap/" 
 
+## [albert-b] map fileのフォルダファイル名 (**.pgm and **.yaml)
+map_file = "map/map312"
 
 #################### Parameters ####################
 T_horizon  = 200             #Planning horizon #may be over 150~200. depends on memory and computational limits
@@ -61,10 +69,12 @@ T_topo     = 10              #Planning horizon for SpCoTMHP
 D_metric   = T_horizon       #Planning horizon for SpCoTMHP
 
 N_best     = word_increment  #N of N-best (N<=10)
-#step       = 50             #The end number of time-step in SpCoSLAM (the number of training data)
+step       = 70              # for albert-b: The end number of time-step in SpCoSLAM (the number of training data)
 
 # SpCoNavi_Astar_approx.py: The number of goal position candidates
 Sampling_J = 1
+Sampling_G = 10 #for SpCoTMHP (albert)
+N_ie       = 1 #0 # for SpCoTMHP
 
 #Initial position (position candidates)
 X_candidates = Start_Position  #Index coordinates on 2 dimension list
@@ -85,7 +95,7 @@ Approx = 0
 if (NANAME != 1):
   Approx = 1
 #Separated N-best approximation version is another program (SpCoNavi0.1s.py)
-
+St_separate = 0   #N-best BoWs: All:0, separate:1
 
 
 #Dynamics of state transition (motion model): (Deterministic:0, Probabilistic:1, Approximation:2(Unimplemented))
@@ -111,11 +121,14 @@ COSTMAP_TOPIC = "/move_base/global_costmap/costmap"
 resolution = 0.1   #0.050000
 origin     = np.array([-10.000000, -10.000000]) #np.array([x,y]) #np.array([-30.000000, -20.000000])
 
+resolution_albert = 0.050000
+origin_albert =  np.array([-30.000000, -20.000000]) #, 0.000000] #np.array([x,y])
+
 #map size (length and width)
 #map_length = 0
 #map_width  = 0
 
 #dimx = 2           #The number of dimensions of xt (x,y)
-#margin = 10*0.05   #margin value for place area in gird map (0.05m/grid)*margin(grid)=0.05*margin(m)
-approx_log_zero = float('-inf')  #np.log(10.0**(-100)) #  float('-inf') #approximated value of log(0)
+margin = 10*0.1 #0.05   #margin value for place area in gird map (0.05m/grid)*margin(grid)=0.05*margin(m)
+approx_log_zero = np.log(10.0**(-200)) #  float('-inf') #approximated value of log(0)
 just_zero = 0.0

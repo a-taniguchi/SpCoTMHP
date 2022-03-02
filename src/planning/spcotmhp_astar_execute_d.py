@@ -27,7 +27,7 @@ action_functions = [tools.right, tools.left, tools.up, tools.down, tools.stay] #
 cost_of_actions  = np.log( np.ones(len(action_functions)) / float(len(action_functions)) ) #[    1/5,    1/5,  1/5,    1/5,    1/5]) #, ,    1,        1,        1,          1]
 
 
-#GaussMap make (same to the function in spcotmhp_astar_path_calculate) #Ito
+#GaussMap make (same to the function in spcotmhp_viterbi_path_calculate) #Ito
 def PostProbMap_Gauss(CostMapProb,Mu,Sig,map_length,map_width,it): #,IndexMap):
         x,y = np.meshgrid(np.linspace(-10.0,9.92,map_width),np.linspace(-10.0,9.92,map_length))
         pos = np.dstack((x,y))    
@@ -50,16 +50,19 @@ def EstimateGoal(Otb_B, THETA):
     #print(pi)
         
     #print(pmf_it)
-    argmax_it = np.argmax(pmf_it)
+    #argmax_it = np.argmax(pmf_it)
 
+    bisyo = 10.0**(-5)
+    pmf_it = pmf_it + bisyo
     #Normalization
-    #pmf_it_n = np.array([pmf_it[i] / float(np.sum(pmf_it)) for i in range(K)])
+    pmf_it_n = np.array([pmf_it[i]  / float(np.sum(pmf_it)) for i in range(K)])
 
     #Sampling it from multinomial distribution
-    #sample_it = multinomial.rvs(Sampling_J, pmf_it_n, size=1, random_state=None)
+    sample_it = np.random.choice(K, size=1, replace=True, p=pmf_it_n)
+    # multinomial.rvs(Sampling_J, pmf_it_n, size=1, random_state=None)
     #print(sample_it)
     
-    return argmax_it
+    return sample_it[0]
 
     """  
     goal_candidate = []
@@ -456,8 +459,8 @@ if __name__ == '__main__':
         goal = goal_candidate[gc_index]
         Path, p_cost = a_star(start_inv, goal, gridmap, action_functions, cost_of_actions, PathWeightMap)    
 
-        first_cost = p_cost / float(len(Path))
-        p_cost_candidate[gc_index] = p_cost / float(len(Path))
+        #first_cost = p_cost / float(len(Path))
+        p_cost_candidate[gc_index] = p_cost / float(len(Path)+1)
         Path_candidate[gc_index] = Path    
 
 
@@ -495,7 +498,7 @@ if __name__ == '__main__':
         print("tyukan",i)
         ## 次のゴール（位置分布インデックス）を推定
         gl = EstimateGoal(Otb_B_list[i], THETA)
-        print("st,gl:",st,gl)
+        print("st,tyukan:",st,gl)
 
         ## 次のゴールまでのトポロジカルプランニング
         root = SearchTopoDijkstra(gl, st, cost)
@@ -547,6 +550,8 @@ if __name__ == '__main__':
     for i in range(len(Path_ROS)):
       plt.plot(Path_ROS[i][1], Path_ROS[i][0], "s", color="tab:red", markersize=1)
     plt.savefig(outputname + '_Path.pdf', dpi=300)#, transparent=True
+    plt.savefig(outputname + '_Path.png', dpi=300)#, transparent=True
+    
     np.savetxt(outputname + "_fin_Path_ROS.csv", Path_ROS, delimiter=",")
     np.savetxt(outputname + "_fin_Distance.csv", disp, delimiter=",")
     plt.clf()

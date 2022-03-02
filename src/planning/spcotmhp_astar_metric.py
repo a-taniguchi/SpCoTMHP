@@ -10,7 +10,7 @@
 
 ##Command: 
 #python3 spcotmhp_astar_metric.py trialname mapname iteration sample type_gauss
-#python3 spcotmhp_astar_metric.py 3LDK_01 s3LDK_01 1 0 n
+#python3 spcotmhp_astar_metric.py 3LDK_01 s3LDK_01 1 0 g
 
 import sys
 import time
@@ -423,10 +423,10 @@ for st_i in range(K):
 
 print("[END] SpCoTMHP. (A star metric path)")
 
-if (type_gauss == "g"):
-    outputsubfolder = outputfile + "Astar_SpCoTMHP_gauss_"
-else:
-    outputsubfolder = outputfile + "Astar_SpCoTMHP_"
+#if (type_gauss == "g"):
+#    outputsubfolder = outputfile + "Astar_SpCoTMHP_gauss_"
+#else:
+outputsubfolder = outputfile + "Astar_SpCoTMHP_"
 
-np.savetxt(outputname+"distance.csv",Distance_save,delimiter=",")
-np.savetxt(outputname+"cost.csv",Like_save,delimiter=",")
+np.savetxt(outputsubfolder+"distance.csv",Distance_save,delimiter=",")
+np.savetxt(outputsubfolder+"cost.csv",Like_save,delimiter=",")

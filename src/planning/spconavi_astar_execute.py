@@ -4,7 +4,7 @@
 # SpCoNavi: Spatial Concept-based Path-Planning Program for SIGVerse
 # Path-Planning Program by A star algorithm (ver. approximate inference)
 # Path Selection: expected log-likelihood per pixel in a path trajectory
-# Akira Taniguchi 2022/02/07
+# Akira Taniguchi 2022/02/07-2022/02/25
 # Spacial Thanks: Ryo Ozaki, Shoichi Hasegawa
 ###########################################################
 
@@ -134,7 +134,7 @@ def a_star(start, goal, maze, action_functions, cost_of_actions, PathWeightMap):
     #for oyako in reversed(OYA):
     ko_origin = ko
     ko = (goal[1], goal[0])
-    print(ko,goal)
+    #print(ko,goal)
     #for i in range(p_cost):
     while(ko != (start[1],start[0])):
         #print(OYA[ko])
@@ -177,12 +177,28 @@ sample = sys.argv[4] #0
 speech_num = sys.argv[6] #0
 
 
-start_list = [0, 0] #Start_Position[int(init_position_num)]
-start_list[0] = int(sys.argv[7]) #0
-start_list[1] = int(sys.argv[8]) #0
-start = (start_list[0], start_list[1])
+#start_list = [0, 0] #Start_Position[int(init_position_num)]
+#start_list[0] = int(sys.argv[7]) #0
+#start_list[1] = int(sys.argv[8]) #0
+start = (int(sys.argv[7]), int(sys.argv[8]))
 start_inv = [start[1],start[0]]
 print("Start:", start)
+
+
+#中間地点の単語番号を指定 (未実装：複数指定の場合、コンマ区切りする)
+waypoint_word = sys.argv[9] # -1:中間なし
+
+
+if (waypoint_word != ""):
+    WP_list    = waypoint_word[:].split(',')
+    print("WP:", WP_list)
+
+    if (int(WP_list[0]) == -1):
+        tyukan = 0
+    else:
+        tyukan = 1
+else:
+    tyukan = 0
 
 
 if (SAVE_time == 1):
@@ -193,8 +209,14 @@ if (SAVE_time == 1):
 filename = outputfolder_SIG + trialname #+ "/" 
 print(filename, iteration, sample)
 outputfile = filename + navigation_folder #outputfolder + trialname + navigation_folder
-outputsubfolder = outputfile + "spconavi_astar_min/"
-outputname = outputsubfolder + "J"+str(Sampling_J)+"N"+str(N_best)+"A"+str(Approx)+"S"+str(start)+"G"+str(speech_num)+"/"
+if(Sampling_J == 1):
+    outputsubfolder = outputfile + "spconavi_astar_min_J1/" 
+else:
+    outputsubfolder = outputfile + "spconavi_astar_min/"
+if (tyukan == 0):
+    outputname = outputsubfolder + "J"+str(Sampling_J)+"N"+str(N_best)+"A"+str(Approx)+"S"+str(start)+"G"+str(speech_num)+"/"
+elif (tyukan == 1):
+    outputname = outputsubfolder + "J"+str(Sampling_J)+"N"+str(N_best)+"A"+str(Approx)+"S"+str(start)+"H"+str(waypoint_word)+"G"+str(speech_num)+"/"
 #"T"+str(T_horizon)+"N"+str(N_best)+"A"+str(Approx)+"S"+str(init_position_num)+"G"+str(speech_num)
 
 Makedir( outputfile )
@@ -210,6 +232,10 @@ W_index = THETA[1]
 
 #####Estimate the goal point by spatial concept
 Otb_B = [int(W_index[i] == Goal_Word[int(speech_num)]) * N_best for i in range(len(W_index))]
+if (tyukan == 1):
+    for w in range(len(WP_list)):
+        Otb_B = [ Otb_B[i] + int(W_index[i] == Goal_Word[int(WP_list[w])]) * N_best for i in range(len(Otb_B)) ]
+
 print("BoW:", Otb_B)
 
 #Path-Planning
@@ -245,8 +271,8 @@ plt.gca().set_aspect('equal')
 ###goalの候補を複数個用意する
 goal_candidate = Sampling_goal(Otb_B, THETA) #(0,0)
 J = Sampling_J #len(goal_candidate)
-if(J != THETA[6]):
-    print("[WARNING] J is not K",J,K)
+#if(J != THETA[6]):
+#    print("[WARNING] J is not K",J,K)
 p_cost_candidate = [0.0 for j in range(J)]
 Path_candidate = [[0.0] for j in range(J)]
 

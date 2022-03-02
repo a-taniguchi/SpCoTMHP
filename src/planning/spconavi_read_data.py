@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 #coding:utf-8
+import os.path
 from scipy.io import mmread
 from scipy.stats import multivariate_normal
 from __init__ import *
@@ -21,6 +22,19 @@ class Tools:
         X = np.array( (Index * resolution) + origin )
         return X
 
+
+    #[albert] ROSのmap 座標系をPython内の2-dimension array index 番号に対応付ける
+    def Map_coordinates_To_Array_index_albert(self, X):
+        X = np.array(X)
+        Index = np.round( (X - origin_albert) / resolution_albert ).astype(int) #四捨五入してint型にする
+        return Index
+
+
+    #[albert] Python内の2-dimension array index 番号からROSのmap 座標系への変換
+    def Array_index_To_Map_coordinates_albert(self, Index):
+        Index = np.array(Index)
+        X = np.array( (Index * resolution_albert) + origin_albert )
+        return X
 
     # Action types of the robot
     def right(self, pos):
@@ -51,6 +65,39 @@ class Tools:
 
 
 class ReadingData:
+
+    #Read path distance
+    def ReadPathDistance(self, outputname):
+        # 結果をファイル読み込み
+        output = outputname + "_Distance.csv"
+        if (os.path.exists(output)):
+            Distance = np.loadtxt(output, delimiter=",")
+            print("Read Distance: " + output)
+        else:
+            Distance = T_topo * D_metric #T_horizon
+            print("[NOTE] Don't Read Distance: " + output)
+        if (int(Distance) == 0):
+            Distance = 1
+
+        return Distance
+
+    #Read the time
+    def ReadTime(self, outputname):
+        # 結果をファイル読み込み
+        output = outputname + "_time_pp.txt"
+        Time = np.loadtxt(output, delimiter=",")
+        print("Read Time: " + output)
+        return Time
+    
+    #Read the path
+    def ReadPathROS(self, outputname):
+        # 結果をファイル読み込み
+        output = outputname + "_Path_ROS.csv"
+        Path = np.loadtxt(output, delimiter=",")
+        print("Read Path: " + output)
+        #if (Path == "") or (Path == []):
+        #    Path
+        return Path
 
     #Read the path
     def ReadPath(self, outputname):
@@ -83,6 +130,10 @@ class ReadingData:
         print("Read costmap: " + outputfile + "contmap.csv")
         return costmap
 
+    #Read  It of learned spatial concepts (for SpCoTMHP)
+    def ReadIt(self, iteration, sample, filename, trialname):
+        It = np.loadtxt( filename + "/" + trialname + '_It_'+ str(iteration) + '_' + str(sample) + '.csv', dtype=int )
+        return It
 
     #Read the psi parameters of learned spatial concepts (for SpCoTMHP)
     def ReadPsi(self, iteration, sample, filename, trialname):
@@ -105,22 +156,38 @@ class ReadingData:
                     if (itemList[j] != ""):
                         W_index = W_index + [itemList[j]]
             i = i + 1
-            
-        #####Parameters W, μ, Σ, φ, π#####
-        Mu    = [ np.array([ 0.0, 0.0 ]) for i in range(K) ]               #the position distribution (mean of Gaussian) (x,y)[K]
-        Sig   = [ np.array([ [0.0, 0.0],[0.0, 0.0] ]) for i in range(K) ]  #the position distribution (co-variance of Gaussian) (2×2-dimension)[K]
-        W     = [ [0.0 for j in range(len(W_index))] for c in range(L) ]  #the name of place (multinomial distribution: W_index-dimension)[L]
-        #theta = [ [0.0 for j in range(DimImg)] for c in range(L) ] 
-        Pi    = [ 0.0 for c in range(L)]                                   #index of spatial concept of multinomial distribution (L-dimension)
-        Phi_l = [ [0.0 for i in range(K)] for c in range(L) ]             #index of position distribution of multinomial distribution (K-dimension)[L]
-        
+
+        Mu = []
         i = 0
         ##Mu is read from the file
         for line in open(filename + "/" + trialname + '_Mu_' + str(iteration) + '_' + str(sample) + '.csv', 'r'):
             itemList = line[:-1].split(',')
-            #Mu[i] = np.array([ float(itemList[0]) - origin[0] , float(itemList[1]) - origin[1] ]) / resolution
-            Mu[i] = np.array([ float(itemList[0]) , float(itemList[1]) ])
-            i = i + 1
+            if itemList[0] != "":
+                #Mu[i] = np.array([ float(itemList[0]) - origin[0] , float(itemList[1]) - origin[1] ]) / resolution
+                Mu = Mu + [ np.array([ float(itemList[0]) , float(itemList[1]) ]) ]
+                i = i + 1       
+        K = i
+            
+        Pi = []
+        i=0
+        ##Pi is read from the file
+        for line in open(filename + "/" + trialname + '_pi_' + str(iteration) + '_' + str(sample) + '.csv', 'r'):
+            Pi = Pi + [float(line[:-1])]
+            if line != "":
+               i = i + 1
+        L = i
+
+        print("K",K,"L",L)
+
+        #####Parameters W, μ, Σ, φ, π#####
+        #Mu    = [ np.array([ 0.0, 0.0 ]) for i in range(K) ]               #the position distribution (mean of Gaussian) (x,y)[K]
+        Sig   = [ np.array([ [0.0, 0.0],[0.0, 0.0] ]) for i in range(K) ]  #the position distribution (co-variance of Gaussian) (2×2-dimension)[K]
+        W     = [ [0.0 for j in range(len(W_index))] for c in range(L) ]  #the name of place (multinomial distribution: W_index-dimension)[L]
+        #theta = [ [0.0 for j in range(DimImg)] for c in range(L) ] 
+        #Pi    = [ 0.0 for c in range(L)]                                   #index of spatial concept of multinomial distribution (L-dimension)
+        Phi_l = [ [0.0 for i in range(K)] for c in range(L) ]             #index of position distribution of multinomial distribution (K-dimension)[L]
+        
+
         
         #i = 0
         ##Sig is read from the file
@@ -141,12 +208,6 @@ class ReadingData:
                 if itemList[i] != "":
                     Phi_l[c][i] = float(itemList[i])
             c = c + 1
-            
-        i=0
-        ##Pi is read from the file
-        for line in open(filename + "/" + trialname + '_pi_' + str(iteration) + '_' + str(sample) + '.csv', 'r'):
-            Pi[i] = float(line[:-1])
-            i = i + 1
 
         
         ##W is read from the file

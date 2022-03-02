@@ -5,7 +5,7 @@ import time
 import numpy as np
 from scipy.stats import multivariate_normal,multinomial
 import collections
-from itertools import izip
+#from itertools import izip
 import spconavi_read_data
 import spconavi_save_data
 from __init__ import *
@@ -265,7 +265,7 @@ class PathPlanner:
                 #Transition = np.array([approx_log_zero for j in xrange(state_num)]) #参照渡しになってしまう
 
                 #cost = [update_lite(cost_np, t, e[t], state_num,IndexMap_one_NOzero,MoveIndex_list) for t in xrange(len(e))]
-                cost = [self.update_lite(cost_np, t, f, state_num,IndexMap_one_NOzero,MoveIndex_list,Transition) for t, f in izip(m, e)] #izipの方がメモリ効率は良いが, zipとしても処理速度は変わらない
+                cost = [self.update_lite(cost_np, t, f, state_num,IndexMap_one_NOzero,MoveIndex_list,Transition) for t, f in zip(m, e)] #izipの方がメモリ効率は良いが, zipとしても処理速度は変わらない
                 trellis.append(cost)
 
                 if (float('inf') in cost) or (float('-inf') in cost) or (float('nan') in cost):

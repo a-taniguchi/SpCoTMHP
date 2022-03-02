@@ -103,9 +103,9 @@ for k in xrange(K):
         #el2                  = Ellipse(xy=Mu_origin[k],width=1.0,height=1.0,color=COLOR[k])  # matplotlib.patches.Ellipse
         #ax.add_patch(el2)
 
-        txt = ax.text(Mu_origin[k][0]+2, Mu_origin[k][1]+2, str(k), size = 8, color = "midnightblue", zorder=3)
-        txt.set_path_effects([path_effects.Stroke(linewidth=2, foreground='white', alpha=0.8),
-                              path_effects.Normal()])
+        #txt = ax.text(Mu_origin[k][0]+2, Mu_origin[k][1]+2, str(k), rotation=90, size = 12, color = "midnightblue", zorder=3)
+        #txt.set_path_effects([path_effects.Stroke(linewidth=2, foreground='white', alpha=0.8),
+        #                      path_effects.Normal()])
     except:
         break
 
@@ -149,8 +149,8 @@ plt.xlabel('X', fontsize=10)
 plt.ylabel('Y', fontsize=10)
 plt.xlim(x_min,x_max)
 plt.ylim(y_min,y_max)
-plt.savefig(file_trialname + '_A_SpCoGraph_' + iteration_sample + '.png', dpi=300)
-plt.savefig(file_trialname + '_A_SpCoGraph_' + iteration_sample + '.pdf', dpi=300)
+plt.savefig(file_trialname + '_A_SpCoGraph_' + iteration_sample + '_nn.png', dpi=300)
+plt.savefig(file_trialname + '_A_SpCoGraph_' + iteration_sample + '_nn.pdf', dpi=300)
 
 #plt.show()
 
