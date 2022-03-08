@@ -119,11 +119,11 @@ latex/
 *.md~
 serket/
 lang_m/
-#3LDK_small/
 .vscode/
-#SIGVerse/learning/
-#SIGVerse/planning/
-#albert-b/learning/
-#albert-b/planning/
 spconavi_ros/
 SIGVerse/data/3LDK_*/tmhp/
+SIGVerse/data/3LDK_*/navi/
+SIGVerse/data/3LDK_*/hoji/
+SIGVerse/planning_SpCoNavi/
+albert-b/planning_SpCoNavi/
+src/learning_torioki/
