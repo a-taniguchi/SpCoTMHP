@@ -19,14 +19,14 @@ Spatial Concept-based Topometric Semantic Mapping for Hierarchical Path-planning
 
 
 ## Abstract 
-    Navigating to destinations using human speech instructions is an important task for autonomous mobile robots that operate in the real world.
-    Spatial representations include a semantic level that represents an abstracted location category, a topological level that represents their connectivity, and a metric level that depends on the structure of the environment.
-    The purpose of this study is to realize a hierarchical spatial representation using a topometric semantic map and planning efficient paths through human-robot interactions.
-    We propose a novel probabilistic generative model, SpCoTMHP, that forms a topometric semantic map that adapts to the environment and leads to hierarchical path planning.
-    We also developed approximate inference methods for path planning, where the levels of the hierarchy can influence each other.
-    The proposed path planning method is theoretically supported by deriving a formulation based on control as probabilistic inference.
-    The navigation experiment using human speech instruction shows that the proposed spatial concept-based hierarchical path planning improves the performance and reduces the calculation cost compared with conventional methods.
-    Hierarchical spatial representation provides a mutually understandable form for humans and robots to render language-based navigation tasks feasible. 
+Navigating to destinations using human speech instructions is an important task for autonomous mobile robots that operate in the real world.
+Spatial representations include a semantic level that represents an abstracted location category, a topological level that represents their connectivity, and a metric level that depends on the structure of the environment.
+The purpose of this study is to realize a hierarchical spatial representation using a topometric semantic map and planning efficient paths through human-robot interactions.
+We propose a novel probabilistic generative model, SpCoTMHP, that forms a topometric semantic map that adapts to the environment and leads to hierarchical path planning.
+We also developed approximate inference methods for path planning, where the levels of the hierarchy can influence each other.
+The proposed path planning method is theoretically supported by deriving a formulation based on control as probabilistic inference.
+The navigation experiment using human speech instruction shows that the proposed spatial concept-based hierarchical path planning improves the performance and reduces the calculation cost compared with conventional methods.
+Hierarchical spatial representation provides a mutually understandable form for humans and robots to render language-based navigation tasks feasible. 
 
 
 ## Reference
