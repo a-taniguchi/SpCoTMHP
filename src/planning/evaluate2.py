@@ -700,7 +700,7 @@ for method in range(len(Methods)):
                         SPL[i][j][tyukan] = SR[i][j][tyukan] * ( PL_truth / float(max( PL[i][j][tyukan], PL_truth ) ) )
                         
             
-            output = outputfile + "/evaluate2/" + Methods[method] + "_" + str(i) + "_" + str(j) + "_" + str(tyukan) + "_"
+            output = outputfile + "/evaluate2/" + Methods[method] + "_" + str(i) + "_" + str(j) + "_" #+ str(tyukan) + "_"
             print("Save each evaluation values")
             ## 環境一つ分の全評価値をまとめて保存（SpCoNavi Viterbiでエラーだったものを含む）
             #np.savetxt(output+"all_Path.csv", Path, delimiter=",")
@@ -745,7 +745,8 @@ for method in range(len(Methods)):
                    ])
     
     ### 評価値の平均を保存する
-    np.savetxt(output+"all_Evaluate.csv", Evaluate_all, delimiter=",", fmt='%s')
+    output2 = outputfile + "/evaluate2/" + Methods[method] + "_"
+    np.savetxt(output2+"all_Evaluate.csv", Evaluate_all, delimiter=",", fmt='%s')
     print(Evaluate_all)
     #print("[end]", Methods[method])
     

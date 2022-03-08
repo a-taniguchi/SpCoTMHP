@@ -99,17 +99,11 @@ def ReadDatasetPosition(directory,DATA_NUM):
 
 
 #データセットから正解の範囲を決める
-def RectangularArea(filename, trialname, true_ie, mu):
+def RectangularArea(filename, trialname, true_ie, mu,DATA_NUM):
     area = np.zeros((4,2)) # [[x_min, y_min], [x_max, y_max]]
     
     DataSetFolder = inputfolder_SIG + trialname
-    
-    ##S## ##### Ishibushi's code #####
-    env_para = np.genfromtxt(DataSetFolder+"/Environment_parameter.txt",dtype= None,delimiter =" ")
-    DATA_initial_index = int(env_para[5][1]) #Initial data num
-    DATA_last_index    = int(env_para[6][1]) #Last data num
-    DATA_NUM = DATA_last_index - DATA_initial_index + 1
-    ##E## ##### Ishibushi's code ######
+
     
     #Otb, dataset_word = ReadDatasetWord(DataSetFolder,DATA_NUM)
     dataset_position = ReadDatasetPosition(DataSetFolder,DATA_NUM)
@@ -156,11 +150,10 @@ def RectangularArea(filename, trialname, true_ie, mu):
     return minmaxX,minmaxY
 
 #xが正解の範囲内かどうかをチェックする
-def SuccessChecker(filename, trialname, true_ie, x_list, mu):
+def SuccessChecker(filename, trialname, true_ie, x_list, minmaxX_list,minmaxY_list):
     check = -1 # 0 or 1
-    minmaxX,minmaxY = RectangularArea(filename,trialname, true_ie, mu) #.tolist()
+    minmaxX,minmaxY =  minmaxX_list[true_ie],minmaxY_list[true_ie] #RectangularArea(filename,trialname, true_ie, mu) #.tolist()
     #check = int(in_rect(area,x))
- 
     
     if (minmaxX[0] <= x_list[0] <= minmaxX[1]):
         if (minmaxY[0] <= x_list[1] <= minmaxY[1]):
@@ -214,13 +207,23 @@ def in_rect(rect,target):
 #Request a folder name for learned parameters.
 trialname = sys.argv[1]
 
+method_id = sys.argv[2]
+
 ##FullPath of folder
 filename    = outputfolder_SIG + trialname #+ "/" 
 outputfile  = filename + navigation_folder
 
 truthfolder = outputfile + "truth_astar/"
+DataSetFolder = inputfolder_SIG + trialname
 
+Makedir( outputfile + "/evaluate/" )
 
+##S## ##### Ishibushi's code #####
+env_para = np.genfromtxt(DataSetFolder+"/Environment_parameter.txt",dtype= None,delimiter =" ")
+DATA_initial_index = int(env_para[5][1]) #Initial data num
+DATA_last_index    = int(env_para[6][1]) #Last data num
+DATA_NUM = DATA_last_index - DATA_initial_index + 1
+##E## ##### Ishibushi's code ######
 
 #Read the files of learned parameters  #THETA = [W,W_index,Mu,Sig,Pi,Phi_l,K,L]
 THETA = read_data.ReadParameters(1, 0, filename, trialname)
@@ -231,6 +234,8 @@ print("Evaluation metrics: SR, Near-SR, WP-SR, PL, Arrival-PL, SPL, Time")
 ### 比較手法
 Methods = [ "spconavi_viterbi", "spconavi_astar_min_J1", "spconavi_astar_min", "astar_result_d_gauss", "astar_result_d2_gauss", "dijkstra_result_wd", "dijkstra_result" ] 
 #, "viterbi_result2", "viterbi_result"
+if (int(method_id) != -1) and (method_id != ""):
+    Methods = [ Methods[int(method_id)] ]
 print("Methods:", Methods)
 
 
@@ -244,8 +249,13 @@ for line in open(filename + "/" + trialname + '_psi_'  + 'setting.csv', 'r'):
           CoonectMatricx[c][i] = float(itemList[i])
     c = c + 1 
     
+minmaxX_list = [0.0 for i in range(K)]
+minmaxY_list = [0.0 for i in range(K)]
+for i in range(K):
+    true_ie = i
+    mu = Mu[i]
+    minmaxX_list[i],minmaxY_list[i] = RectangularArea(filename,trialname, true_ie, mu,DATA_NUM) #.tolist()
 
-    
 spconavi_error = np.array([ [np.nan for i in range(K)] for c in range(K) ])
 
 for method in range(len(Methods)):
@@ -346,9 +356,9 @@ for method in range(len(Methods)):
             
             if (trialname == "3LDK_01"):
                 if (true_ie == 7) or (true_ie == 8) or (true_ie == 9):
-                    sr7 = SuccessChecker(filename,trialname, 7, x_inv, Mu[7])
-                    sr8 = SuccessChecker(filename,trialname, 8, x_inv, Mu[8])
-                    sr9 = SuccessChecker(filename,trialname, 9, x_inv, Mu[9])
+                    sr7 = SuccessChecker(filename,trialname, 7, x_inv, minmaxX_list,minmaxY_list)
+                    sr8 = SuccessChecker(filename,trialname, 8, x_inv, minmaxX_list,minmaxY_list)
+                    sr9 = SuccessChecker(filename,trialname, 9, x_inv, minmaxX_list,minmaxY_list)
                     SR[i][j] = max([sr7,sr8,sr9])
                     
                     # Read PL_truth
@@ -370,12 +380,12 @@ for method in range(len(Methods)):
                     elif (i == 9): near = [sr9]
                     elif (i ==10): near = [sr9,sr8]
                 else:
-                    SR[i][j] = SuccessChecker(filename,trialname, true_ie, x_inv, Mu[j])
+                    SR[i][j] = SuccessChecker(filename,trialname, true_ie, x_inv, minmaxX_list,minmaxY_list)
             elif (trialname == "3LDK_05"):
                 if (true_ie == 7) or (true_ie == 8) or (true_ie == 9):
-                    sr7 = SuccessChecker(filename,trialname, 7, x_inv, Mu[7])
-                    sr8 = SuccessChecker(filename,trialname, 8, x_inv, Mu[8])
-                    sr9 = SuccessChecker(filename,trialname, 9, x_inv, Mu[9])
+                    sr7 = SuccessChecker(filename,trialname, 7, x_inv, minmaxX_list,minmaxY_list)
+                    sr8 = SuccessChecker(filename,trialname, 8, x_inv, minmaxX_list,minmaxY_list)
+                    sr9 = SuccessChecker(filename,trialname, 9, x_inv, minmaxX_list,minmaxY_list)
                     SR[i][j] = max([sr7,sr8,sr9])
                     
                     # Read PL_truth
@@ -397,12 +407,12 @@ for method in range(len(Methods)):
                     elif (i == 9): near = [sr9]
                     elif (i ==10): near = [sr7]
                 else:
-                    SR[i][j] = SuccessChecker(filename,trialname, true_ie, x_inv, Mu[j])
+                    SR[i][j] = SuccessChecker(filename,trialname, true_ie, x_inv, minmaxX_list,minmaxY_list)
             elif (trialname == "3LDK_06"):
                 if (true_ie == 3) or (true_ie == 5) or (true_ie == 7):
-                    sr3 = SuccessChecker(filename,trialname, 3, x_inv, Mu[3])
-                    sr5 = SuccessChecker(filename,trialname, 5, x_inv, Mu[5])
-                    sr7 = SuccessChecker(filename,trialname, 7, x_inv, Mu[7])
+                    sr3 = SuccessChecker(filename,trialname, 3, x_inv, minmaxX_list,minmaxY_list)
+                    sr5 = SuccessChecker(filename,trialname, 5, x_inv, minmaxX_list,minmaxY_list)
+                    sr7 = SuccessChecker(filename,trialname, 7, x_inv, minmaxX_list,minmaxY_list)
                     SR[i][j] = max([sr3,sr5,sr7])
                     
                     # Read PL_truth
@@ -424,12 +434,12 @@ for method in range(len(Methods)):
                     elif (i == 9): near = [sr7]
                     elif (i ==10): near = [sr7]
                 else:
-                    SR[i][j] = SuccessChecker(filename,trialname, true_ie, x_inv, Mu[j])
+                    SR[i][j] = SuccessChecker(filename,trialname, true_ie, x_inv, minmaxX_list,minmaxY_list)
             elif (trialname == "3LDK_07"):
                 if (true_ie == 6) or (true_ie == 7) or (true_ie == 9):
-                    sr6 = SuccessChecker(filename,trialname, 6, x_inv, Mu[6])
-                    sr7 = SuccessChecker(filename,trialname, 7, x_inv, Mu[7])
-                    sr9 = SuccessChecker(filename,trialname, 9, x_inv, Mu[9])
+                    sr6 = SuccessChecker(filename,trialname, 6, x_inv, minmaxX_list,minmaxY_list)
+                    sr7 = SuccessChecker(filename,trialname, 7, x_inv, minmaxX_list,minmaxY_list)
+                    sr9 = SuccessChecker(filename,trialname, 9, x_inv, minmaxX_list,minmaxY_list)
                     SR[i][j] = max([sr6,sr7,sr9])
                     
                     # Read PL_truth
@@ -451,8 +461,8 @@ for method in range(len(Methods)):
                     elif (i == 9): near = [sr9]
                     elif (i ==10): near = [sr9]
                 elif ((true_ie == 2) or (true_ie == 10)) and (speech_num == 9): #単語が"廊下"のとき
-                    sr2 = SuccessChecker(filename,trialname, 2, x_inv, Mu[2])
-                    sr10 = SuccessChecker(filename,trialname, 10, x_inv, Mu[10])
+                    sr2 = SuccessChecker(filename,trialname, 2, x_inv, minmaxX_list,minmaxY_list)
+                    sr10 = SuccessChecker(filename,trialname, 10, x_inv, minmaxX_list,minmaxY_list)
                     SR[i][j] = max([sr2,sr10])
                     
                     # Read PL_truth
@@ -473,12 +483,12 @@ for method in range(len(Methods)):
                     elif (i == 9): near = [sr10]
                     elif (i ==10): near = [sr10]
                 else:
-                    SR[i][j] = SuccessChecker(filename,trialname, true_ie, x_inv, Mu[j])
+                    SR[i][j] = SuccessChecker(filename,trialname, true_ie, x_inv, minmaxX_list,minmaxY_list)
             elif (trialname == "3LDK_09"):
                 if (true_ie == 1) or (true_ie == 3) or (true_ie == 9):
-                    sr1 = SuccessChecker(filename,trialname, 1, x_inv, Mu[1])
-                    sr3 = SuccessChecker(filename,trialname, 3, x_inv, Mu[3])
-                    sr9 = SuccessChecker(filename,trialname, 9, x_inv, Mu[9])
+                    sr1 = SuccessChecker(filename,trialname, 1, x_inv, minmaxX_list,minmaxY_list)
+                    sr3 = SuccessChecker(filename,trialname, 3, x_inv, minmaxX_list,minmaxY_list)
+                    sr9 = SuccessChecker(filename,trialname, 9, x_inv, minmaxX_list,minmaxY_list)
                     SR[i][j] = max([sr1,sr3,sr9])
                     
                     # Read PL_truth
@@ -500,7 +510,7 @@ for method in range(len(Methods)):
                     elif (i == 9): near = [sr9]
                     elif (i ==10): near = [sr3]
                 else:
-                    SR[i][j] = SuccessChecker(filename,trialname, true_ie, x_inv, Mu[j])
+                    SR[i][j] = SuccessChecker(filename,trialname, true_ie, x_inv, minmaxX_list,minmaxY_list)
                     
 
             
@@ -525,7 +535,7 @@ for method in range(len(Methods)):
             SPL[i][j] = SR[i][j] * ( PL_truth / float(max( PL[i][j], PL_truth ) ) )
             
     
-    output = outputfile + "/evaluate_" + Methods[method] + "_"
+    output = outputfile + "/evaluate/" + Methods[method] + "_"
     print("Save each evaluation values")
     ## 環境一つ分の全評価値をまとめて保存（SpCoNavi Viterbiでエラーだったものを含む）
     #np.savetxt(output+"all_Path.csv", Path, delimiter=",")
